@@ -1,0 +1,17 @@
+{
+  "name": "aura",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Aura — Agentic scheduling app for high school students",
+  "scripts": {
+    "mobile": "pnpm --filter @aura/mobile start",
+    "mobile:ios": "pnpm --filter @aura/mobile ios",
+    "mobile:android": "pnpm --filter @aura/mobile android",
+    "typecheck": "tsc --noEmit",
+    "clean": "pnpm -r exec rm -rf node_modules && rm -rf node_modules"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "packageManager": "pnpm@9.15.4"
+}
