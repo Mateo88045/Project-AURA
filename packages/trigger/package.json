@@ -1,0 +1,14 @@
+{
+  "name": "@aura/trigger",
+  "version": "0.1.0",
+  "private": true,
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "dependencies": {
+    "@aura/shared": "workspace:*"
+  },
+  "devDependencies": {
+    "@trigger.dev/sdk": "^3.0.0",
+    "typescript": "^5.3.0"
+  }
+}
