@@ -1,17 +1,34 @@
-// /packages/trigger/src/jobs/daily-trigger.ts
-// STUB — Backend (Dev B) owns this file. DO NOT implement in Dev A sessions.
-//
-// TODO: Trigger.dev — Job: 'daily-assignment-trigger'
-// Trigger type: Cron (user-configurable time, default 3:00 PM local)
-// Pipeline A steps:
-//   1. Fetch — Call Google Classroom API / Canvas API using stored OAuth token
-//   2. Extract & Normalize — Raw assignment data → Aura Task schema
-//   3. Grade (Gemini Flash) — Send each task + user profile to grader prompt
-//   4. Schedule (deterministic) — Run greedy slot-filling algorithm
-//   5. Draft Shadow Schedule — Write to Supabase as status: 'shadow'
-//   6. Notify — Send push notification: "Aura found N new assignments"
+import { task, tasks } from '@trigger.dev/sdk/v3';
+import type { GraderResult, Task } from '@aura/shared/types';
 
+/**
+ * Pipeline A — daily assignment trigger (Trigger.dev).
+ * TODO: Supabase — fetch connections, persist tasks/scheduled_blocks.
+ * TODO: Integrations — Google Classroom / Canvas fetch + normalize.
+ * Grading uses Gemini inside batch-grader task or inline stub until wired.
+ */
+export const dailyAssignmentTrigger = task({
+  id: 'daily-assignment-trigger',
+  run: async (payload: { userId: string }) => {
+    const { userId } = payload;
+    // Stub normalized tasks for future grader wiring
+    const stubTasks: Pick<Task, 'title' | 'subject' | 'description'>[] = [];
+    console.log('[daily-assignment-trigger] start', { userId });
+
+    // TODO: Trigger.dev — trigger.batch-grader as child task or inline gradeTaskBatch
+    const graded: GraderResult[] = [];
+
+    return {
+      ok: true as const,
+      userId,
+      gradedCount: graded.length,
+      message:
+        'Daily sync stub completed. Wire Classroom/Canvas + Supabase + batch-grader next.',
+    };
+  },
+});
+
+/** Prefer API + tasks.trigger from server; kept for Node scripts. */
 export async function triggerDailySync(userId: string): Promise<void> {
-  // TODO: Trigger.dev — fire job 'daily-assignment-trigger' with payload { userId }
-  console.log('[STUB] Would trigger daily sync for user:', userId);
+  await tasks.trigger('daily-assignment-trigger', { userId });
 }

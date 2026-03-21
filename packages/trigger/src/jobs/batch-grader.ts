@@ -1,21 +1,30 @@
-// /packages/trigger/src/jobs/batch-grader.ts
-// STUB — Backend (Dev B) owns this file. DO NOT implement in Dev A sessions.
-//
-// TODO: Trigger.dev — Job: 'batch-grader'
-// Trigger type: Invoked by daily-trigger after normalization step
-// Steps:
-//   1. Receive array of normalized tasks
-//   2. For each task, call Gemini Flash with grader prompt + user profile
-//   3. Parse structured JSON response: { difficulty, estimated_minutes, task_type }
-//   4. Write graded results back to Supabase tasks table
-
+import { task } from '@trigger.dev/sdk/v3';
 import type { Task, GraderResult } from '@aura/shared/types';
 
+/**
+ * Grades normalized tasks with Gemini Flash (Pipeline A step 3).
+ * TODO: Supabase — read/write tasks table.
+ * TODO: Call Gemini with packages/shared/prompts/grader.ts
+ */
 export async function gradeTaskBatch(
-  _tasks: Pick<Task, 'title' | 'subject' | 'description'>[],
-  _userId: string,
+  tasksInput: Pick<Task, 'title' | 'subject' | 'description'>[],
+  userId: string,
 ): Promise<GraderResult[]> {
-  // TODO: Trigger.dev — implement Gemini Flash batch grading
-  console.log('[STUB] Would grade', _tasks.length, 'tasks for user:', _userId);
-  return [];
+  console.log('[gradeTaskBatch] stub', { userId, count: tasksInput.length });
+  return tasksInput.map(() => ({
+    difficulty: 3 as const,
+    estimatedMinutes: 45,
+    taskType: 'other' as const,
+  }));
 }
+
+export const batchGraderTask = task({
+  id: 'batch-grader',
+  run: async (payload: {
+    userId: string;
+    tasks: Pick<Task, 'title' | 'subject' | 'description'>[];
+  }) => {
+    const results = await gradeTaskBatch(payload.tasks, payload.userId);
+    return { userId: payload.userId, results };
+  },
+});
