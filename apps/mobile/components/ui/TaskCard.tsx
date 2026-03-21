@@ -13,18 +13,19 @@ interface TaskCardProps {
 export function TaskCard({ task, onPress, onComplete }: TaskCardProps) {
   return (
     <Pressable
-      className="w-full rounded-[14px] bg-[#111827] p-4 mb-3"
+      className="w-full rounded-[14px] p-4 mb-3"
+      style={{ backgroundColor: Colors.surface1 }}
       onPress={onPress}
     >
       <View className="flex-row items-center justify-between">
         <View className="flex-1 mr-3">
-          <Text className="text-[#F1FAEE] text-base font-semibold">
+          <Text className="text-base font-semibold" style={{ color: Colors.textPrimary }}>
             {task.title}
           </Text>
-          <Text className="text-[#8EAFC2] text-xs mt-1">
+          <Text className="text-xs mt-1" style={{ color: Colors.textSecondary }}>
             {task.subject} • {task.estimatedMinutes} min
           </Text>
-          <Text className="text-[#8EAFC2] text-xs mt-1">
+          <Text className="text-xs mt-1" style={{ color: Colors.textSecondary }}>
             Due {new Date(task.dueDate).toLocaleString()}
           </Text>
         </View>

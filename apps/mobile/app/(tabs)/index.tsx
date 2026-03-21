@@ -42,7 +42,7 @@ export default function TodayScreen() {
   );
 
   return (
-    <View className="flex-1 bg-[#0A1118]">
+    <View className="flex-1" style={{ backgroundColor: Colors.bgDark }}>
       <View style={styles.orbOne} />
       <View style={styles.orbTwo} />
 
@@ -52,13 +52,19 @@ export default function TodayScreen() {
       >
         <View className="pt-12 pb-6 flex-row items-center justify-between">
           <View>
-            <Text className="text-[#8EAFC2] text-xs font-light tracking-[1.5px]">
+            <Text
+              className="text-xs font-light tracking-[1.5px]"
+              style={{ color: Colors.textSecondary }}
+            >
               TODAY
             </Text>
-            <Text className="text-[#F1FAEE] text-2xl font-semibold mt-1">
+            <Text
+              className="text-2xl font-semibold mt-1"
+              style={{ color: Colors.textPrimary }}
+            >
               {friendlyDate}
             </Text>
-            <Text className="text-[#8EAFC2] text-sm mt-1">
+            <Text className="text-sm mt-1" style={{ color: Colors.textSecondary }}>
               Hey, {user?.displayName ?? 'there'}
             </Text>
           </View>
@@ -66,7 +72,10 @@ export default function TodayScreen() {
         </View>
 
         <View className="flex-row items-center justify-between mb-4">
-          <Text className="text-[#F1FAEE] text-base font-semibold">
+          <Text
+            className="text-base font-semibold"
+            style={{ color: Colors.textPrimary }}
+          >
             Your river
           </Text>
           <AuraButton
@@ -87,7 +96,7 @@ export default function TodayScreen() {
 
         {!loading && error && (
           <View className="mt-8 items-center">
-            <Text className="text-[#E76F6F] text-sm mb-3">
+            <Text className="text-sm mb-3" style={{ color: Colors.red }}>
               We couldn&apos;t load today&apos;s schedule.
             </Text>
             <AuraButton
@@ -102,10 +111,13 @@ export default function TodayScreen() {
 
         {!loading && !error && scheduledBlocks.length === 0 && (
           <View className="mt-8">
-            <Text className="text-[#F1FAEE] text-base font-semibold">
+            <Text
+              className="text-base font-semibold"
+              style={{ color: Colors.textPrimary }}
+            >
               Aura is still learning your week
             </Text>
-            <Text className="text-[#8EAFC2] text-sm mt-2">
+            <Text className="text-sm mt-2" style={{ color: Colors.textSecondary }}>
               Once you connect your classes, Aura will start drafting a plan and
               your river will light up with tasks.
             </Text>
@@ -120,7 +132,10 @@ export default function TodayScreen() {
           >
             <View className="flex-row">
               <View className="items-center mr-4">
-                <View className="flex-1 w-px bg-[#A8DADC]/30" />
+                <View
+                  className="flex-1 w-px"
+                  style={{ backgroundColor: Colors.mist, opacity: 0.3 }}
+                />
               </View>
               <View className="flex-1">
                 {fixedEvents.map((event) => (
@@ -128,12 +143,18 @@ export default function TodayScreen() {
                     key={event.id}
                     className="flex-row items-center mb-4"
                   >
-                    <View className="w-3 h-3 rounded-full border border-[#8EAFC2] mr-3" />
+                    <View
+                      className="w-3 h-3 rounded-full border mr-3"
+                      style={{ borderColor: Colors.textSecondary }}
+                    />
                     <View className="flex-1">
-                      <Text className="text-[#8EAFC2] text-xs">
+                      <Text className="text-xs" style={{ color: Colors.textSecondary }}>
                         {event.startTime} – {event.endTime}
                       </Text>
-                      <Text className="text-[#8EAFC2] text-sm mt-0.5">
+                      <Text
+                        className="text-sm mt-0.5"
+                        style={{ color: Colors.textSecondary }}
+                      >
                         {event.title}
                       </Text>
                     </View>
@@ -146,7 +167,16 @@ export default function TodayScreen() {
                     className="flex-row items-stretch mb-4"
                   >
                     <View className="items-center mr-3">
-                      <View className="w-3 h-3 rounded-full bg-[#A8DADC] shadow-md shadow-[#A8DADC]" />
+                      <View
+                        className="w-3 h-3 rounded-full"
+                        style={{
+                          backgroundColor: Colors.mist,
+                          shadowColor: Colors.mist,
+                          shadowOpacity: 0.6,
+                          shadowRadius: 8,
+                          shadowOffset: { width: 0, height: 0 },
+                        }}
+                      />
                     </View>
                     <View className="flex-1">
                       {block.task && (

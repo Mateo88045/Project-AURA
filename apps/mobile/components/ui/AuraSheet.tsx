@@ -22,8 +22,9 @@ export function AuraSheet({ visible, onClose, children }: AuraSheetProps) {
         onPress={onClose}
       />
       <View
-        className="bg-[#0A1118] px-[28px] pt-4 pb-8"
+        className="px-[28px] pt-4 pb-8"
         style={{
+          backgroundColor: Colors.bgDark,
           borderTopLeftRadius: Layout.radiusHero,
           borderTopRightRadius: Layout.radiusHero,
           borderColor: Colors.mist,

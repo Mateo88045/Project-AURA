@@ -16,8 +16,10 @@ export function DifficultyBadge({ difficulty }: DifficultyBadgeProps) {
           <View
             // eslint-disable-next-line react/no-array-index-key
             key={index}
-            className="h-[3px] w-[10px] rounded-full bg-[#1B2634]"
-            style={filled ? { backgroundColor: color } : { backgroundColor: Colors.bgDark }}
+            className="h-[3px] w-[10px] rounded-full"
+            style={{
+              backgroundColor: filled ? color : Colors.surface3,
+            }}
           />
         );
       })}
