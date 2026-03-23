@@ -5,6 +5,10 @@ import {
 } from '@aura/shared/prompts/copilot';
 import type { CopilotAction } from '@aura/shared/types';
 import { env } from '../env.js';
+import {
+  assertAllowedOpenRouterModel,
+  openRouterChatCompletion,
+} from './openRouterClient.js';
 
 export type ChatMessage = { role: 'user' | 'assistant'; content: string };
 
@@ -40,16 +44,41 @@ export async function runClaudeCopilot(params: {
   messages: ChatMessage[];
   routerContext?: string;
 }): Promise<CopilotResponse> {
-  if (!env.anthropicApiKey) {
-    throw new Error('ANTHROPIC_API_KEY is not configured');
+  if (!env.anthropicApiKey && !env.openRouterApiKey) {
+    throw new Error('ANTHROPIC_API_KEY or OPENROUTER_API_KEY is not configured');
   }
-
-  const client = new Anthropic({ apiKey: env.anthropicApiKey });
 
   const system = params.routerContext
     ? `${COPILOT_SYSTEM_PROMPT}\n\nRouter context (Gemini): ${params.routerContext}`
     : COPILOT_SYSTEM_PROMPT;
 
+  if (env.openRouterApiKey) {
+    assertAllowedOpenRouterModel(
+      env.openRouterClaudeCopilotModel,
+      'claude_copilot',
+    );
+
+    const assistantText = await openRouterChatCompletion({
+      model: env.openRouterClaudeCopilotModel,
+      temperature: 0.2,
+      maxTokens: 1024,
+      messages: [
+        { role: 'system', content: system },
+        ...params.messages.map((m) => ({ role: m.role, content: m.content })),
+      ],
+    });
+
+    const parsed = tryParseCopilotJson(assistantText);
+    if (parsed) return parsed;
+
+    return {
+      message: assistantText,
+      copilotPromptVersion: COPILOT_PROMPT_VERSION,
+      rawAssistantText: assistantText,
+    };
+  }
+
+  const client = new Anthropic({ apiKey: env.anthropicApiKey });
   const anthropicMessages = params.messages.map((m) => ({
     role: m.role === 'assistant' ? ('assistant' as const) : ('user' as const),
     content: m.content,
@@ -64,7 +93,9 @@ export async function runClaudeCopilot(params: {
 
   const block = res.content.find((b) => b.type === 'text');
   const text =
-    block && block.type === 'text' ? block.text : 'Sorry, I had trouble replying.';
+    block && block.type === 'text'
+      ? block.text
+      : 'Sorry, I had trouble replying.';
 
   const parsed = tryParseCopilotJson(text);
   if (parsed) return parsed;

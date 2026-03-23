@@ -7,9 +7,12 @@ import { env } from '../env.js';
 export const chatRouter = new Hono<{ Variables: AuraVariables }>();
 
 chatRouter.post('/', async (c) => {
-  if (!env.anthropicApiKey) {
+  if (!env.anthropicApiKey && !env.openRouterApiKey) {
     return c.json(
-      { error: 'Chat is not configured (set ANTHROPIC_API_KEY)' },
+      {
+        error:
+          'Chat is not configured (set ANTHROPIC_API_KEY or OPENROUTER_API_KEY)',
+      },
       503,
     );
   }
