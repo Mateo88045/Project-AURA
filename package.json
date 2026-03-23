@@ -7,11 +7,25 @@
     "mobile": "pnpm --filter @aura/mobile start",
     "mobile:ios": "pnpm --filter @aura/mobile ios",
     "mobile:android": "pnpm --filter @aura/mobile android",
+    "api": "pnpm --filter @aura/api dev",
+    "api:start": "pnpm --filter @aura/api start",
+    "trigger:dev": "pnpm --filter @aura/trigger trigger:dev",
     "typecheck": "tsc --noEmit",
-    "clean": "pnpm -r exec rm -rf node_modules && rm -rf node_modules"
+    "clean": "pnpm -r exec rm -rf node_modules && rm -rf node_modules",
+    "android": "expo run:android",
+    "ios": "expo run:ios"
   },
   "engines": {
     "node": ">=18.0.0"
   },
-  "packageManager": "pnpm@9.15.4"
+  "packageManager": "pnpm@9.15.4",
+  "dependencies": {
+    "@expo/metro-runtime": "^55.0.6",
+    "expo": "~52.0.0",
+    "react": "18.3.1",
+    "react-dom": "^19.2.4",
+    "react-native": "0.76.9",
+    "react-native-web": "^0.21.2",
+    "react-native-worklets-core": "^1.6.3"
+  }
 }

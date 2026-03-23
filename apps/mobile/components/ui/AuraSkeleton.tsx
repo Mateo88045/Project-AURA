@@ -1,7 +1,8 @@
-import { View } from 'react-native';
+import { View, type DimensionValue } from 'react-native';
+import { Colors } from '@aura/shared/constants/colors';
 
 interface AuraSkeletonProps {
-  width?: number | string;
+  width?: DimensionValue;
   height?: number;
   rounded?: boolean;
   className?: string;
@@ -15,8 +16,9 @@ export function AuraSkeleton({
 }: AuraSkeletonProps) {
   return (
     <View
-      className={`bg-[#1F2937] ${className ?? ''}`}
+      className={className}
       style={{
+        backgroundColor: Colors.surface2,
         width,
         height,
         borderRadius: rounded ? 999 : 0,

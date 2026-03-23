@@ -30,6 +30,9 @@ android/
 .DS_Store
 Thumbs.db
 
+# Trigger.dev local
+.trigger/
+
 # TypeScript
 *.tsbuildinfo
 

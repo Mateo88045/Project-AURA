@@ -32,13 +32,16 @@ export function AuraToastProvider({ children }: AuraToastProviderProps) {
         {messages.map((message) => (
           <View
             key={message.id}
-            className="w-full rounded-[14px] bg-[#111827] px-4 py-3"
+            className="w-full rounded-[14px] px-4 py-3"
             style={{
+              backgroundColor: Colors.surface1,
               borderWidth: 1,
               borderColor: Colors.mist,
             }}
           >
-            <Text className="text-[#F1FAEE] text-sm">{message.text}</Text>
+            <Text className="text-sm" style={{ color: Colors.textPrimary }}>
+              {message.text}
+            </Text>
           </View>
         ))}
       </View>

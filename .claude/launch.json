@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "Expo Dev Server",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--filter", "@aura/mobile", "start"],
+      "port": 8081
+    },
+    {
+      "name": "Trigger.dev Dev",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--filter", "@aura/trigger", "exec", "trigger-dev", "dev"],
+      "port": 3030
+    }
+  ]
+}

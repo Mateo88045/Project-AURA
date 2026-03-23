@@ -12,6 +12,7 @@ import { useShadowSchedule } from '../../hooks/useShadowSchedule';
 import { AuraButton } from '../../components/ui/AuraButton';
 import { AuraSkeleton } from '../../components/ui/AuraSkeleton';
 import { TaskCard } from '../../components/ui/TaskCard';
+import { requestShadowSchedule } from '../../services/jobs';
 
 const MOCK_USER_ID = 'user-1';
 
@@ -32,6 +33,8 @@ export default function ShadowScheduleReviewScreen() {
   const [declinedBlockIds, setDeclinedBlockIds] = useState<Set<string>>(
     new Set(),
   );
+  const [adjustBusy, setAdjustBusy] = useState(false);
+  const [adjustMessage, setAdjustMessage] = useState<string | null>(null);
 
   const hasShadowBlocks = shadowBlocks.length > 0;
 
@@ -65,8 +68,18 @@ export default function ShadowScheduleReviewScreen() {
   }
 
   function handleAskAdjust() {
-    // TODO: Trigger.dev — request re-plan for shadow schedule for the day
-    console.log('[STUB] Ask Aura to adjust shadow plan for day', dayIso);
+    setAdjustMessage(null);
+    setAdjustBusy(true);
+    void requestShadowSchedule(MOCK_USER_ID, dayIso)
+      .then((r) => {
+        setAdjustMessage(`Replan queued (run ${r.runId})`);
+      })
+      .catch((e: unknown) => {
+        setAdjustMessage(
+          e instanceof Error ? e.message : 'Could not request replan',
+        );
+      })
+      .finally(() => setAdjustBusy(false));
   }
 
   return (
@@ -80,13 +93,19 @@ export default function ShadowScheduleReviewScreen() {
       >
         <View className="pt-12 pb-6 flex-row items-center justify-between">
           <View>
-            <Text className="text-[#8EAFC2] text-xs font-light tracking-[1.5px]">
+            <Text
+              className="text-xs font-light tracking-[1.5px]"
+              style={{ color: Colors.textSecondary }}
+            >
               REVIEW
             </Text>
-            <Text className="text-[#F1FAEE] text-2xl font-semibold mt-1">
+            <Text
+              className="text-2xl font-semibold mt-1"
+              style={{ color: Colors.textPrimary }}
+            >
               Shadow plan
             </Text>
-            <Text className="text-[#8EAFC2] text-sm mt-1">
+            <Text className="text-sm mt-1" style={{ color: Colors.textSecondary }}>
               Approve Aura&apos;s draft for tonight, or ask for tweaks.
             </Text>
           </View>
@@ -100,7 +119,7 @@ export default function ShadowScheduleReviewScreen() {
         </View>
 
         <View className="flex-row items-center justify-between mb-4">
-          <Text className="text-[#F1FAEE] text-base font-semibold">
+          <Text className="text-base font-semibold" style={{ color: Colors.textPrimary }}>
             Tonight&apos;s blocks
           </Text>
           <View className="flex-row gap-2">
@@ -117,9 +136,18 @@ export default function ShadowScheduleReviewScreen() {
               variant="ghost"
               onPress={handleAskAdjust}
               disabled={!hasShadowBlocks}
+              loading={adjustBusy}
             />
           </View>
         </View>
+        {adjustMessage ? (
+          <Text
+            className="text-xs mb-3"
+            style={{ color: Colors.textSecondary }}
+          >
+            {adjustMessage}
+          </Text>
+        ) : null}
 
         {loading && (
           <View className="mt-4">
@@ -131,7 +159,7 @@ export default function ShadowScheduleReviewScreen() {
 
         {!loading && error && (
           <View className="mt-8 items-center">
-            <Text className="text-[#E76F6F] text-sm mb-3">
+            <Text className="text-sm mb-3" style={{ color: Colors.red }}>
               We couldn&apos;t load your shadow plan.
             </Text>
             <AuraButton
@@ -146,10 +174,10 @@ export default function ShadowScheduleReviewScreen() {
 
         {!loading && !error && !hasShadowBlocks && (
           <View className="mt-8">
-            <Text className="text-[#F1FAEE] text-base font-semibold">
+            <Text className="text-base font-semibold" style={{ color: Colors.textPrimary }}>
               No shadow plan yet
             </Text>
-            <Text className="text-[#8EAFC2] text-sm mt-2">
+            <Text className="text-sm mt-2" style={{ color: Colors.textSecondary }}>
               Once Aura drafts a plan for tonight, you&apos;ll be able to
               review and approve it here.
             </Text>
@@ -168,7 +196,7 @@ export default function ShadowScheduleReviewScreen() {
 
               return (
                 <View key={block.id} className="mb-4">
-                  <Text className="text-[#8EAFC2] text-xs mb-1">
+                  <Text className="text-xs mb-1" style={{ color: Colors.textSecondary }}>
                     {new Date(block.startTime).toLocaleTimeString([], {
                       hour: 'numeric',
                       minute: '2-digit',

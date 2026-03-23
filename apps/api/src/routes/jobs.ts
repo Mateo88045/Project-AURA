@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { tasks } from '@trigger.dev/sdk/v3';
 import type { AuraVariables } from '../middleware/auth.js';
-import { assertTriggerConfigured, env } from '../env.js';
+import { assertTriggerConfigured } from '../env.js';
 
 export const jobsRouter = new Hono<{ Variables: AuraVariables }>();
 

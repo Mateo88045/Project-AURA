@@ -1,6 +1,7 @@
 import '../global.css';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { Colors } from '@aura/shared/constants/colors';
 
 export default function RootLayout() {
   return (
@@ -9,7 +10,7 @@ export default function RootLayout() {
       <Stack
         screenOptions={{
           headerShown: false,
-          contentStyle: { backgroundColor: '#0A1118' },
+          contentStyle: { backgroundColor: Colors.bgDark },
         }}
       >
         <Stack.Screen name="(tabs)" />

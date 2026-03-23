@@ -22,7 +22,9 @@ export function AuraAvatar({ name }: AuraAvatarProps) {
         borderColor: Colors.mist,
       }}
     >
-      <Text className="text-[#F1FAEE] text-sm font-semibold">{initials}</Text>
+      <Text className="text-sm font-semibold" style={{ color: Colors.textPrimary }}>
+        {initials}
+      </Text>
     </View>
   );
 }

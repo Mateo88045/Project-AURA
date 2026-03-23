@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, type Href } from 'expo-router';
 import { Colors } from '@aura/shared/constants/colors';
 import { Layout } from '@aura/shared/constants/layout';
 import { useTodaySchedule } from '../../hooks/useTodaySchedule';
@@ -10,11 +10,14 @@ import { AuraButton } from '../../components/ui/AuraButton';
 import { AuraSheet } from '../../components/ui/AuraSheet';
 import { TaskCard } from '../../components/ui/TaskCard';
 import { AuraSkeleton } from '../../components/ui/AuraSkeleton';
+import { triggerDailySyncJob } from '../../services/jobs';
 
 const MOCK_USER_ID = 'user-1';
 
 export default function TodayScreen() {
   const router = useRouter();
+  const [syncBusy, setSyncBusy] = useState(false);
+  const [syncMessage, setSyncMessage] = useState<string | null>(null);
   const today = useMemo(() => new Date(), []);
   const dayIso = today.toISOString().slice(0, 10);
 
@@ -71,19 +74,49 @@ export default function TodayScreen() {
           <AuraAvatar name={user?.displayName ?? 'Aura User'} />
         </View>
 
-        <View className="flex-row items-center justify-between mb-4">
+        <View className="mb-4">
           <Text
             className="text-base font-semibold"
             style={{ color: Colors.textPrimary }}
           >
             Your river
           </Text>
-          <AuraButton
-            label="Review shadow plan"
-            size="sm"
-            variant="ghost"
-            onPress={() => router.push('/schedule/review')}
-          />
+          <View className="flex-row flex-wrap gap-2 mt-2">
+            <AuraButton
+              label="Refresh from school"
+              size="sm"
+              variant="outline"
+              loading={syncBusy}
+              onPress={() => {
+                setSyncMessage(null);
+                setSyncBusy(true);
+                void triggerDailySyncJob(MOCK_USER_ID)
+                  .then((r) => {
+                    setSyncMessage(`Sync started (run ${r.runId})`);
+                  })
+                  .catch((e: unknown) => {
+                    setSyncMessage(
+                      e instanceof Error ? e.message : 'Sync request failed',
+                    );
+                  })
+                  .finally(() => setSyncBusy(false));
+              }}
+            />
+            <AuraButton
+              label="Review shadow plan"
+              size="sm"
+              variant="ghost"
+              onPress={() => router.push('/schedule/review' as Href)}
+            />
+          </View>
+          {syncMessage ? (
+            <Text
+              className="text-xs mt-2"
+              style={{ color: Colors.textSecondary }}
+            >
+              {syncMessage}
+            </Text>
+          ) : null}
         </View>
 
         {loading && (

@@ -7,6 +7,11 @@ export const Colors = {
   bgDark: '#0A1118', // Deep ocean — dark mode background
   bgLight: '#F1FAEE', // Cream — light mode background
 
+  // Surfaces (dark mode)
+  surface1: '#111827', // Cards / sheets
+  surface2: '#1F2937', // Skeletons / elevated
+  surface3: '#1B2634', // Muted bars / separators
+
   // Primary accents
   mist: '#A8DADC', // Soft accent, river line, AI task glow
   steel: '#457B9D', // CTA buttons, active nav states, bold accent

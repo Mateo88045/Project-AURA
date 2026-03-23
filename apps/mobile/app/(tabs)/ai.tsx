@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, type Href } from 'expo-router';
 import { Colors } from '@aura/shared/constants/colors';
 import { Layout } from '@aura/shared/constants/layout';
 import { AuraButton } from '../../components/ui/AuraButton';
@@ -37,7 +37,7 @@ export default function AIHubScreen() {
         <View className="mt-6 gap-3">
           <AuraButton
             label="Open chat"
-            onPress={() => router.push('/(tabs)/ai/chat')}
+            onPress={() => router.push('/ai/chat' as Href)}
           />
           <AuraButton
             label={`Explain my workload (${friendlyDate})`}

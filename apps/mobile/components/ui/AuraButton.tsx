@@ -24,13 +24,13 @@ const baseClasses =
   'flex-row items-center justify-center rounded-lg active:opacity-80';
 
 const variantClasses: Record<AuraButtonVariant, string> = {
-  primary: 'bg-[#457B9D]',
-  ghost: 'bg-transparent border border-[#457B9D33]',
-  outline: 'bg-transparent border border-[#457B9D]',
-  destructive: 'bg-[#E76F6F]',
+  primary: '',
+  ghost: '',
+  outline: '',
+  destructive: '',
 };
 
-const labelClasses = 'text-[#F1FAEE] text-sm font-semibold';
+const labelClasses = 'text-sm font-semibold';
 
 export function AuraButton({
   label,
@@ -42,19 +42,55 @@ export function AuraButton({
 }: AuraButtonProps) {
   const isDisabled = disabled || loading;
 
+  const { backgroundColor, borderColor, borderWidth, labelColor } =
+    variant === 'primary'
+      ? {
+          backgroundColor: Colors.steel,
+          borderColor: Colors.transparent,
+          borderWidth: 0,
+          labelColor: Colors.textPrimary,
+        }
+      : variant === 'destructive'
+        ? {
+            backgroundColor: Colors.red,
+            borderColor: Colors.transparent,
+            borderWidth: 0,
+            labelColor: Colors.textPrimary,
+          }
+        : variant === 'outline'
+          ? {
+              backgroundColor: Colors.transparent,
+              borderColor: Colors.steel,
+              borderWidth: 1,
+              labelColor: Colors.textPrimary,
+            }
+          : {
+              backgroundColor: Colors.transparent,
+              borderColor: 'rgba(69, 123, 157, 0.2)',
+              borderWidth: 1,
+              labelColor: Colors.textPrimary,
+            };
+
   return (
     <Pressable
       className={`${baseClasses} ${sizeClasses[size]} ${variantClasses[variant]} ${
         isDisabled ? 'opacity-60' : ''
       }`}
-      style={{ borderRadius: Layout.radiusButton }}
+      style={{
+        borderRadius: Layout.radiusButton,
+        backgroundColor,
+        borderColor,
+        borderWidth,
+      }}
       onPress={onPress}
       disabled={isDisabled}
     >
       {loading ? (
         <ActivityIndicator color={Colors.textPrimary} />
       ) : (
-        <Text className={labelClasses}>{label}</Text>
+        <Text className={labelClasses} style={{ color: labelColor }}>
+          {label}
+        </Text>
       )}
     </Pressable>
   );
