@@ -13,8 +13,15 @@
     "sourceMap": true
   },
   "references": [
-    { "path": "./apps/mobile" },
-    { "path": "./packages/shared" },
-    { "path": "./packages/trigger" }
-  ]
+    {
+      "path": "./apps/mobile"
+    },
+    {
+      "path": "./packages/shared"
+    },
+    {
+      "path": "./packages/trigger"
+    }
+  ],
+  "extends": "expo/tsconfig.base"
 }

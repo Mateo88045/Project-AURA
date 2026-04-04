@@ -3,14 +3,15 @@
   "configurations": [
     {
       "name": "Expo Dev Server",
-      "runtimeExecutable": "pnpm",
-      "runtimeArgs": ["--filter", "@aura/mobile", "start"],
-      "port": 8081
+      "runtimeExecutable": "/bin/zsh",
+      "runtimeArgs": ["-c", "export PATH=/opt/homebrew/bin:$PATH && cd apps/mobile && npx expo start --web --port 8082"],
+      "port": 8082,
+      "autoPort": false
     },
     {
       "name": "Trigger.dev Dev",
-      "runtimeExecutable": "pnpm",
-      "runtimeArgs": ["--filter", "@aura/trigger", "exec", "trigger-dev", "dev"],
+      "runtimeExecutable": "/bin/zsh",
+      "runtimeArgs": ["-c", "export PATH=/opt/homebrew/bin:$PATH && cd packages/trigger && npx trigger dev"],
       "port": 3030
     }
   ]
