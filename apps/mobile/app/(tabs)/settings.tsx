@@ -80,7 +80,7 @@ export default function SettingsScreen() {
       label: 'Daily trigger time',
       value: user?.dailyTriggerTime,
       icon: <Clock color={Colors.textSecondary} size={18} strokeWidth={1.8} />,
-      onPress: () => toast.show('Trigger time editor coming soon.', 'info'),
+      onPress: () => router.push('/settings/guardrails'),
     },
     {
       label: 'Privacy policy',

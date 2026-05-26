@@ -57,13 +57,13 @@
     },
     "extra": {
       "eas": {
-        "projectId": ""
+        "projectId": "REPLACE_WITH_REAL_EAS_PROJECT_ID"
       },
       "supabaseUrl": "https://bvwumzzuvubiacueftbz.supabase.co",
       "supabasePublishableKey": "sb_publishable_if5RMKHlwHLzUu97PaAcbQ_Vgm-rb7u",
-      "supportUrl": "https://example.com/aura/support",
-      "privacyPolicyUrl": "https://example.com/aura/privacy",
-      "termsUrl": "https://example.com/aura/terms"
+      "supportUrl": "REPLACE_WITH_REAL_SUPPORT_URL",
+      "privacyPolicyUrl": "REPLACE_WITH_REAL_PRIVACY_POLICY_URL",
+      "termsUrl": "REPLACE_WITH_REAL_TERMS_URL"
     }
   }
 }

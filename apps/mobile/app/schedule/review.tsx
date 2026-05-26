@@ -53,6 +53,7 @@ export default function ScheduleReview() {
         </View>
         <Pressable
           accessibilityLabel="Close"
+          accessibilityRole="button"
           onPress={() => router.back()}
           style={({ pressed }) => [styles.close, pressed && { opacity: 0.6 }]}
         >

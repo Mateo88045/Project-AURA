@@ -1,5 +1,8 @@
 import { useCallback, useState } from 'react';
 import type { Difficulty, OnboardingAnswers, SubjectStrength } from '@aura/shared/types';
+import { getSupabaseOrNull } from '../lib/supabase';
+import { IS_DEMO_MODE } from '../lib/env';
+import { sanitizeDisplayName } from '../lib/validation';
 import {
   saveNoWorkAfterGuardrail,
   saveOnboardingProfile,
@@ -155,14 +158,33 @@ export function useOnboardingForm() {
         averageHomeworkHours: state.averageHomeworkHours ?? 1.5,
         preferredStudyTime: state.preferredStudyTime ?? 'afternoon',
       };
-      // TODO: Supabase — get current userId from auth session
-      const userId = 'stub-user-id';
-      await saveOnboardingProfile({
-        userId,
-        displayName: state.displayName.trim(),
-        gradeLevel: state.gradeLevel ?? 11,
-        answers,
-      });
+
+      const supabase = getSupabaseOrNull();
+
+      if (!supabase) {
+        // Demo mode: stubs log but don't persist — still navigate forward
+        if (!IS_DEMO_MODE) throw new Error('Supabase is not configured.');
+        await saveOnboardingProfile({ userId: 'demo-user', displayName: state.displayName.trim(), gradeLevel: state.gradeLevel ?? 11, answers });
+        setState((s) => ({ ...s, submitting: false }));
+        return true;
+      }
+
+      const { data: sessionData } = await supabase.auth.getSession();
+      const userId = sessionData.session?.user?.id;
+      if (!userId) throw new Error('No active session — please sign in first.');
+
+      const { error } = await supabase
+        .from('users')
+        .update({
+          display_name: sanitizeDisplayName(state.displayName.trim()),
+          grade_level: state.gradeLevel ?? 11,
+          onboarding_answers: answers,
+          onboarding_step: 100,
+          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        })
+        .eq('id', userId);
+      if (error) throw new Error(error.message);
+
       if (state.noWorkAfterTime) {
         await saveNoWorkAfterGuardrail(userId, state.noWorkAfterTime);
       }

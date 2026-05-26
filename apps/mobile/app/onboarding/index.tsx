@@ -31,8 +31,15 @@ export default function OnboardingWelcomeScreen() {
 
       <View style={styles.footer}>
         <AuraButton
-          label="Get Started"
-          onPress={() => router.push('/onboarding/profile')}
+          label="Connect your school"
+          onPress={() => router.push('/onboarding/connect')}
+          fullWidth
+        />
+        <AuraButton
+          label="I'll connect later"
+          onPress={() => router.push('/onboarding/connect')}
+          variant="ghost"
+          fullWidth
         />
         <Text style={styles.footerNote}>
           Takes about 2 minutes. No card required.
