@@ -10,6 +10,8 @@
     "./constants/typography": "./constants/typography.ts",
     "./constants/layout": "./constants/layout.ts",
     "./prompts/grader": "./prompts/grader.ts",
-    "./prompts/copilot": "./prompts/copilot.ts"
+    "./prompts/copilot": "./prompts/copilot.ts",
+    "./scheduler": "./scheduler.ts",
+    "./supabase": "./supabase.ts"
   }
 }

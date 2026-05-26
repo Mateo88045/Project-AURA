@@ -15,20 +15,50 @@
     },
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.aura.app"
+      "bundleIdentifier": "com.aura.app",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Aura uses the camera to capture photos of your assignments so they can be added to your schedule.",
+        "NSPhotoLibraryUsageDescription": "Aura needs access to your photo library so you can add pictures of assignments.",
+        "NSUserNotificationsUsageDescription": "Aura sends reminders for your scheduled study blocks and daily assignment updates.",
+        "UIBackgroundModes": ["remote-notification"],
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#0A1118"
       },
-      "package": "com.aura.app"
+      "package": "com.aura.app",
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.POST_NOTIFICATIONS",
+        "android.permission.VIBRATE"
+      ]
     },
     "plugins": [
-      "expo-router"
+      "expo-router",
+      "expo-secure-store",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Aura uses the camera to capture photos of your assignments so they can be added to your schedule."
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "color": "#A8DADC"
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "eas": {
+        "projectId": "REPLACE_WITH_EAS_PROJECT_ID"
+      }
     }
   }
 }

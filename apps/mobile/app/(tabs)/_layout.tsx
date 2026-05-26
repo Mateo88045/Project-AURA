@@ -1,25 +1,7 @@
 import { Tabs } from 'expo-router';
-import { View, Text, StyleSheet } from 'react-native';
+import { StyleSheet } from 'react-native';
+import { Home, Calendar, Sparkles, Settings as SettingsIcon } from 'lucide-react-native';
 import { Colors } from '@aura/shared/constants/colors';
-
-/**
- * Tab icon placeholder — will be replaced with proper icons
- * when screens are built.
- */
-function TabIcon({ label, focused }: { label: string; focused: boolean }) {
-  return (
-    <View style={styles.iconContainer}>
-      <Text
-        style={[
-          styles.iconText,
-          { color: focused ? Colors.mist : Colors.textSecondary },
-        ]}
-      >
-        {label.charAt(0)}
-      </Text>
-    </View>
-  );
-}
 
 export default function TabLayout() {
   return (
@@ -27,29 +9,30 @@ export default function TabLayout() {
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: Colors.bgDark,
-          borderTopColor: 'rgba(168, 218, 220, 0.1)',
+          backgroundColor: 'rgba(10,17,24,0.92)',
+          borderTopColor: 'rgba(168,218,220,0.1)',
           borderTopWidth: StyleSheet.hairlineWidth,
+          height: 84,
+          paddingTop: 8,
         },
         tabBarActiveTintColor: Colors.mist,
         tabBarInactiveTintColor: Colors.textSecondary,
+        tabBarLabelStyle: { fontSize: 11, fontWeight: '500', letterSpacing: 0.5 },
       }}
     >
       <Tabs.Screen
         name="index"
         options={{
           title: 'Today',
-          tabBarIcon: ({ focused }) => (
-            <TabIcon label="Today" focused={focused} />
-          ),
+          tabBarIcon: ({ color, size }) => <Home color={color} size={size - 2} strokeWidth={1.8} />,
         }}
       />
       <Tabs.Screen
         name="week"
         options={{
           title: 'Week',
-          tabBarIcon: ({ focused }) => (
-            <TabIcon label="Week" focused={focused} />
+          tabBarIcon: ({ color, size }) => (
+            <Calendar color={color} size={size - 2} strokeWidth={1.8} />
           ),
         }}
       />
@@ -57,8 +40,8 @@ export default function TabLayout() {
         name="ai"
         options={{
           title: 'AI',
-          tabBarIcon: ({ focused }) => (
-            <TabIcon label="AI" focused={focused} />
+          tabBarIcon: ({ color, size }) => (
+            <Sparkles color={color} size={size - 2} strokeWidth={1.8} />
           ),
         }}
       />
@@ -66,24 +49,11 @@ export default function TabLayout() {
         name="settings"
         options={{
           title: 'Settings',
-          tabBarIcon: ({ focused }) => (
-            <TabIcon label="Settings" focused={focused} />
+          tabBarIcon: ({ color, size }) => (
+            <SettingsIcon color={color} size={size - 2} strokeWidth={1.8} />
           ),
         }}
       />
     </Tabs>
   );
 }
-
-const styles = StyleSheet.create({
-  iconContainer: {
-    width: 24,
-    height: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  iconText: {
-    fontSize: 14,
-    fontWeight: '600',
-  },
-});

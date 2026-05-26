@@ -1,16 +1,138 @@
-import { View, Text } from 'react-native';
+import { View, Text, StyleSheet, Pressable, Alert } from 'react-native';
+import { useRouter } from 'expo-router';
+import { ChevronRight, User, Link2, ShieldCheck, Brain, Clock, LogOut } from 'lucide-react-native';
+import { Colors } from '@aura/shared/constants/colors';
+import { ScreenContainer } from '../../components/ui/ScreenContainer';
+import { AuraAvatar } from '../../components/ui/AuraAvatar';
+import { useCurrentUser } from '../../hooks/useCurrentUser';
+import { useToast } from '../../components/ui/AuraToast';
+import { clearSession } from '../../lib/storage';
 
-/**
- * Settings — /(tabs)/settings
- * Status: Placeholder — screen not yet built.
- */
+interface Row {
+  label: string;
+  value?: string;
+  icon: React.ReactNode;
+  onPress: () => void;
+  destructive?: boolean;
+}
+
 export default function SettingsScreen() {
+  const router = useRouter();
+  const { data: user } = useCurrentUser();
+  const toast = useToast();
+
+  const signOut = () => {
+    Alert.alert('Sign out?', 'You\'ll need your school login to come back in.', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Sign out',
+        style: 'destructive',
+        onPress: async () => {
+          await clearSession();
+          toast.show('Signed out.', 'info');
+          router.replace('/onboarding');
+        },
+      },
+    ]);
+  };
+
+  const rows: Row[] = [
+    {
+      label: 'Profile',
+      value: user?.displayName,
+      icon: <User color={Colors.textSecondary} size={18} strokeWidth={1.8} />,
+      onPress: () => router.push('/onboarding/profile'),
+    },
+    {
+      label: 'Connections',
+      icon: <Link2 color={Colors.textSecondary} size={18} strokeWidth={1.8} />,
+      onPress: () => router.push('/settings/connections'),
+    },
+    {
+      label: 'Guardrails',
+      icon: <ShieldCheck color={Colors.textSecondary} size={18} strokeWidth={1.8} />,
+      onPress: () => router.push('/settings/guardrails'),
+    },
+    {
+      label: 'Aura\'s brain',
+      icon: <Brain color={Colors.textSecondary} size={18} strokeWidth={1.8} />,
+      onPress: () => router.push('/settings/brain'),
+    },
+    {
+      label: 'Daily trigger time',
+      value: user?.dailyTriggerTime,
+      icon: <Clock color={Colors.textSecondary} size={18} strokeWidth={1.8} />,
+      onPress: () => toast.show('Trigger time editor coming soon.', 'info'),
+    },
+    {
+      label: 'Sign out',
+      icon: <LogOut color={Colors.red} size={18} strokeWidth={1.8} />,
+      onPress: signOut,
+      destructive: true,
+    },
+  ];
+
   return (
-    <View className="flex-1 bg-[#0A1118] items-center justify-center px-[28px]">
-      <Text className="text-[#F1FAEE] text-lg font-semibold">Settings</Text>
-      <Text className="text-[#8EAFC2] text-sm mt-2">
-        Screen not yet built
-      </Text>
-    </View>
+    <ScreenContainer>
+      <View style={styles.userBlock}>
+        <AuraAvatar name={user?.displayName ?? '—'} size={56} />
+        <View>
+          <Text style={styles.name}>{user?.displayName ?? '—'}</Text>
+          <Text style={styles.meta}>
+            Grade {user?.gradeLevel ?? '—'} · {user?.email ?? '—'}
+          </Text>
+        </View>
+      </View>
+
+      <View style={{ marginTop: 32, gap: 4 }}>
+        {rows.map((r) => (
+          <Pressable
+            key={r.label}
+            onPress={r.onPress}
+            accessibilityRole="button"
+            accessibilityLabel={r.label}
+            style={({ pressed }) => [styles.row, pressed && styles.pressed]}
+          >
+            <View style={styles.rowIcon}>{r.icon}</View>
+            <Text style={[styles.rowLabel, r.destructive && { color: Colors.red }]}>
+              {r.label}
+            </Text>
+            <View style={styles.rowRight}>
+              {r.value ? <Text style={styles.rowValue}>{r.value}</Text> : null}
+              {!r.destructive ? (
+                <ChevronRight color={Colors.textSecondary} size={16} />
+              ) : null}
+            </View>
+          </Pressable>
+        ))}
+      </View>
+    </ScreenContainer>
   );
 }
+
+const styles = StyleSheet.create({
+  userBlock: { flexDirection: 'row', alignItems: 'center', gap: 14 },
+  name: { color: Colors.textPrimary, fontSize: 22, fontWeight: '700', letterSpacing: -0.5 },
+  meta: { color: Colors.textSecondary, fontSize: 12, marginTop: 2 },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+    paddingVertical: 16,
+    paddingHorizontal: 4,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: 'rgba(168,218,220,0.08)',
+  },
+  pressed: { opacity: 0.6 },
+  rowIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(168,218,220,0.06)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  rowLabel: { flex: 1, color: Colors.textPrimary, fontSize: 15, fontWeight: '500' },
+  rowRight: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  rowValue: { color: Colors.textSecondary, fontSize: 13 },
+});
