@@ -1,10 +1,18 @@
 import type { CopilotAction } from '@aura/shared/types';
+import { IS_DEMO_MODE } from '../lib/env';
+
+function devLog(label: string, payload: unknown) {
+  if (__DEV__ || IS_DEMO_MODE) {
+    // eslint-disable-next-line no-console
+    console.log(`[STUB] ${label}`, payload);
+  }
+}
 
 export async function triggerDailySync(userId: string): Promise<void> {
   // TODO: Trigger.dev — fire job 'daily-assignment-trigger' with payload { userId }
   // Steps: fetch Google Classroom + Canvas → normalize → grade (Gemini Flash) →
   // run scheduler → write shadow blocks → push notify user to review.
-  console.log('[STUB] triggerDailySync', { userId });
+  devLog('triggerDailySync', { userId });
 }
 
 export async function triggerPhotoIngest(
@@ -14,7 +22,7 @@ export async function triggerPhotoIngest(
   // TODO: Trigger.dev / Supabase Edge Function — invoke 'photo-ingest' with
   // { userId, photoBase64 }. Pipeline B: Gemini Flash Vision → OcrExtraction →
   // user confirm → enter Pipeline A at grading step.
-  console.log('[STUB] triggerPhotoIngest', { userId, bytes: photoBase64.length });
+  devLog('triggerPhotoIngest', { userId, bytes: photoBase64.length });
 }
 
 export async function triggerCopilotAction(
@@ -24,7 +32,7 @@ export async function triggerCopilotAction(
   // TODO: Supabase Edge Function — invoke 'copilot' with { userId, message }.
   // Pipeline C: assemble context payload → Claude Sonnet → parse JSON action +
   // NL confirmation. Caller must confirm before action is applied to DB.
-  console.log('[STUB] triggerCopilotAction', { userId, message });
+  devLog('triggerCopilotAction', { userId, message });
   return {
     type: 'reschedule',
     payload: {},
@@ -36,7 +44,7 @@ export async function triggerCopilotAction(
 export async function approveShadowSchedule(userId: string, day: string): Promise<void> {
   // TODO: Supabase — update scheduled_blocks set status='approved'
   // where user_id = userId and day = day and status = 'shadow'.
-  console.log('[STUB] approveShadowSchedule', { userId, day });
+  devLog('approveShadowSchedule', { userId, day });
 }
 
 export async function completeTask(
@@ -46,5 +54,5 @@ export async function completeTask(
 ): Promise<void> {
   // TODO: Supabase — insert into task_completions { task_id, actual_minutes,
   // user_feedback }; update tasks set status='completed'.
-  console.log('[STUB] completeTask', { taskId, actualMinutes, feedback });
+  devLog('completeTask', { taskId, actualMinutes, feedback });
 }

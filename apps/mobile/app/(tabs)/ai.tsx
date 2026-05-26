@@ -25,7 +25,7 @@ export default function AiHubScreen() {
       title: 'Snap an assignment',
       body: 'Photograph a worksheet or handout. Aura reads it and schedules it.',
       icon: <Camera color={Colors.mist} size={22} strokeWidth={1.8} />,
-      onPress: () => router.push('/ai/chat?mode=photo'),
+      onPress: () => router.push('/photo/capture'),
     },
     {
       title: 'Sunday briefing',

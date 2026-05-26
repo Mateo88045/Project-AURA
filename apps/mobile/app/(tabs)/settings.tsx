@@ -1,12 +1,13 @@
-import { View, Text, StyleSheet, Pressable, Alert } from 'react-native';
+import { View, Text, StyleSheet, Pressable, Alert, Linking } from 'react-native';
 import { useRouter } from 'expo-router';
-import { ChevronRight, User, Link2, ShieldCheck, Brain, Clock, LogOut } from 'lucide-react-native';
+import { ChevronRight, User, Link2, ShieldCheck, Brain, Clock, LogOut, FileText, LifeBuoy } from 'lucide-react-native';
 import { Colors } from '@aura/shared/constants/colors';
 import { ScreenContainer } from '../../components/ui/ScreenContainer';
 import { AuraAvatar } from '../../components/ui/AuraAvatar';
 import { useCurrentUser } from '../../hooks/useCurrentUser';
 import { useToast } from '../../components/ui/AuraToast';
 import { clearSession } from '../../lib/storage';
+import { PRIVACY_POLICY_URL, SUPPORT_URL, TERMS_URL } from '../../lib/env';
 
 interface Row {
   label: string;
@@ -14,6 +15,23 @@ interface Row {
   icon: React.ReactNode;
   onPress: () => void;
   destructive?: boolean;
+}
+
+async function openExternal(url: string, toast: { show: (msg: string, variant?: 'info' | 'error' | 'success') => void }) {
+  if (!url) {
+    toast.show('Link not configured yet.', 'info');
+    return;
+  }
+  try {
+    const supported = await Linking.canOpenURL(url);
+    if (!supported) {
+      toast.show('Can\'t open that link.', 'error');
+      return;
+    }
+    await Linking.openURL(url);
+  } catch {
+    toast.show('Can\'t open that link.', 'error');
+  }
 }
 
 export default function SettingsScreen() {
@@ -63,6 +81,21 @@ export default function SettingsScreen() {
       value: user?.dailyTriggerTime,
       icon: <Clock color={Colors.textSecondary} size={18} strokeWidth={1.8} />,
       onPress: () => toast.show('Trigger time editor coming soon.', 'info'),
+    },
+    {
+      label: 'Privacy policy',
+      icon: <ShieldCheck color={Colors.textSecondary} size={18} strokeWidth={1.8} />,
+      onPress: () => openExternal(PRIVACY_POLICY_URL, toast),
+    },
+    {
+      label: 'Terms of service',
+      icon: <FileText color={Colors.textSecondary} size={18} strokeWidth={1.8} />,
+      onPress: () => openExternal(TERMS_URL, toast),
+    },
+    {
+      label: 'Contact support',
+      icon: <LifeBuoy color={Colors.textSecondary} size={18} strokeWidth={1.8} />,
+      onPress: () => openExternal(SUPPORT_URL, toast),
     },
     {
       label: 'Sign out',

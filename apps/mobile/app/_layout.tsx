@@ -7,6 +7,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { View } from 'react-native';
 import { Colors } from '@aura/shared/constants/colors';
 import { ToastProvider } from '../components/ui/AuraToast';
+import { DemoModeBanner } from '../components/ui/DemoModeBanner';
 import { getAuthToken } from '../lib/storage';
 import { registerPushToken, subscribeToNotifications } from '../services/notifications';
 
@@ -17,6 +18,7 @@ export default function RootLayout() {
         <ToastProvider>
           <StatusBar style="light" />
           <AuthAndNotifications />
+          <DemoModeBanner />
           <Stack
             screenOptions={{
               headerShown: false,
@@ -31,6 +33,10 @@ export default function RootLayout() {
               options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
             />
             <Stack.Screen name="ai/chat" options={{ animation: 'slide_from_right' }} />
+            <Stack.Screen
+              name="photo/capture"
+              options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
+            />
             <Stack.Screen name="tasks/[id]" options={{ animation: 'slide_from_right' }} />
             <Stack.Screen name="briefing" options={{ animation: 'slide_from_bottom' }} />
             <Stack.Screen name="settings/connections" />
