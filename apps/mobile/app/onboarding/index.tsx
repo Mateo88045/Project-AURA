@@ -1,63 +1,112 @@
-import { View, Text, StyleSheet } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Colors } from '@aura/shared/constants/colors';
-import { ScreenContainer } from '../../components/ui/ScreenContainer';
 import { AuraButton } from '../../components/ui/AuraButton';
+import AmbientOrbs from '../../components/onboarding/AmbientOrbs';
 
-export default function OnboardingWelcome() {
+export default function OnboardingWelcomeScreen() {
   const router = useRouter();
+
   return (
-    <ScreenContainer scroll={false}>
-      <View style={{ flex: 1, justifyContent: 'flex-end' }}>
-        <Text style={styles.eyebrow}>AURA</Text>
-        <Text style={styles.title}>
-          <Text style={{ fontWeight: '300' }}>The calendar that</Text>{'\n'}
-          <Text style={{ fontWeight: '700' }}>manages you.</Text>
-        </Text>
-        <Text style={styles.body}>
-          Aura connects to your classes, reads your assignments, and lays them
-          across your free time so you never have to plan a study session again.
+    <SafeAreaView style={styles.root}>
+      <AmbientOrbs />
+
+      <View style={styles.content}>
+        <View style={styles.wordmark}>
+          <Text style={styles.wordmarkText}>aura</Text>
+          <View style={styles.glowDot} />
+        </View>
+
+        <View style={styles.heroText}>
+          <Text style={styles.taglineThin}>Your schedule,</Text>
+          <Text style={styles.taglineBold}>handled.</Text>
+        </View>
+
+        <Text style={styles.subCopy}>
+          Aura connects to your classes, grades your workload, and builds a
+          real study plan around your actual life.
         </Text>
       </View>
-      <View style={{ gap: 12, paddingBottom: 12 }}>
+
+      <View style={styles.footer}>
         <AuraButton
-          label="Connect your school"
-          onPress={() => router.push('/onboarding/connect')}
-          variant="primary"
-          size="lg"
-          fullWidth
-        />
-        <AuraButton
-          label="I'll connect later"
+          label="Get Started"
           onPress={() => router.push('/onboarding/profile')}
-          variant="ghost"
-          fullWidth
         />
+        <Text style={styles.footerNote}>
+          Takes about 2 minutes. No card required.
+        </Text>
       </View>
-    </ScreenContainer>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  eyebrow: {
-    color: Colors.mist,
-    fontSize: 12,
-    letterSpacing: 4,
-    fontWeight: '600',
-    marginBottom: 16,
+  root: {
+    flex: 1,
+    backgroundColor: Colors.bgDark,
+    paddingHorizontal: 28,
   },
-  title: {
+  content: {
+    flex: 1,
+    justifyContent: 'center',
+    gap: 24,
+  },
+  wordmark: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  wordmarkText: {
     color: Colors.textPrimary,
-    fontSize: 36,
-    lineHeight: 42,
-    letterSpacing: -1.2,
-    marginBottom: 16,
+    fontSize: 22,
+    fontWeight: '300',
+    letterSpacing: 6,
   },
-  body: {
+  glowDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: Colors.mist,
+    shadowColor: Colors.mist,
+    shadowRadius: 6,
+    shadowOpacity: 0.9,
+    shadowOffset: { width: 0, height: 0 },
+  },
+  heroText: {
+    gap: 0,
+  },
+  taglineThin: {
+    color: Colors.textSecondary,
+    fontSize: 44,
+    fontWeight: '300',
+    letterSpacing: -1.2,
+    lineHeight: 52,
+  },
+  taglineBold: {
+    color: Colors.textPrimary,
+    fontSize: 44,
+    fontWeight: '700',
+    letterSpacing: -1.2,
+    lineHeight: 52,
+  },
+  subCopy: {
     color: Colors.textSecondary,
     fontSize: 15,
-    lineHeight: 22,
-    marginBottom: 32,
+    fontWeight: '400',
+    lineHeight: 23,
     maxWidth: 320,
+  },
+  footer: {
+    paddingBottom: 16,
+    gap: 14,
+  },
+  footerNote: {
+    color: Colors.textSecondary,
+    fontSize: 13,
+    fontWeight: '400',
+    textAlign: 'center',
+    opacity: 0.7,
   },
 });
