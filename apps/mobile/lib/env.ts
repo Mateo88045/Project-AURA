@@ -1,23 +1,21 @@
 import Constants from 'expo-constants';
+import { IS_SUPABASE_CONFIGURED } from './supabase';
 
 /**
- * True while the app is running against mock data instead of a real Supabase
- * backend. We use this to:
+ * True when the app is running against mock data instead of the real Supabase
+ * backend. Flips automatically based on whether the Supabase URL + publishable
+ * key are configured in `app.json` extras (or env). Used to:
  *   - render a visible "Demo mode" banner so users aren't misled
  *   - allow a fake-auth bootstrap in onboarding without confusing the UI
- *   - prevent shipping a production build with mock data accidentally
- *
- * Wire this to a real signal (e.g. `Constants.expoConfig?.extra?.supabaseUrl`)
- * once Dev B lands the Supabase client.
+ *   - prevent shipping a production build accidentally pointed at nothing
  */
-export const IS_DEMO_MODE: boolean =
-  process.env.EXPO_PUBLIC_AURA_MODE !== 'production';
+export const IS_DEMO_MODE: boolean = !IS_SUPABASE_CONFIGURED;
 
 /**
- * True only for App Store / production channel builds.
+ * True only for App Store / production channel builds with a real EAS project.
  */
 export const IS_PRODUCTION_BUILD: boolean =
-  Constants.expoConfig?.extra?.eas?.projectId !== '' &&
+  (Constants.expoConfig?.extra?.eas?.projectId ?? '') !== '' &&
   process.env.EXPO_PUBLIC_AURA_MODE === 'production';
 
 export const SUPPORT_URL: string =

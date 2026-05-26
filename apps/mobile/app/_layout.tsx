@@ -9,6 +9,8 @@ import { Colors } from '@aura/shared/constants/colors';
 import { ToastProvider } from '../components/ui/AuraToast';
 import { DemoModeBanner } from '../components/ui/DemoModeBanner';
 import { getAuthToken } from '../lib/storage';
+import { getSupabaseOrNull } from '../lib/supabase';
+import { IS_DEMO_MODE } from '../lib/env';
 import { registerPushToken, subscribeToNotifications } from '../services/notifications';
 
 export default function RootLayout() {
@@ -56,18 +58,39 @@ function AuthAndNotifications() {
 
   useEffect(() => {
     let mounted = true;
-    (async () => {
-      const token = await getAuthToken();
-      if (!mounted) return;
+    const supabase = getSupabaseOrNull();
+
+    async function checkAndRoute() {
       const inOnboarding = segments[0] === 'onboarding';
-      if (!token && !inOnboarding) router.replace('/onboarding');
+      let signedIn = false;
+      if (supabase) {
+        const { data } = await supabase.auth.getSession();
+        signedIn = !!data.session;
+      } else if (IS_DEMO_MODE) {
+        signedIn = !!(await getAuthToken());
+      }
+      if (!mounted) return;
+      if (!signedIn && !inOnboarding) router.replace('/onboarding');
       setBootstrapped(true);
-    })();
-    return () => {
+    }
+
+    void checkAndRoute();
+
+    if (!supabase) return () => {
       mounted = false;
     };
-    // Intentionally run once — auth guard for cold boot only.
-    // Sign-in / sign-out flows route explicitly.
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event: string) => {
+      if (!mounted) return;
+      if (event === 'SIGNED_OUT') router.replace('/onboarding');
+    });
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
+    // Intentionally run once on mount; auth state listener handles updates.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

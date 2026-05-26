@@ -6,8 +6,10 @@ import { ScreenContainer } from '../../components/ui/ScreenContainer';
 import { AuraButton } from '../../components/ui/AuraButton';
 import { useToast } from '../../components/ui/AuraToast';
 import { sanitizeDisplayName } from '../../lib/validation';
-import { setAuthToken, setUserId } from '../../lib/storage';
+import { getSupabaseOrNull } from '../../lib/supabase';
 import { IS_DEMO_MODE } from '../../lib/env';
+import { setAuthToken, setUserId } from '../../lib/storage';
+import { useAuth } from '../../hooks/useAuth';
 
 const GRADES = [9, 10, 11, 12];
 const STUDY_TIMES = ['morning', 'afternoon', 'evening'] as const;
@@ -16,6 +18,7 @@ type StudyTime = (typeof STUDY_TIMES)[number];
 export default function OnboardingProfile() {
   const router = useRouter();
   const toast = useToast();
+  const { userId } = useAuth();
   const [displayName, setDisplayName] = useState('');
   const [grade, setGrade] = useState<number | null>(null);
   const [studyTime, setStudyTime] = useState<StudyTime | null>(null);
@@ -33,21 +36,50 @@ export default function OnboardingProfile() {
     if (!valid) return;
     setSubmitting(true);
     try {
-      // TODO: Supabase — upsert users { display_name, grade_level,
-      // onboarding_answers, timezone, daily_trigger_time }. Returns auth token
-      // we store in SecureStore.
-      if (!IS_DEMO_MODE) {
-        // Fails closed: a production build should never reach onboarding
-        // without a real Supabase signup wired in. If you see this in prod,
-        // Dev B's signup call is missing.
-        toast.show('Signup isn\'t available yet. Try again later.', 'error');
+      const supabase = getSupabaseOrNull();
+      if (!supabase) {
+        if (!IS_DEMO_MODE) {
+          toast.show("Signup isn't available — try again later.", 'error');
+          return;
+        }
+        // Pure demo mode (no Supabase configured) — keep a marker so the
+        // auth guard lets us into the tabs.
+        await setAuthToken(`demo:${Date.now()}`);
+        await setUserId('demo-user');
+        toast.show(`Welcome, ${sanitizeDisplayName(displayName)}.`, 'success');
+        router.replace('/(tabs)');
         return;
       }
-      const demoToken = `demo:${Date.now()}`;
-      await setAuthToken(demoToken);
-      await setUserId('demo-user');
+      if (!userId) {
+        toast.show('Sign in first, then complete your profile.', 'error');
+        router.replace('/onboarding/connect');
+        return;
+      }
+      const { error } = await supabase
+        .from('users')
+        .update({
+          display_name: sanitizeDisplayName(displayName),
+          grade_level: grade,
+          onboarding_answers: {
+            subjects: [],
+            extracurriculars: [],
+            averageHomeworkHours: Number(homeworkHours),
+            preferredStudyTime: studyTime,
+          },
+          onboarding_step: 100,
+          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        })
+        .eq('id', userId);
+      if (error) throw error;
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (sessionData.session) {
+        await setAuthToken(sessionData.session.access_token);
+        await setUserId(userId);
+      }
       toast.show(`Welcome, ${sanitizeDisplayName(displayName)}.`, 'success');
       router.replace('/(tabs)');
+    } catch (e) {
+      toast.show((e as Error).message || 'Could not save profile.', 'error');
     } finally {
       setSubmitting(false);
     }
@@ -102,7 +134,11 @@ export default function OnboardingProfile() {
                 style={[styles.chip, studyTime === t && styles.chipActive]}
               >
                 <Text
-                  style={[styles.chipText, studyTime === t && styles.chipTextActive, { textTransform: 'capitalize' }]}
+                  style={[
+                    styles.chipText,
+                    studyTime === t && styles.chipTextActive,
+                    { textTransform: 'capitalize' },
+                  ]}
                 >
                   {t}
                 </Text>

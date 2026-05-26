@@ -59,6 +59,8 @@
       "eas": {
         "projectId": ""
       },
+      "supabaseUrl": "https://bvwumzzuvubiacueftbz.supabase.co",
+      "supabasePublishableKey": "sb_publishable_if5RMKHlwHLzUu97PaAcbQ_Vgm-rb7u",
       "supportUrl": "https://example.com/aura/support",
       "privacyPolicyUrl": "https://example.com/aura/privacy",
       "termsUrl": "https://example.com/aura/terms"

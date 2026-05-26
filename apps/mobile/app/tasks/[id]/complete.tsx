@@ -8,6 +8,7 @@ import { AuraButton } from '../../../components/ui/AuraButton';
 import { useToast } from '../../../components/ui/AuraToast';
 import { useTask } from '../../../hooks/useTasks';
 import { completeTask } from '../../../services/jobs';
+import { useAuth } from '../../../hooks/useAuth';
 import type { UserFeedback } from '@aura/shared/types';
 
 const FEEDBACK_LABELS: Record<UserFeedback, string> = {
@@ -21,6 +22,7 @@ export default function CompleteTask() {
   const router = useRouter();
   const toast = useToast();
   const { data: task } = useTask(id ?? null);
+  const { userId } = useAuth();
   const [actual, setActual] = useState('');
   const [feedback, setFeedback] = useState<UserFeedback | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -28,12 +30,14 @@ export default function CompleteTask() {
   const valid = Number(actual) > 0 && feedback !== null;
 
   const submit = async () => {
-    if (!valid || !task) return;
+    if (!valid || !task || !userId) return;
     setSubmitting(true);
     try {
-      await completeTask(task.id, Number(actual), feedback!);
+      await completeTask(task.id, userId, task.estimatedMinutes, Number(actual), feedback!);
       toast.show('Nice work.', 'success');
       router.dismissAll();
+    } catch (e) {
+      toast.show((e as Error).message || "Couldn't save that.", 'error');
     } finally {
       setSubmitting(false);
     }

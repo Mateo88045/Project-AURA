@@ -1,5 +1,6 @@
-import { useEffect, useState, useCallback } from 'react';
-import type { ScheduledBlock, BlockStatus } from '@aura/shared/types';
+import { useEffect, useState, useCallback, useMemo } from 'react';
+import type { ScheduledBlock, BlockStatus, Task } from '@aura/shared/types';
+import { getSupabaseOrNull } from '../lib/supabase';
 import { MOCK_TASKS } from './_mockData';
 
 interface Result {
@@ -14,25 +15,128 @@ export function useScheduledBlocks(
   day: string,
   statuses: BlockStatus[] = ['approved', 'shadow'],
 ): Result {
-  // TODO: Supabase — select scheduled_blocks.*, tasks.* from scheduled_blocks
-  // left join tasks on scheduled_blocks.task_id = tasks.id
-  // where user_id = userId and day = day and status = any(statuses)
-  // order by start_time asc.
+  const supabase = getSupabaseOrNull();
   const [data, setData] = useState<ScheduledBlock[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+  const statusKey = useMemo(() => statuses.join(','), [statuses]);
 
-  const load = useCallback(() => {
-    setLoading(true);
-    const t = setTimeout(() => {
-      setData(buildMockBlocks(userId ?? 'mock-user', day, statuses));
+  const load = useCallback(async () => {
+    if (!supabase) {
+      setData(buildMockBlocks(userId ?? 'demo-user', day, statuses));
       setLoading(false);
-    }, 300);
-    return () => clearTimeout(t);
-  }, [userId, day, statuses.join(',')]);
+      return;
+    }
+    if (!userId) {
+      setData([]);
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    const { data: rows, error: err } = await supabase
+      .from('scheduled_blocks')
+      .select('*, task:tasks(*)')
+      .eq('user_id', userId)
+      .eq('day', day)
+      .in('status', statuses)
+      .order('start_time', { ascending: true })
+      .returns<BlockRow[]>();
+    if (err) setError(new Error(err.message));
+    setData((rows ?? []).map(rowToBlock));
+    setLoading(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [supabase, userId, day, statusKey]);
 
-  useEffect(load, [load]);
+  useEffect(() => {
+    void load();
+  }, [load]);
 
-  return { data, loading, error: null, refetch: load };
+  useEffect(() => {
+    if (!supabase || !userId) return;
+    const channel = supabase
+      .channel(`scheduled_blocks:${userId}:${day}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'scheduled_blocks',
+          filter: `user_id=eq.${userId}`,
+        },
+        () => {
+          void load();
+        },
+      )
+      .subscribe();
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  }, [supabase, userId, day, load]);
+
+  return { data, loading, error, refetch: load };
+}
+
+interface BlockRow {
+  id: string;
+  user_id: string;
+  task_id: string | null;
+  start_time: string;
+  end_time: string;
+  status: string;
+  day: string;
+  created_at: string;
+  task: TaskRow | null;
+}
+
+interface TaskRow {
+  id: string;
+  user_id: string;
+  title: string;
+  subject: string;
+  source: string;
+  external_id: string | null;
+  due_date: string;
+  difficulty: number;
+  estimated_minutes: number;
+  task_type: string;
+  status: string;
+  description: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+function rowToBlock(row: BlockRow): ScheduledBlock {
+  return {
+    id: row.id,
+    userId: row.user_id,
+    taskId: row.task_id ?? undefined,
+    task: row.task ? rowToTask(row.task) : undefined,
+    startTime: row.start_time,
+    endTime: row.end_time,
+    status: row.status as BlockStatus,
+    day: row.day,
+    createdAt: row.created_at,
+  };
+}
+
+export function rowToTask(row: TaskRow): Task {
+  return {
+    id: row.id,
+    userId: row.user_id,
+    title: row.title,
+    subject: row.subject,
+    source: row.source as Task['source'],
+    externalId: row.external_id ?? undefined,
+    dueDate: row.due_date,
+    difficulty: row.difficulty as Task['difficulty'],
+    estimatedMinutes: row.estimated_minutes,
+    taskType: row.task_type as Task['taskType'],
+    status: row.status as Task['status'],
+    description: row.description ?? undefined,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
 }
 
 function buildMockBlocks(
@@ -40,7 +144,8 @@ function buildMockBlocks(
   day: string,
   statuses: BlockStatus[],
 ): ScheduledBlock[] {
-  const at = (h: number, m: number) => `${day}T${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:00`;
+  const at = (h: number, m: number) =>
+    `${day}T${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:00`;
   const blocks: ScheduledBlock[] = [
     {
       id: 'b1',

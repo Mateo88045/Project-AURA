@@ -1,34 +1,73 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import type { Connection } from '@aura/shared/types';
+import { getSupabaseOrNull } from '../lib/supabase';
 
 interface Result {
   data: Connection[];
   loading: boolean;
   error: Error | null;
+  refetch: () => void;
 }
 
 export function useConnections(userId: string | null): Result {
-  // TODO: Supabase — select id, user_id, platform, status, last_synced_at, created_at
-  // from connections where user_id = userId.
-  // NEVER select oauth_token / refresh_token / canvas_api_token on the client.
+  const supabase = getSupabaseOrNull();
   const [data, setData] = useState<Connection[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
 
-  useEffect(() => {
-    const t = setTimeout(() => {
+  const load = useCallback(async () => {
+    if (!supabase) {
       setData(MOCK_CONNECTIONS);
       setLoading(false);
-    }, 200);
-    return () => clearTimeout(t);
-  }, [userId]);
+      return;
+    }
+    if (!userId) {
+      setData([]);
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    // Important: never select the token columns on the client. They are
+    // server-only and the encrypted variants stay in the DB.
+    const { data: rows, error: err } = await supabase
+      .from('connections')
+      .select('id, user_id, platform, status, last_synced_at, created_at')
+      .eq('user_id', userId);
+    if (err) setError(new Error(err.message));
+    type Row = {
+      id: string;
+      user_id: string;
+      platform: string;
+      status: string;
+      last_synced_at: string | null;
+      created_at: string;
+    };
+    setData(
+      (rows ?? []).map((r: Row) => ({
+        id: r.id,
+        userId: r.user_id,
+        platform: r.platform as Connection['platform'],
+        oauthToken: '',
+        refreshToken: '',
+        status: r.status as Connection['status'],
+        lastSyncedAt: r.last_synced_at ?? r.created_at,
+        createdAt: r.created_at,
+      })),
+    );
+    setLoading(false);
+  }, [supabase, userId]);
 
-  return { data, loading, error: null };
+  useEffect(() => {
+    void load();
+  }, [load]);
+
+  return { data, loading, error, refetch: load };
 }
 
 const MOCK_CONNECTIONS: Connection[] = [
   {
     id: 'c1',
-    userId: 'mock-user',
+    userId: 'demo-user',
     platform: 'google_classroom',
     oauthToken: '',
     refreshToken: '',

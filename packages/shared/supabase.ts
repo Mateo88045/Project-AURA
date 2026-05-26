@@ -1,10 +1,42 @@
 // /packages/shared/supabase.ts
-// STUB — Backend (Dev B) owns this file.
-// DO NOT implement Supabase client or queries here in Dev A sessions.
+// Real Supabase client factory. The mobile app imports the singleton from
+// `apps/mobile/lib/supabase.ts` because the AsyncStorage adapter is a native
+// dep that only exists in the mobile workspace. This file exports the types
+// and the factory.
 
-// TODO: Supabase — Initialize Supabase client with:
-//   - SUPABASE_URL from environment
-//   - SUPABASE_ANON_KEY from environment
-//   - Auth session persistence for React Native (AsyncStorage adapter)
+import { createClient, SupabaseClient, SupportedStorage } from '@supabase/supabase-js';
+import type { Database } from './supabase/database.types';
 
-export const supabase = null; // Placeholder — replaced by Dev B
+export type { Database, Json } from './supabase/database.types';
+export type AuraSupabase = SupabaseClient<Database>;
+
+export interface CreateClientOptions {
+  url: string;
+  publishableKey: string;
+  storage: SupportedStorage;
+}
+
+export function createAuraClient({
+  url,
+  publishableKey,
+  storage,
+}: CreateClientOptions): AuraSupabase {
+  if (!url || !publishableKey) {
+    throw new Error(
+      '[supabase] Missing SUPABASE_URL or SUPABASE_PUBLISHABLE_KEY — check app.json extras / env.',
+    );
+  }
+  return createClient<Database>(url, publishableKey, {
+    auth: {
+      storage,
+      autoRefreshToken: true,
+      persistSession: true,
+      detectSessionInUrl: false, // RN does not handle URL session detection
+      flowType: 'pkce',
+    },
+    db: { schema: 'public' },
+    global: {
+      headers: { 'x-application-name': 'aura-mobile' },
+    },
+  });
+}

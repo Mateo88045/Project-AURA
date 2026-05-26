@@ -13,5 +13,8 @@
     "./prompts/copilot": "./prompts/copilot.ts",
     "./scheduler": "./scheduler.ts",
     "./supabase": "./supabase.ts"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.106.2"
   }
 }

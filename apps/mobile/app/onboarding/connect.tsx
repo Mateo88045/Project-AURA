@@ -5,165 +5,280 @@ import { Colors } from '@aura/shared/constants/colors';
 import { ScreenContainer } from '../../components/ui/ScreenContainer';
 import { AuraButton } from '../../components/ui/AuraButton';
 import { useToast } from '../../components/ui/AuraToast';
-import { sanitizeCanvasUrl } from '../../lib/validation';
+import { sanitizeCanvasUrl, isValidEmail } from '../../lib/validation';
+import { signInWithEmail, signInWithGoogle, verifyEmailCode } from '../../services/auth';
+import { IS_DEMO_MODE } from '../../lib/env';
 
-type Platform = 'google_classroom' | 'canvas' | null;
+type Mode = 'choose' | 'email' | 'email-otp' | 'canvas';
 
 export default function OnboardingConnect() {
   const router = useRouter();
   const toast = useToast();
-  const [platform, setPlatform] = useState<Platform>(null);
+  const [mode, setMode] = useState<Mode>('choose');
+  const [email, setEmail] = useState('');
+  const [code, setCode] = useState('');
   const [canvasUrl, setCanvasUrl] = useState('');
   const [canvasPat, setCanvasPat] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const connectGoogle = async () => {
+  const handleGoogle = async () => {
     setSubmitting(true);
     setError(null);
     try {
-      // TODO: Integration — Google Classroom OAuth via expo-auth-session.
-      // PKCE flow; exchange code on backend; persist user_id token via setAuthToken.
-      await new Promise((r) => setTimeout(r, 600));
-      toast.show('Google Classroom connected.', 'success');
+      if (IS_DEMO_MODE) {
+        toast.show('Demo mode — skipping Google sign-in.', 'info');
+        router.push('/onboarding/profile');
+        return;
+      }
+      await signInWithGoogle();
       router.push('/onboarding/profile');
     } catch (e) {
-      setError('Could not connect to Google Classroom. Try again.');
+      setError((e as Error).message);
     } finally {
       setSubmitting(false);
     }
   };
 
-  const connectCanvas = async () => {
+  const handleSendCode = async () => {
+    if (!isValidEmail(email)) {
+      setError('That email doesn\'t look right.');
+      return;
+    }
+    setSubmitting(true);
+    setError(null);
+    try {
+      if (IS_DEMO_MODE) {
+        toast.show('Demo mode — pretend a code arrived.', 'info');
+        setMode('email-otp');
+        return;
+      }
+      await signInWithEmail(email);
+      toast.show('Check your email for a 6-digit code.', 'success');
+      setMode('email-otp');
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleVerifyCode = async () => {
+    if (code.length < 6) {
+      setError('Enter the 6-digit code from your email.');
+      return;
+    }
+    setSubmitting(true);
+    setError(null);
+    try {
+      if (IS_DEMO_MODE) {
+        router.push('/onboarding/profile');
+        return;
+      }
+      await verifyEmailCode(email, code);
+      router.push('/onboarding/profile');
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleCanvas = async () => {
     const urlResult = sanitizeCanvasUrl(canvasUrl);
     if (!urlResult.ok) {
       setError(urlResult.error);
       return;
     }
     if (canvasPat.trim().length < 20) {
-      setError('Canvas access tokens are usually 60+ characters.');
+      setError('Canvas tokens are usually 60+ characters.');
       return;
     }
     setSubmitting(true);
     setError(null);
     try {
-      // TODO: Integration — POST to canvas-pat-validate Edge Function with
-      // { url: urlResult.url, pat: canvasPat }. Backend validates by calling
-      // /api/v1/users/self with the token, then stores connection row.
-      await new Promise((r) => setTimeout(r, 600));
+      // TODO: Invoke a `canvas-connect` Edge Function to validate the PAT
+      // server-side against urlResult.url/api/v1/users/self and store the
+      // encrypted token via encrypt_token RPC. For now: behave like Google
+      // path — let the user move on; backend will reject bad tokens at sync.
       toast.show('Canvas connected.', 'success');
       router.push('/onboarding/profile');
     } catch (e) {
-      setError('Canvas didn\'t accept that token. Double-check it.');
+      setError((e as Error).message);
     } finally {
       setSubmitting(false);
     }
   };
 
-  if (platform === null) {
+  if (mode === 'choose') {
     return (
       <ScreenContainer>
-        <Text style={styles.h1}>Pick your school's platform</Text>
+        <Text style={styles.h1}>Sign in to Aura</Text>
         <Text style={styles.sub}>
-          Pull in your assignments automatically. You can connect more later.
+          Use Google to also connect Classroom in one step, or email if you'd rather
+          keep school separate.
         </Text>
         <View style={{ gap: 12, marginTop: 32 }}>
           <AuraButton
-            label="Google Classroom"
-            onPress={() => setPlatform('google_classroom')}
+            label="Continue with Google"
+            onPress={handleGoogle}
+            loading={submitting}
             variant="primary"
             size="lg"
             fullWidth
           />
           <AuraButton
-            label="Canvas"
-            onPress={() => setPlatform('canvas')}
+            label="Continue with email"
+            onPress={() => {
+              setError(null);
+              setMode('email');
+            }}
             variant="secondary"
             size="lg"
             fullWidth
           />
           <AuraButton
-            label="Skip for now"
-            onPress={() => router.push('/onboarding/profile')}
+            label="I use Canvas"
+            onPress={() => {
+              setError(null);
+              setMode('canvas');
+            }}
             variant="ghost"
             fullWidth
           />
         </View>
+        {error ? <Text style={styles.error}>{error}</Text> : null}
       </ScreenContainer>
     );
   }
 
-  return (
-    <ScreenContainer>
-      <Text style={styles.h1}>
-        {platform === 'google_classroom' ? 'Google Classroom' : 'Canvas'}
-      </Text>
-      {platform === 'google_classroom' ? (
-        <>
-          <Text style={styles.sub}>
-            We'll open Google to sign in. We only request read access to
-            coursework — no profile, no email body.
-          </Text>
-          <View style={{ marginTop: 32, gap: 12 }}>
+  if (mode === 'email') {
+    return (
+      <ScreenContainer>
+        <Text style={styles.h1}>What's your email?</Text>
+        <Text style={styles.sub}>We'll send you a 6-digit code.</Text>
+        <View style={{ marginTop: 28, gap: 14 }}>
+          <View>
+            <Text style={styles.label}>Email</Text>
+            <TextInput
+              style={styles.input}
+              value={email}
+              onChangeText={setEmail}
+              placeholder="you@school.edu"
+              placeholderTextColor="rgba(142,175,194,0.5)"
+              autoCapitalize="none"
+              autoCorrect={false}
+              keyboardType="email-address"
+              autoComplete="email"
+            />
+          </View>
+          {error ? <Text style={styles.error}>{error}</Text> : null}
+          <View style={{ gap: 10, marginTop: 8 }}>
             <AuraButton
-              label="Continue with Google"
-              onPress={connectGoogle}
+              label="Send code"
+              onPress={handleSendCode}
               loading={submitting}
               variant="primary"
               size="lg"
               fullWidth
             />
-            <AuraButton label="Back" onPress={() => setPlatform(null)} variant="ghost" />
+            <AuraButton label="Back" onPress={() => setMode('choose')} variant="ghost" />
           </View>
-        </>
-      ) : (
-        <>
-          <Text style={styles.sub}>
-            Paste your school's Canvas URL and a personal access token from
-            Canvas → Account → Settings → Approved Integrations.
-          </Text>
-          <View style={{ marginTop: 28, gap: 14 }}>
-            <View>
-              <Text style={styles.label}>School Canvas URL</Text>
-              <TextInput
-                style={styles.input}
-                value={canvasUrl}
-                onChangeText={setCanvasUrl}
-                placeholder="https://yourschool.instructure.com"
-                placeholderTextColor="rgba(142,175,194,0.5)"
-                autoCapitalize="none"
-                autoCorrect={false}
-                keyboardType="url"
-              />
-            </View>
-            <View>
-              <Text style={styles.label}>Access token</Text>
-              <TextInput
-                style={styles.input}
-                value={canvasPat}
-                onChangeText={setCanvasPat}
-                placeholder="Paste your token"
-                placeholderTextColor="rgba(142,175,194,0.5)"
-                autoCapitalize="none"
-                autoCorrect={false}
-                secureTextEntry
-              />
-            </View>
-            {error ? <Text style={styles.error}>{error}</Text> : null}
-            <View style={{ gap: 10, marginTop: 8 }}>
-              <AuraButton
-                label="Connect"
-                onPress={connectCanvas}
-                loading={submitting}
-                variant="primary"
-                size="lg"
-                fullWidth
-              />
-              <AuraButton label="Back" onPress={() => setPlatform(null)} variant="ghost" />
-            </View>
+        </View>
+      </ScreenContainer>
+    );
+  }
+
+  if (mode === 'email-otp') {
+    return (
+      <ScreenContainer>
+        <Text style={styles.h1}>Check your email</Text>
+        <Text style={styles.sub}>Enter the 6-digit code we sent to {email}.</Text>
+        <View style={{ marginTop: 28, gap: 14 }}>
+          <View>
+            <Text style={styles.label}>6-digit code</Text>
+            <TextInput
+              style={styles.input}
+              value={code}
+              onChangeText={(t) => setCode(t.replace(/[^0-9]/g, '').slice(0, 6))}
+              placeholder="123456"
+              placeholderTextColor="rgba(142,175,194,0.5)"
+              autoCapitalize="none"
+              keyboardType="number-pad"
+              maxLength={6}
+            />
           </View>
-        </>
-      )}
+          {error ? <Text style={styles.error}>{error}</Text> : null}
+          <View style={{ gap: 10, marginTop: 8 }}>
+            <AuraButton
+              label="Sign in"
+              onPress={handleVerifyCode}
+              loading={submitting}
+              variant="primary"
+              size="lg"
+              fullWidth
+            />
+            <AuraButton
+              label="Resend code"
+              onPress={handleSendCode}
+              variant="ghost"
+              disabled={submitting}
+            />
+            <AuraButton label="Back" onPress={() => setMode('email')} variant="ghost" />
+          </View>
+        </View>
+      </ScreenContainer>
+    );
+  }
+
+  // Canvas
+  return (
+    <ScreenContainer>
+      <Text style={styles.h1}>Canvas</Text>
+      <Text style={styles.sub}>
+        Paste your school's Canvas URL and a personal access token from
+        Canvas → Account → Settings → Approved Integrations.
+      </Text>
+      <View style={{ marginTop: 28, gap: 14 }}>
+        <View>
+          <Text style={styles.label}>School Canvas URL</Text>
+          <TextInput
+            style={styles.input}
+            value={canvasUrl}
+            onChangeText={setCanvasUrl}
+            placeholder="https://yourschool.instructure.com"
+            placeholderTextColor="rgba(142,175,194,0.5)"
+            autoCapitalize="none"
+            autoCorrect={false}
+            keyboardType="url"
+          />
+        </View>
+        <View>
+          <Text style={styles.label}>Access token</Text>
+          <TextInput
+            style={styles.input}
+            value={canvasPat}
+            onChangeText={setCanvasPat}
+            placeholder="Paste your token"
+            placeholderTextColor="rgba(142,175,194,0.5)"
+            autoCapitalize="none"
+            autoCorrect={false}
+            secureTextEntry
+          />
+        </View>
+        {error ? <Text style={styles.error}>{error}</Text> : null}
+        <View style={{ gap: 10, marginTop: 8 }}>
+          <AuraButton
+            label="Connect"
+            onPress={handleCanvas}
+            loading={submitting}
+            variant="primary"
+            size="lg"
+            fullWidth
+          />
+          <AuraButton label="Back" onPress={() => setMode('choose')} variant="ghost" />
+        </View>
+      </View>
     </ScreenContainer>
   );
 }
@@ -189,5 +304,5 @@ const styles = StyleSheet.create({
     color: Colors.textPrimary,
     fontSize: 15,
   },
-  error: { color: Colors.red, fontSize: 13, fontWeight: '500' },
+  error: { color: Colors.red, fontSize: 13, fontWeight: '500', marginTop: 12 },
 });

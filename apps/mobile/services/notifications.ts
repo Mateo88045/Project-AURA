@@ -3,6 +3,7 @@ import * as Device from 'expo-device';
 import Constants from 'expo-constants';
 import { Platform } from 'react-native';
 import { router } from 'expo-router';
+import { getSupabaseOrNull } from '../lib/supabase';
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -50,11 +51,24 @@ export async function registerPushToken(): Promise<string | null> {
   }
   try {
     const token = await Notifications.getExpoPushTokenAsync({ projectId });
+    void savePushTokenToUser(token.data);
     return token.data;
   } catch (err) {
     console.warn('[notifications] failed to get push token', err);
     return null;
   }
+}
+
+async function savePushTokenToUser(pushToken: string): Promise<void> {
+  const supabase = getSupabaseOrNull();
+  if (!supabase) return;
+  const { data: sessionData } = await supabase.auth.getSession();
+  const userId = sessionData.session?.user?.id;
+  if (!userId) return;
+  await supabase
+    .from('users')
+    .update({ expo_push_token: pushToken, notifications_enabled: true })
+    .eq('id', userId);
 }
 
 function parseDeepLink(raw: unknown): NotificationDeepLink | null {

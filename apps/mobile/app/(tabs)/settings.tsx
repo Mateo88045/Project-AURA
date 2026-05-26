@@ -6,7 +6,7 @@ import { ScreenContainer } from '../../components/ui/ScreenContainer';
 import { AuraAvatar } from '../../components/ui/AuraAvatar';
 import { useCurrentUser } from '../../hooks/useCurrentUser';
 import { useToast } from '../../components/ui/AuraToast';
-import { clearSession } from '../../lib/storage';
+import { signOut } from '../../services/auth';
 import { PRIVACY_POLICY_URL, SUPPORT_URL, TERMS_URL } from '../../lib/env';
 
 interface Row {
@@ -39,14 +39,14 @@ export default function SettingsScreen() {
   const { data: user } = useCurrentUser();
   const toast = useToast();
 
-  const signOut = () => {
-    Alert.alert('Sign out?', 'You\'ll need your school login to come back in.', [
+  const onSignOut = () => {
+    Alert.alert('Sign out?', "You'll need your school login to come back in.", [
       { text: 'Cancel', style: 'cancel' },
       {
         text: 'Sign out',
         style: 'destructive',
         onPress: async () => {
-          await clearSession();
+          await signOut();
           toast.show('Signed out.', 'info');
           router.replace('/onboarding');
         },
@@ -100,7 +100,7 @@ export default function SettingsScreen() {
     {
       label: 'Sign out',
       icon: <LogOut color={Colors.red} size={18} strokeWidth={1.8} />,
-      onPress: signOut,
+      onPress: onSignOut,
       destructive: true,
     },
   ];

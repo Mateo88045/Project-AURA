@@ -1,5 +1,7 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import type { ConversationMessage } from '@aura/shared/types';
+import type { Json } from '@aura/shared/supabase';
+import { getSupabaseOrNull } from '../lib/supabase';
 import { triggerCopilotAction } from '../services/jobs';
 
 interface Result {
@@ -9,20 +11,40 @@ interface Result {
   send: (text: string) => Promise<void>;
 }
 
+const DEFAULT_GREETING: ConversationMessage = {
+  role: 'assistant',
+  content:
+    "Hey — I'm your copilot. Ask me to move things around, free up an evening, or add a task.",
+  timestamp: new Date().toISOString(),
+};
+
 export function useConversation(userId: string | null): Result {
-  // TODO: Supabase — select messages from conversations where user_id = userId
-  // order by updated_at desc limit 1. On send, append to messages jsonb[] and
-  // update updated_at. Realtime subscribe so the UI streams new assistant messages.
-  const [messages, setMessages] = useState<ConversationMessage[]>([
-    {
-      role: 'assistant',
-      content:
-        'Hey — I\'m your copilot. Ask me to move things around, free up an evening, or add a task.',
-      timestamp: new Date().toISOString(),
-    },
-  ]);
+  const supabase = getSupabaseOrNull();
+  const [messages, setMessages] = useState<ConversationMessage[]>([DEFAULT_GREETING]);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<Error | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      if (!supabase || !userId) return;
+      const { data, error: err } = await supabase
+        .from('conversations')
+        .select('messages')
+        .eq('user_id', userId)
+        .order('updated_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (cancelled) return;
+      if (err) setError(new Error(err.message));
+      const stored = (data?.messages as ConversationMessage[] | undefined) ?? [];
+      if (stored.length > 0) setMessages(stored);
+    }
+    void load();
+    return () => {
+      cancelled = true;
+    };
+  }, [supabase, userId]);
 
   const send = useCallback(
     async (text: string) => {
@@ -32,7 +54,8 @@ export function useConversation(userId: string | null): Result {
         content: text.trim(),
         timestamp: new Date().toISOString(),
       };
-      setMessages((m) => [...m, userMsg]);
+      const next = [...messages, userMsg];
+      setMessages(next);
       setSending(true);
       setError(null);
       try {
@@ -42,14 +65,28 @@ export function useConversation(userId: string | null): Result {
           content: action.confirmationMessage,
           timestamp: new Date().toISOString(),
         };
-        setMessages((m) => [...m, reply]);
+        const after = [...next, reply];
+        setMessages(after);
+        if (supabase) {
+          // Upsert into a single conversation row per user, newest-first wins.
+          await supabase
+            .from('conversations')
+            .upsert(
+              {
+                user_id: userId,
+                messages: after as unknown as Json,
+                updated_at: new Date().toISOString(),
+              },
+              { onConflict: 'user_id' },
+            );
+        }
       } catch (e) {
         setError(e as Error);
       } finally {
         setSending(false);
       }
     },
-    [userId],
+    [userId, messages, supabase],
   );
 
   return { messages, sending, error, send };
