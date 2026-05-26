@@ -69,7 +69,7 @@ list.
 
 | Layer | Tool | Notes |
 |---|---|---|
-| Mobile app | React Native (Expo SDK 52) + Expo Router v3 | TypeScript throughout. Expo Dev Client (not managed workflow). Always use SDK 52 APIs — never suggest deprecated patterns. |
+| Mobile app | React Native (Expo SDK 54) + Expo Router v6 | TypeScript throughout. Expo Dev Client (not managed workflow). Always use SDK 54 APIs — never suggest deprecated patterns. |
 | Styling | NativeWind v4 | Tailwind utility classes for React Native. Uses `className` prop — NOT `style`. See NativeWind v4 rules below. |
 | UI Components | Custom, shadcn-inspired | shadcn/ui is the design reference for component anatomy, spacing, and interaction patterns. Build RN equivalents in NativeWind. |
 | Backend / DB | Supabase | PostgreSQL, Auth, Edge Functions, Realtime. **DO NOT implement — stub only.** |
@@ -518,11 +518,13 @@ The greedy slot-filling algorithm runs in pure TypeScript with no AI calls.
    ```
    Use `StyleSheet.create` only for dynamic values (e.g. animated styles,
    values computed at runtime) that cannot be expressed as static Tailwind classes.
-4. **Expo SDK 52 only.** Never suggest deprecated APIs. Key SDK 52 patterns:
-   - Camera: `expo-camera` v15 with `CameraView` component (not legacy `Camera`)
-   - Router: `expo-router` v3 — use `useRouter()`, `<Link>`, `router.push()`
-   - Notifications: `expo-notifications` v0.28+
-   - Image: `expo-image` (not `Image` from `react-native`)
+4. **Expo SDK 54 only.** Never suggest deprecated APIs. Key SDK 54 patterns:
+   - Camera: `expo-camera` v17 with `CameraView` component (not legacy `Camera`)
+   - Router: `expo-router` v6 — use `useRouter()`, `<Link>`, `router.push()`
+   - Notifications: `expo-notifications` v0.32+
+   - Image: `expo-image` v3 (not `Image` from `react-native`)
+   - React: 19.1.0 (not 18.x)
+   - React Native: 0.81.5
 5. **Expo Router** file-based navigation. Never use React Navigation directly.
 6. **No hardcoded strings** for colors, spacing, or font weights — import from constants.
 7. **Component scope:** One component per file. Under 200 lines. Extract sub-components early.

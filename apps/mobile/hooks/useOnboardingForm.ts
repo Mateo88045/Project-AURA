@@ -178,7 +178,7 @@ export function useOnboardingForm() {
         .update({
           display_name: sanitizeDisplayName(state.displayName.trim()),
           grade_level: state.gradeLevel ?? 11,
-          onboarding_answers: answers,
+          onboarding_answers: JSON.parse(JSON.stringify(answers)),
           onboarding_step: 100,
           timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
         })
