@@ -99,7 +99,7 @@ const styles = StyleSheet.create({
     gap: 10,
     ...Platform.select({
       ios: {
-        shadowColor: '#000',
+        shadowColor: Colors.black,
         shadowOpacity: 0.4,
         shadowOffset: { width: 0, height: 8 },
         shadowRadius: 16,

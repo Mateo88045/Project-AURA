@@ -45,7 +45,7 @@ export default function ChatScreen() {
       <View style={[styles.root, { paddingTop: insets.top + 8 }]}>
         <AmbientOrbs />
         <View style={styles.header}>
-          <Pressable onPress={() => router.back()} style={styles.back} accessibilityLabel="Back">
+          <Pressable onPress={() => router.back()} style={styles.back} accessibilityRole="button" accessibilityLabel="Back">
             <ArrowLeft color={Colors.textSecondary} size={20} />
           </Pressable>
           <View>

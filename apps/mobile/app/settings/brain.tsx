@@ -3,12 +3,13 @@ import { Colors } from '@aura/shared/constants/colors';
 import { ScreenContainer } from '../../components/ui/ScreenContainer';
 import { ScreenHeader } from '../../components/ui/ScreenHeader';
 import { AuraSkeleton } from '../../components/ui/AuraSkeleton';
+import { EmptyState } from '../../components/ui/EmptyState';
 import { useCurrentUser } from '../../hooks/useCurrentUser';
 
 export default function BrainViewer() {
   const { data: user, loading } = useCurrentUser();
 
-  if (loading || !user) {
+  if (loading) {
     return (
       <ScreenContainer>
         <ScreenHeader title="Aura's brain" eyebrow="Settings" />
@@ -16,6 +17,18 @@ export default function BrainViewer() {
           <AuraSkeleton height={120} />
           <AuraSkeleton height={120} />
         </View>
+      </ScreenContainer>
+    );
+  }
+
+  if (!user || !user.onboardingAnswers) {
+    return (
+      <ScreenContainer>
+        <ScreenHeader title="Aura's brain" eyebrow="Settings" />
+        <EmptyState
+          title="Nothing here yet."
+          body="Complete the onboarding questionnaire and Aura's brain will fill in here."
+        />
       </ScreenContainer>
     );
   }
@@ -50,15 +63,17 @@ export default function BrainViewer() {
         </View>
       </Section>
 
-      <Section title="Extracurriculars">
-        <View style={styles.chipRow}>
-          {a.extracurriculars.map((e) => (
-            <View key={e} style={styles.chip}>
-              <Text style={styles.chipText}>{e}</Text>
-            </View>
-          ))}
-        </View>
-      </Section>
+      {a.extracurriculars.length > 0 ? (
+        <Section title="Extracurriculars">
+          <View style={styles.chipRow}>
+            {a.extracurriculars.map((e) => (
+              <View key={e} style={styles.chip}>
+                <Text style={styles.chipText}>{e}</Text>
+              </View>
+            ))}
+          </View>
+        </Section>
+      ) : null}
 
       <Section title="Rhythm">
         <Fact label="Best work time" value={a.preferredStudyTime} />
@@ -79,11 +94,11 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   );
 }
 
-function Fact({ label, value }: { label: string; value: string }) {
+function Fact({ label, value }: { label: string; value: string | null | undefined }) {
   return (
     <View style={styles.factRow}>
       <Text style={styles.label}>{label}</Text>
-      <Text style={styles.factValue}>{value}</Text>
+      <Text style={styles.factValue}>{value ?? '—'}</Text>
     </View>
   );
 }

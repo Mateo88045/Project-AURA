@@ -57,13 +57,13 @@
     },
     "extra": {
       "eas": {
-        "projectId": "REPLACE_WITH_REAL_EAS_PROJECT_ID"
+        "projectId": ""
       },
       "supabaseUrl": "https://bvwumzzuvubiacueftbz.supabase.co",
       "supabasePublishableKey": "sb_publishable_if5RMKHlwHLzUu97PaAcbQ_Vgm-rb7u",
-      "supportUrl": "REPLACE_WITH_REAL_SUPPORT_URL",
-      "privacyPolicyUrl": "REPLACE_WITH_REAL_PRIVACY_POLICY_URL",
-      "termsUrl": "REPLACE_WITH_REAL_TERMS_URL"
+      "supportUrl": "",
+      "privacyPolicyUrl": "",
+      "termsUrl": ""
     }
   }
 }

@@ -1,31 +1,73 @@
 import type { OnboardingAnswers } from '@aura/shared/types';
+import { getSupabaseOrNull } from '../lib/supabase';
+import { IS_DEMO_MODE } from '../lib/env';
 
+/**
+ * Demo-mode fallback for saveOnboardingProfile.
+ * In real mode, useOnboardingForm.submit() writes directly to Supabase.
+ * This function is only invoked when Supabase is not configured (demo/CI).
+ */
 export async function saveOnboardingProfile(payload: {
   userId: string;
   displayName: string;
   gradeLevel: number;
   answers: OnboardingAnswers;
 }): Promise<void> {
-  // TODO: Supabase — UPDATE users SET
-  //   display_name = payload.displayName,
-  //   grade_level = payload.gradeLevel,
-  //   onboarding_answers = payload.answers
-  // WHERE id = payload.userId
-  console.log('[STUB] saveOnboardingProfile:', payload);
+  if (__DEV__ || IS_DEMO_MODE) {
+    // eslint-disable-next-line no-console
+    console.log('[onboarding] saveOnboardingProfile (demo)', payload.userId);
+  }
 }
 
+/**
+ * Upserts the user's bedtime guardrail into the guardrails table.
+ * Uses ON CONFLICT (user_id, rule_type) to update an existing row.
+ */
 export async function saveNoWorkAfterGuardrail(
   userId: string,
   time: string, // HH:MM
 ): Promise<void> {
-  // TODO: Supabase — INSERT INTO guardrails (user_id, rule_type, value, active)
-  // VALUES (userId, 'no_work_after', { time }, true)
-  // ON CONFLICT (user_id, rule_type) DO UPDATE SET value = excluded.value
-  console.log('[STUB] saveNoWorkAfterGuardrail:', userId, time);
+  const supabase = getSupabaseOrNull();
+  if (!supabase) {
+    if (__DEV__ || IS_DEMO_MODE) {
+      // eslint-disable-next-line no-console
+      console.log('[onboarding] saveNoWorkAfterGuardrail (demo)', userId, time);
+    }
+    return;
+  }
+
+  const { error } = await supabase.from('guardrails').upsert(
+    {
+      user_id: userId,
+      rule_type: 'no_work_after',
+      value: { time },
+      active: true,
+    },
+    { onConflict: 'user_id,rule_type' },
+  );
+
+  if (error) throw new Error(error.message);
 }
 
+/**
+ * Kicks off the post-onboarding pipeline:
+ * triggers the first classroom sync so the user has real data on day one.
+ */
 export async function triggerOnboardingComplete(userId: string): Promise<void> {
-  // TODO: Trigger.dev — fire job 'onboarding-complete' with payload { userId }
-  // Job steps: initialize default guardrails, trigger first assignment sync
-  console.log('[STUB] triggerOnboardingComplete:', userId);
+  const supabase = getSupabaseOrNull();
+  if (!supabase) {
+    if (__DEV__ || IS_DEMO_MODE) {
+      // eslint-disable-next-line no-console
+      console.log('[onboarding] triggerOnboardingComplete (demo)', userId);
+    }
+    return;
+  }
+
+  // Fire the classroom-sync edge function to pull the first batch of assignments.
+  // The function initializes default guardrails server-side if none exist yet.
+  const { error } = await supabase.functions.invoke('classroom-sync', {
+    body: { user_id: userId },
+  });
+
+  if (error) throw new Error(error.message);
 }

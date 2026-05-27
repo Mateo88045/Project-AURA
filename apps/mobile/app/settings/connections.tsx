@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Colors } from '@aura/shared/constants/colors';
@@ -9,6 +10,7 @@ import { EmptyState } from '../../components/ui/EmptyState';
 import { useCurrentUser } from '../../hooks/useCurrentUser';
 import { useConnections } from '../../hooks/useConnections';
 import { useToast } from '../../components/ui/AuraToast';
+import { getSupabaseOrNull } from '../../lib/supabase';
 
 const PLATFORM_LABELS = {
   google_classroom: 'Google Classroom',
@@ -26,14 +28,38 @@ export default function ConnectionsHub() {
   const toast = useToast();
   const { data: user } = useCurrentUser();
   const { data, loading } = useConnections(user?.id ?? null);
+  // Optimistic removal: ids disconnected locally while the DB write is in flight
+  const [removed, setRemoved] = useState<Set<string>>(new Set());
 
-  const revoke = (id: string) => {
-    // TODO: Supabase — delete from connections where id = $id and user_id = auth.uid().
-    // Also revoke OAuth token server-side (Google revocation endpoint or Canvas
-    // /api/v1/users/self/tokens/$tokenId delete).
-    console.log('[STUB] revoke connection', id);
+  const revoke = async (id: string) => {
+    setRemoved((s) => new Set([...s, id]));
+
+    const supabase = getSupabaseOrNull();
+    if (!supabase) {
+      toast.show('Connection removed.', 'info');
+      return;
+    }
+
+    const { error } = await supabase
+      .from('connections')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      // Rollback optimistic removal on failure
+      setRemoved((s) => {
+        const n = new Set(s);
+        n.delete(id);
+        return n;
+      });
+      toast.show("Couldn't remove that connection.", 'error');
+      return;
+    }
+
     toast.show('Connection removed.', 'info');
   };
+
+  const visible = data.filter((c) => !removed.has(c.id));
 
   return (
     <ScreenContainer>
@@ -43,7 +69,7 @@ export default function ConnectionsHub() {
           <AuraSkeleton height={72} />
           <AuraSkeleton height={72} />
         </View>
-      ) : data.length === 0 ? (
+      ) : visible.length === 0 ? (
         <EmptyState
           title="No platforms connected."
           body="Connect Google Classroom or Canvas to start pulling assignments."
@@ -57,7 +83,7 @@ export default function ConnectionsHub() {
         />
       ) : (
         <View style={{ gap: 12 }}>
-          {data.map((c) => (
+          {visible.map((c) => (
             <View key={c.id} style={styles.card}>
               <View style={{ flex: 1 }}>
                 <Text style={styles.platform}>{PLATFORM_LABELS[c.platform]}</Text>
@@ -76,7 +102,12 @@ export default function ConnectionsHub() {
                     {c.status}
                   </Text>
                 </View>
-                <AuraButton label="Disconnect" onPress={() => revoke(c.id)} variant="ghost" size="sm" />
+                <AuraButton
+                  label="Disconnect"
+                  onPress={() => void revoke(c.id)}
+                  variant="ghost"
+                  size="sm"
+                />
               </View>
             </View>
           ))}

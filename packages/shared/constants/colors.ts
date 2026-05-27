@@ -25,6 +25,7 @@ export const Colors = {
   // Utility
   transparent: 'transparent',
   white: '#FFFFFF',
+  black: '#000000',  // For shadows and camera overlays — not for UI backgrounds
 } as const;
 
 /** Maps difficulty level (1–5) to the appropriate color */

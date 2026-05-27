@@ -31,7 +31,7 @@ export default function PhotoCapture() {
     return (
       <View style={[styles.root, { paddingTop: insets.top + 24, paddingHorizontal: 28 }]}>
         <AmbientOrbs />
-        <Pressable onPress={() => router.back()} style={styles.close} accessibilityLabel="Close">
+        <Pressable onPress={() => router.back()} style={styles.close} accessibilityRole="button" accessibilityLabel="Close">
           <X color={Colors.textSecondary} size={20} />
         </Pressable>
         <View style={styles.permissionBody}>
@@ -99,7 +99,7 @@ export default function PhotoCapture() {
       )}
 
       <View style={[styles.topBar, { paddingTop: insets.top + 8 }]}>
-        <Pressable onPress={() => router.back()} style={styles.close} accessibilityLabel="Close">
+        <Pressable onPress={() => router.back()} style={styles.close} accessibilityRole="button" accessibilityLabel="Close">
           <X color={Colors.textPrimary} size={22} />
         </Pressable>
         <Text style={styles.hint}>
@@ -112,6 +112,7 @@ export default function PhotoCapture() {
           <>
             <Pressable
               onPress={retake}
+              accessibilityRole="button"
               accessibilityLabel="Retake"
               style={({ pressed }) => [styles.secondary, pressed && { opacity: 0.7 }]}
             >
@@ -120,6 +121,7 @@ export default function PhotoCapture() {
             <Pressable
               onPress={submit}
               disabled={sending}
+              accessibilityRole="button"
               accessibilityLabel="Send to Aura"
               style={({ pressed }) => [
                 styles.send,
@@ -133,6 +135,7 @@ export default function PhotoCapture() {
         ) : (
           <Pressable
             onPress={capture}
+            accessibilityRole="button"
             accessibilityLabel="Take photo"
             style={({ pressed }) => [styles.shutter, pressed && { transform: [{ scale: 0.96 }] }]}
           >
@@ -145,8 +148,8 @@ export default function PhotoCapture() {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#000' },
-  preview: { ...StyleSheet.absoluteFillObject, backgroundColor: '#000' },
+  root: { flex: 1, backgroundColor: Colors.black },
+  preview: { ...StyleSheet.absoluteFillObject, backgroundColor: Colors.black },
   topBar: {
     position: 'absolute',
     top: 0,

@@ -59,7 +59,7 @@ const styles = StyleSheet.create({
   backdrop: { backgroundColor: 'rgba(0,0,0,0.5)' },
   container: { flex: 1, justifyContent: 'flex-end' },
   sheet: {
-    backgroundColor: '#101820',
+    backgroundColor: Colors.bgDark,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     paddingHorizontal: 24,
@@ -68,7 +68,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(168,218,220,0.15)',
     ...Platform.select({
       ios: {
-        shadowColor: '#000',
+        shadowColor: Colors.black,
         shadowOpacity: 0.5,
         shadowOffset: { width: 0, height: -8 },
         shadowRadius: 24,

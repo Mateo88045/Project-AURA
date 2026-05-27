@@ -3,6 +3,7 @@ import * as Device from 'expo-device';
 import Constants from 'expo-constants';
 import { Platform } from 'react-native';
 import { router } from 'expo-router';
+import { Colors } from '@aura/shared/constants/colors';
 import { getSupabaseOrNull } from '../lib/supabase';
 
 Notifications.setNotificationHandler({
@@ -38,7 +39,7 @@ export async function registerPushToken(): Promise<string | null> {
       name: 'Aura',
       importance: Notifications.AndroidImportance.DEFAULT,
       vibrationPattern: [0, 250, 250, 250],
-      lightColor: '#A8DADC',
+      lightColor: Colors.mist,
     });
   }
 
