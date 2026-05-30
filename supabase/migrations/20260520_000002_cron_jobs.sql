@@ -1,4 +1,4 @@
--- pg_cron schedules that POST to Aura's Edge Functions.
+-- pg_cron schedules that POST to Chronos's Edge Functions.
 --
 -- Prerequisites (must be set OUTSIDE this migration by an admin):
 --   1. Project URL stored in vault:

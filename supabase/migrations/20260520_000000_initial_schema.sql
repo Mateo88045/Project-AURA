@@ -1,4 +1,4 @@
--- Aura initial schema.
+-- Chronos initial schema.
 -- Run via: supabase db push (after `supabase link --project-ref <ref>`)
 -- Or apply manually via the Supabase SQL editor.
 --

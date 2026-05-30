@@ -46,7 +46,7 @@ export async function sendPushNotification(payload: PushPayload): Promise<PushTi
       data: payload.data ?? {},
       badge: payload.badge,
       sound: payload.sound ?? 'default',
-      channelId: payload.channelId ?? 'aura-default',
+      channelId: payload.channelId ?? 'chronos-default',
       ttl: payload.ttl,
       expiration: payload.expiration,
       priority: payload.priority ?? 'high',
@@ -93,7 +93,7 @@ export async function notifyScheduleReady(
   return sendPushNotification({
     to: pushToken,
     title: 'Your schedule is ready',
-    body: `Aura has planned ${pendingTaskCount} task${pendingTaskCount !== 1 ? 's' : ''} for tomorrow. Tap to review.`,
+    body: `Chronos has planned ${pendingTaskCount} task${pendingTaskCount !== 1 ? 's' : ''} for tomorrow. Tap to review.`,
     data: { type: 'daily_schedule_ready' },
     badge: 1,
     priority: 'high',
@@ -122,7 +122,7 @@ export async function notifySundayBriefing(
   return sendPushNotification({
     to: pushToken,
     title: "This week's outlook",
-    body: `${taskCount} assignment${taskCount !== 1 ? 's' : ''} on deck. Open Aura to see the plan.`,
+    body: `${taskCount} assignment${taskCount !== 1 ? 's' : ''} on deck. Open Chronos to see the plan.`,
     data: { type: 'sunday_briefing' },
     badge: 1,
     priority: 'normal',

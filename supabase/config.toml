@@ -2,7 +2,7 @@
 # Run `supabase link --project-ref <ref>` to associate this directory with a remote project.
 # Then `supabase db push` to apply migrations, `supabase functions deploy <name>` to deploy Edge Functions.
 
-project_id = "aura"
+project_id = "chronos"
 
 [api]
 enabled = true
@@ -30,8 +30,8 @@ file_size_limit = "50MiB"
 
 [auth]
 enabled = true
-site_url = "aura://"
-additional_redirect_urls = ["aura://onboarding/connect"]
+site_url = "chronos://"
+additional_redirect_urls = ["chronos://onboarding/connect"]
 jwt_expiry = 3600
 enable_refresh_token_rotation = true
 refresh_token_reuse_interval = 10
