@@ -1,42 +1,32 @@
 // /packages/shared/supabase.ts
-// Real Supabase client factory. The mobile app imports the singleton from
-// `apps/mobile/lib/supabase.ts` because the AsyncStorage adapter is a native
-// dep that only exists in the mobile workspace. This file exports the types
-// and the factory.
+// Mobile Supabase singleton. The app imports `{ supabase }` directly; the
+// AsyncStorage adapter persists the auth session across launches. URL + anon
+// key come from EXPO_PUBLIC_* env vars (see apps/mobile/.env).
 
-import { createClient, SupabaseClient, SupportedStorage } from '@supabase/supabase-js';
-import type { Database } from './supabase/database.types';
+import { createClient } from '@supabase/supabase-js';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export type { Database, Json } from './supabase/database.types';
-export type ChronosSupabase = SupabaseClient<Database>;
 
-export interface CreateClientOptions {
-  url: string;
-  publishableKey: string;
-  storage: SupportedStorage;
+const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL ?? '';
+const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? '';
+
+if (!supabaseUrl || !supabaseAnonKey) {
+  console.warn(
+    '[Supabase] Missing EXPO_PUBLIC_SUPABASE_URL or EXPO_PUBLIC_SUPABASE_ANON_KEY. ' +
+      'Copy .env.example to .env and fill in values.',
+  );
 }
 
-export function createChronosClient({
-  url,
-  publishableKey,
-  storage,
-}: CreateClientOptions): ChronosSupabase {
-  if (!url || !publishableKey) {
-    throw new Error(
-      '[supabase] Missing SUPABASE_URL or SUPABASE_PUBLISHABLE_KEY — check app.json extras / env.',
-    );
-  }
-  return createClient<Database>(url, publishableKey, {
+export const supabase = createClient(
+  supabaseUrl || 'https://placeholder.supabase.co',
+  supabaseAnonKey || 'placeholder-key',
+  {
     auth: {
-      storage,
+      storage: AsyncStorage,
       autoRefreshToken: true,
       persistSession: true,
       detectSessionInUrl: false, // RN does not handle URL session detection
-      flowType: 'pkce',
     },
-    db: { schema: 'public' },
-    global: {
-      headers: { 'x-application-name': 'chronos-mobile' },
-    },
-  });
-}
+  },
+);

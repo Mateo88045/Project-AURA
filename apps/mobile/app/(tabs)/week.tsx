@@ -1,152 +1,335 @@
-import { useMemo } from 'react';
-import { View, Text, StyleSheet, Pressable } from 'react-native';
-import { useRouter } from 'expo-router';
-import { Colors } from '@chronos/shared/constants/colors';
-import { ScreenContainer } from '../../components/ui/ScreenContainer';
-import { ChronosSkeleton } from '../../components/ui/ChronosSkeleton';
-import { ErrorState } from '../../components/ui/ErrorState';
-import { useCurrentUser } from '../../hooks/useCurrentUser';
-import { useWeekScheduledBlocks } from '../../hooks/useWeekScheduledBlocks';
-import { useFixedEvents } from '../../hooks/useFixedEvents';
-import { addDays, isSameDay, startOfWeek, todayKey, minutesBetween } from '../../lib/time';
+import { useMemo, useState, useEffect } from 'react';
+import { View, ScrollView, Pressable, StyleSheet, Text } from 'react-native';
+import { useRouter, type Href } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Animated, { FadeIn } from 'react-native-reanimated';
+import { radius, spacing, typography } from '@chronos/shared/theme';
+import type { ThemeColors } from '@chronos/shared/theme';
+import { useTheme } from '../../lib/theme';
+import { useTasksForDay } from '../../hooks/useTasksForDay';
+import { useTaskCountsForWeek } from '../../hooks/useTaskCountsForWeek';
+import { Screen } from '../../components/ui/Screen';
+import { AuraText } from '../../components/ui/AuraText';
+import { AuraSkeleton } from '../../components/ui/AuraSkeleton';
+import { AuraButton } from '../../components/ui/AuraButton';
+import { AuraSymbol } from '../../components/ui/AuraSymbol';
+import { TaskBlock } from '../../components/ui/TaskBlock';
+import { haptic } from '../../lib/haptics';
+import { useAuth } from '../../hooks/useAuth';
+const STAGGER_MS = 40;
+
+function formatDayLabel(date: Date) {
+  return date.toLocaleDateString(undefined, { weekday: 'short' }).toUpperCase();
+}
+
+function toDayIso(date: Date) {
+  return date.toISOString().slice(0, 10);
+}
+
+function formatWeekRange(days: Date[]): string {
+  const fmt = (d: Date) =>
+    d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  return `${fmt(days[0])} – ${fmt(days[6])}`;
+}
 
 export default function WeekScreen() {
   const router = useRouter();
-  const { data: user } = useCurrentUser();
-  const fixed = useFixedEvents(user?.id ?? null);
+  const insets = useSafeAreaInsets();
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+  const today = useMemo(() => new Date(), []);
+  const { user: authUser } = useAuth();
 
-  const days = useMemo(() => {
-    const start = startOfWeek();
-    return Array.from({ length: 7 }, (_, i) => addDays(start, i));
-  }, []);
+  // Week navigation offset (0 = current week, -1 = last week, 1 = next week)
+  const [weekOffset, setWeekOffset] = useState(0);
 
-  const dayKeys = useMemo(() => days.map((d) => todayKey(d)), [days]);
-  const week = useWeekScheduledBlocks(user?.id ?? null, dayKeys);
+  const weekDays = useMemo(() => {
+    const base = new Date(today);
+    base.setDate(today.getDate() + weekOffset * 7);
+    const start = new Date(base);
+    start.setDate(base.getDate() - base.getDay());
+    return Array.from({ length: 7 }).map((_, i) => {
+      const d = new Date(start);
+      d.setDate(start.getDate() + i);
+      return d;
+    });
+  }, [today, weekOffset]);
 
-  const loading = week.loading || fixed.loading;
+  const weekDayIsos = useMemo(() => weekDays.map(toDayIso), [weekDays]);
+  const weekRangeLabel = useMemo(() => formatWeekRange(weekDays), [weekDays]);
+
+  const [selectedDayIso, setSelectedDayIso] = useState(toDayIso(today));
+
+  // Reset selection to first day when navigating weeks
+  useEffect(() => {
+    if (weekOffset === 0) {
+      setSelectedDayIso(toDayIso(today));
+    } else {
+      setSelectedDayIso(weekDayIsos[0]);
+    }
+  }, [weekOffset, today, weekDayIsos]);
+
+  const { tasks, loading, error, refetch } = useTasksForDay(authUser?.id ?? '', selectedDayIso);
+  const { counts } = useTaskCountsForWeek(authUser?.id ?? '', weekDayIsos);
+
+  const isToday = (d: Date) => toDayIso(d) === toDayIso(today);
+  const isSelected = (d: Date) => toDayIso(d) === selectedDayIso;
+
+  function goToPrevWeek() {
+    haptic.selection();
+    setWeekOffset((prev) => prev - 1);
+  }
+
+  function goToNextWeek() {
+    haptic.selection();
+    setWeekOffset((prev) => prev + 1);
+  }
 
   return (
-    <ScreenContainer>
-      <Text style={styles.h1}>This week</Text>
-      <Text style={styles.sub}>Tap a day to dive in.</Text>
+    <Screen>
+      {/* Header */}
+      <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
+        <Animated.View entering={FadeIn.duration(280)}>
+          <Text style={styles.eyebrow}>WEEK</Text>
+        </Animated.View>
+        <Animated.View entering={FadeIn.delay(STAGGER_MS).duration(280)}>
+          <View style={styles.titleRow}>
+            <Pressable
+              onPress={goToPrevWeek}
+              hitSlop={12}
+              style={styles.navArrow}
+              accessibilityRole="button"
+              accessibilityLabel="Previous week"
+            >
+              <AuraSymbol name="chevron.left" size={16} color={colors.text.secondary} />
+            </Pressable>
+            <Text style={styles.title}>{weekRangeLabel}</Text>
+            <Pressable
+              onPress={goToNextWeek}
+              hitSlop={12}
+              style={styles.navArrow}
+              accessibilityRole="button"
+              accessibilityLabel="Next week"
+            >
+              <AuraSymbol name="chevron.right" size={16} color={colors.text.secondary} />
+            </Pressable>
+          </View>
+        </Animated.View>
+        <Animated.View entering={FadeIn.delay(STAGGER_MS * 2).duration(280)}>
+          <Text style={styles.subtitle}>
+            Tap a day to see what&apos;s ahead.
+          </Text>
+        </Animated.View>
+      </View>
 
-      {loading ? (
-        <View style={{ gap: 14, marginTop: 24 }}>
-          {[0, 1, 2, 3, 4, 5, 6].map((i) => (
-            <ChronosSkeleton key={i} height={72} radius={14} />
-          ))}
-        </View>
-      ) : week.error ? (
-        <View style={{ marginTop: 24 }}>
-          <ErrorState
-            message="Couldn't load this week's schedule."
-            onRetry={week.refetch}
-          />
-        </View>
-      ) : (
-        <View style={{ gap: 12, marginTop: 24 }}>
-          {days.map((d) => {
-            const isToday = isSameDay(d, new Date());
-            const weekday = d.getDay();
-            const fixedHere = fixed.data.filter((e) => e.daysOfWeek.includes(weekday));
-            const fixedMins = fixedHere.reduce((acc, e) => {
-              const [sh, sm] = e.startTime.split(':').map(Number);
-              const [eh, em] = e.endTime.split(':').map(Number);
-              return acc + (eh * 60 + em) - (sh * 60 + sm);
-            }, 0);
-            const dayKey = todayKey(d);
-            const blocksForDay = week.byDay[dayKey] ?? [];
-            const aiMins = blocksForDay
-              .filter((b) => !!b.taskId)
-              .reduce((acc, b) => acc + minutesBetween(b.startTime, b.endTime), 0);
-            const density = Math.min(1, (fixedMins + aiMins) / (12 * 60));
-
-            return (
-              <Pressable
-                key={d.toISOString()}
-                onPress={() => router.push('/(tabs)')}
-                accessibilityRole="button"
-                accessibilityLabel={`Open ${d.toLocaleDateString()}`}
-                style={({ pressed }) => [
-                  styles.dayCard,
-                  isToday && styles.dayCardToday,
-                  pressed && styles.pressed,
-                ]}
-              >
-                <View>
-                  <Text style={[styles.dayName, isToday && styles.dayNameToday]}>
-                    {d.toLocaleDateString(undefined, { weekday: 'short' })}
-                  </Text>
-                  <Text style={styles.dayDate}>{d.getDate()}</Text>
-                </View>
-                <View style={styles.densityBar}>
-                  <View style={[styles.densityFill, { width: `${density * 100}%` }]} />
-                </View>
-                <Text style={styles.dayHours}>
-                  {Math.round((fixedMins + aiMins) / 60 * 10) / 10}h
+      {/* Day row */}
+      <Animated.View
+        entering={FadeIn.delay(STAGGER_MS * 3).duration(280)}
+        style={styles.daysRow}
+      >
+        {weekDays.map((day) => {
+          const selected = isSelected(day);
+          const todayFlag = isToday(day);
+          const dayIso = toDayIso(day);
+          const hasTask = (counts[dayIso] ?? 0) > 0;
+          return (
+            <Pressable
+              key={dayIso}
+              onPress={() => {
+                haptic.selection();
+                setSelectedDayIso(dayIso);
+              }}
+              style={[styles.dayCol, selected && styles.dayColSelected]}
+              accessibilityRole="button"
+              accessibilityLabel={`${formatDayLabel(day)} ${day.getDate()}`}
+            >
+              <Text style={styles.dayLabel}>{formatDayLabel(day)}</Text>
+              <View style={[styles.dayNum, todayFlag && styles.dayNumToday]}>
+                <Text
+                  style={[
+                    styles.dayNumText,
+                    { color: todayFlag ? colors.text.inverse : colors.text.primary },
+                  ]}
+                >
+                  {day.getDate()}
                 </Text>
-              </Pressable>
-            );
-          })}
-        </View>
-      )}
-    </ScreenContainer>
+              </View>
+              {/* Task count badge dot */}
+              {hasTask ? (
+                <View style={styles.countDot} />
+              ) : (
+                <View style={styles.countDotPlaceholder} />
+              )}
+            </Pressable>
+          );
+        })}
+      </Animated.View>
+
+      {/* Tasks for selected day */}
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={{ paddingBottom: 160 }}
+        showsVerticalScrollIndicator={false}
+        bounces={false}
+      >
+        {loading && (
+          <View style={styles.loading}>
+            <AuraSkeleton height={18} />
+            <AuraSkeleton height={72} />
+            <AuraSkeleton height={72} />
+          </View>
+        )}
+
+        {!loading && error && (
+          <View style={styles.center}>
+            <AuraText variant="body" color="hard" style={styles.errorText}>
+              Couldn&apos;t load tasks for this day.
+            </AuraText>
+            <AuraButton label="Try again" variant="outline" onPress={refetch} />
+          </View>
+        )}
+
+        {!loading && !error && tasks.length === 0 && (
+          <View style={styles.empty}>
+            <AuraText variant="title2">Nothing scheduled</AuraText>
+            <AuraText variant="body" color="secondary" style={styles.emptyBody}>
+              This day is free. Chronos will fill it once classes are connected.
+            </AuraText>
+          </View>
+        )}
+
+        {!loading && !error && tasks.length > 0 && (
+          <View style={styles.taskList}>
+            {tasks.map((task, i) => (
+              <Animated.View
+                key={task.id}
+                entering={FadeIn.delay(STAGGER_MS * (4 + i)).duration(200)}
+                style={styles.taskItem}
+              >
+                <TaskBlock
+                  title={task.title}
+                  subject={task.subject}
+                  estimatedMinutes={task.estimatedMinutes}
+                  difficulty={task.difficulty}
+                  variant="scheduled"
+                  onPress={() => {
+                    haptic.liquidTap();
+                    router.push(`/tasks/${task.id}` as Href);
+                  }}
+                />
+              </Animated.View>
+            ))}
+          </View>
+        )}
+      </ScrollView>
+    </Screen>
   );
 }
 
-const styles = StyleSheet.create({
-  h1: {
-    fontSize: 32,
-    fontWeight: '700',
-    color: Colors.textPrimary,
-    letterSpacing: -1.2,
-  },
-  sub: { color: Colors.textSecondary, fontSize: 13, marginTop: 4 },
-  dayCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    backgroundColor: 'rgba(168,218,220,0.04)',
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(168,218,220,0.1)',
-    borderRadius: 14,
-    gap: 14,
-  },
-  dayCardToday: {
-    borderColor: 'rgba(168,218,220,0.4)',
-    backgroundColor: 'rgba(168,218,220,0.07)',
-  },
-  pressed: { opacity: 0.7 },
-  dayName: {
-    color: Colors.textSecondary,
-    fontSize: 11,
-    fontWeight: '500',
-    letterSpacing: 2,
-    textTransform: 'uppercase',
-    width: 36,
-  },
-  dayNameToday: { color: Colors.mist },
-  dayDate: {
-    color: Colors.textPrimary,
-    fontSize: 22,
-    fontWeight: '700',
-    letterSpacing: -0.5,
-    width: 36,
-  },
-  densityBar: {
-    flex: 1,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: 'rgba(168,218,220,0.1)',
-    overflow: 'hidden',
-  },
-  densityFill: { height: '100%', backgroundColor: Colors.mist, opacity: 0.7 },
-  dayHours: {
-    color: Colors.textSecondary,
-    fontSize: 13,
-    fontWeight: '500',
-    width: 44,
-    textAlign: 'right',
-  },
-});
+function makeStyles(c: ThemeColors) {
+  return StyleSheet.create({
+    header: {
+      paddingBottom: spacing.md,
+    },
+    eyebrow: {
+      ...typography.caption,
+      color: c.text.tertiary,
+    },
+    titleRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.sm,
+      marginTop: spacing.xs,
+    },
+    navArrow: {
+      width: 32,
+      height: 32,
+      borderRadius: 16,
+      backgroundColor: c.glass.light,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    title: {
+      ...typography.displayMedium,
+      color: c.text.primary,
+      flex: 1,
+      textAlign: 'center',
+    },
+    subtitle: {
+      ...typography.body,
+      color: c.text.secondary,
+      marginTop: spacing.xs,
+    },
+    daysRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      marginTop: spacing.xl,
+      marginBottom: spacing.lg,
+    },
+    dayCol: {
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingHorizontal: spacing.xs,
+      paddingVertical: spacing.sm,
+      borderRadius: radius.md,
+      minWidth: 40,
+      minHeight: 64,
+      gap: spacing.xs,
+    },
+    dayColSelected: {
+      backgroundColor: c.glass.light,
+    },
+    dayLabel: {
+      ...typography.micro,
+      color: c.text.tertiary,
+    },
+    dayNum: {
+      width: 28,
+      height: 28,
+      borderRadius: 14,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    dayNumToday: {
+      backgroundColor: c.accent.blue,
+    },
+    dayNumText: {
+      ...typography.title2,
+    },
+    countDot: {
+      width: 6,
+      height: 6,
+      borderRadius: 3,
+      backgroundColor: c.accent.blue,
+    },
+    countDotPlaceholder: {
+      width: 6,
+      height: 6,
+    },
+    scroll: {
+      flex: 1,
+    },
+    loading: {
+      gap: spacing.md,
+    },
+    center: {
+      marginTop: spacing.xl,
+      alignItems: 'center',
+    },
+    errorText: {
+      marginBottom: spacing.md,
+    },
+    empty: {
+      marginTop: spacing.xl,
+    },
+    emptyBody: {
+      marginTop: spacing.sm,
+    },
+    taskList: {
+      gap: spacing.itemGap,
+    },
+    taskItem: {
+      marginBottom: spacing.xs,
+    },
+  });
+}

@@ -6,15 +6,31 @@
   "types": "./types/index.ts",
   "exports": {
     "./types": "./types/index.ts",
+    "./theme": "./theme/index.ts",
+    "./theme/*": "./theme/*.ts",
     "./constants/colors": "./constants/colors.ts",
     "./constants/typography": "./constants/typography.ts",
     "./constants/layout": "./constants/layout.ts",
+    "./constants/motion": "./constants/motion.ts",
     "./prompts/grader": "./prompts/grader.ts",
     "./prompts/copilot": "./prompts/copilot.ts",
+    "./prompts/router": "./prompts/router.ts",
     "./scheduler": "./scheduler.ts",
     "./supabase": "./supabase.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.106.2"
+  },
+  "peerDependencies": {
+    "@react-native-async-storage/async-storage": ">=1.0.0",
+    "react-native-reanimated": ">=3.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@react-native-async-storage/async-storage": {
+      "optional": false
+    },
+    "react-native-reanimated": {
+      "optional": false
+    }
   }
 }

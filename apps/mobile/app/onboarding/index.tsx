@@ -1,141 +1,204 @@
-import { useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useMemo } from 'react';
+import { View, StyleSheet, Text } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Colors } from '@chronos/shared/constants/colors';
-import { ChronosButton } from '../../components/ui/ChronosButton';
-import AmbientOrbs from '../../components/onboarding/AmbientOrbs';
-import { setAuthToken, setUserId } from '../../lib/storage';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
+import { radius, spacing, typography } from '@chronos/shared/theme';
+import type { ThemeColors } from '@chronos/shared/theme';
+import { useTheme, type ResolvedMode } from '../../lib/theme';
+import { AmbientOrbs } from '../../components/ui/AmbientOrbs';
+import { GlassCard } from '../../components/ui/GlassCard';
+import { AuraButton } from '../../components/ui/AuraButton';
+import { AuraSymbol } from '../../components/ui/AuraSymbol';
+import { enableGuestMode } from '../../lib/guest';
+
+const STAGGER_MS = 40;
+const STEPS_TOTAL = 5;
+const CURRENT_STEP = 0;
+
+// Background gradient stops differ per mode so the hero sits on a matched
+// atmosphere rather than fighting the canvas.
+function backdropColors(mode: ResolvedMode): [string, string, string] {
+  return mode === 'light'
+    ? ['#F8FAFC', '#F1F5F9', '#F8FAFC']
+    : ['#07090F', '#0D1117', '#07090F'];
+}
 
 export default function OnboardingWelcomeScreen() {
   const router = useRouter();
-  const [skipping, setSkipping] = useState(false);
+  const insets = useSafeAreaInsets();
+  const { colors, resolvedMode } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
 
-  /**
-   * Guest mode: lets the user try the app with mock data before committing
-   * to an account. Required by App Store 5.1.1 — apps can't gate trial of
-   * core functionality behind account creation. The auth guard in _layout
-   * reads this token and considers the user "signed in" for navigation
-   * purposes; demo-mode hooks render mock data.
-   */
-  const enterGuestMode = async () => {
-    setSkipping(true);
-    try {
-      await setAuthToken('guest');
-      await setUserId('guest-user');
-      router.replace('/(tabs)');
-    } finally {
-      setSkipping(false);
-    }
+  // Guideline 5.1.1 — let users try the app before creating an account.
+  const exploreAsGuest = async () => {
+    await enableGuestMode();
+    router.replace('/(tabs)');
   };
 
   return (
-    <SafeAreaView style={styles.root}>
+    <View style={styles.root}>
+      <LinearGradient
+        colors={backdropColors(resolvedMode)}
+        locations={[0, 0.5, 1]}
+        style={StyleSheet.absoluteFill}
+        start={{ x: 0.2, y: 0 }}
+        end={{ x: 0.8, y: 1 }}
+      />
       <AmbientOrbs />
 
-      <View style={styles.content}>
-        <View style={styles.wordmark}>
-          <Text style={styles.wordmarkText}>chronos</Text>
-          <View style={styles.glowDot} />
+      <View style={[styles.container, { paddingTop: insets.top + 24, paddingBottom: insets.bottom + 24 }]}>
+        {/* Progress dots */}
+        <Animated.View entering={FadeIn.duration(280)} style={styles.progressRow}>
+          {Array.from({ length: STEPS_TOTAL }).map((_, i) => (
+            <View
+              key={i}
+              style={[styles.dot, i === CURRENT_STEP && styles.dotActive]}
+            />
+          ))}
+        </Animated.View>
+
+        {/* Hero */}
+        <View style={styles.heroWrap}>
+          <Animated.View entering={FadeIn.delay(STAGGER_MS).duration(320)}>
+            <GlassCard intensity="light" style={styles.card}>
+              <View style={styles.cardInner}>
+                <View style={styles.iconCircle}>
+                  <AuraSymbol name="sparkles" size={36} color={colors.accent.blue} />
+                </View>
+
+                <Animated.View entering={FadeInDown.delay(STAGGER_MS * 2).duration(320)}>
+                  <Text style={styles.label}>WELCOME</Text>
+                </Animated.View>
+                <Animated.View entering={FadeInDown.delay(STAGGER_MS * 3).duration(320)}>
+                  <Text style={styles.title}>Your homework brain.</Text>
+                </Animated.View>
+                <Animated.View entering={FadeInDown.delay(STAGGER_MS * 4).duration(320)}>
+                  <Text style={styles.body}>
+                    Chronos watches your classes, drafts a plan every night, and
+                    turns your free time into a calm, glowing river.
+                  </Text>
+                </Animated.View>
+              </View>
+            </GlassCard>
+          </Animated.View>
         </View>
 
-        <View style={styles.heroText}>
-          <Text style={styles.taglineThin}>Your schedule,</Text>
-          <Text style={styles.taglineBold}>handled.</Text>
-        </View>
-
-        <Text style={styles.subCopy}>
-          Chronos connects to your classes, grades your workload, and builds a
-          real study plan around your actual life.
-        </Text>
+        {/* CTA */}
+        <Animated.View
+          entering={FadeIn.delay(STAGGER_MS * 5).duration(320)}
+          style={styles.ctaWrap}
+        >
+          <Text style={styles.hint}>TAKES ABOUT 1 MINUTE</Text>
+          <View style={styles.ctaButton}>
+            <AuraButton
+              label="Get started"
+              size="lg"
+              fullWidth
+              onPress={() => router.push('/onboarding/connect')}
+            />
+          </View>
+          <View style={styles.ctaButton}>
+            <AuraButton
+              label="Explore without an account"
+              variant="ghost"
+              fullWidth
+              onPress={exploreAsGuest}
+            />
+          </View>
+          <Text style={styles.disclaimer}>
+            No schedules are changed without your approval.
+          </Text>
+        </Animated.View>
       </View>
-
-      <View style={styles.footer}>
-        <ChronosButton
-          label="Connect your school"
-          onPress={() => router.push('/onboarding/connect')}
-          fullWidth
-        />
-        <ChronosButton
-          label="Try it first"
-          onPress={enterGuestMode}
-          loading={skipping}
-          variant="ghost"
-          fullWidth
-        />
-        <Text style={styles.footerNote}>
-          Takes about 2 minutes. No card required.
-        </Text>
-      </View>
-    </SafeAreaView>
+    </View>
   );
 }
 
-const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    backgroundColor: Colors.bgDark,
-    paddingHorizontal: 28,
-  },
-  content: {
-    flex: 1,
-    justifyContent: 'center',
-    gap: 24,
-  },
-  wordmark: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  wordmarkText: {
-    color: Colors.textPrimary,
-    fontSize: 22,
-    fontWeight: '300',
-    letterSpacing: 6,
-  },
-  glowDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: Colors.mist,
-    shadowColor: Colors.mist,
-    shadowRadius: 6,
-    shadowOpacity: 0.9,
-    shadowOffset: { width: 0, height: 0 },
-  },
-  heroText: {
-    gap: 0,
-  },
-  taglineThin: {
-    color: Colors.textSecondary,
-    fontSize: 44,
-    fontWeight: '300',
-    letterSpacing: -1.2,
-    lineHeight: 52,
-  },
-  taglineBold: {
-    color: Colors.textPrimary,
-    fontSize: 44,
-    fontWeight: '700',
-    letterSpacing: -1.2,
-    lineHeight: 52,
-  },
-  subCopy: {
-    color: Colors.textSecondary,
-    fontSize: 15,
-    fontWeight: '400',
-    lineHeight: 23,
-    maxWidth: 320,
-  },
-  footer: {
-    paddingBottom: 16,
-    gap: 14,
-  },
-  footerNote: {
-    color: Colors.textSecondary,
-    fontSize: 13,
-    fontWeight: '400',
-    textAlign: 'center',
-    opacity: 0.7,
-  },
-});
+function makeStyles(c: ThemeColors) {
+  return StyleSheet.create({
+    root: {
+      flex: 1,
+      backgroundColor: c.background.primary,
+    },
+    container: {
+      flex: 1,
+      paddingHorizontal: spacing.screenPadding,
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    },
+    progressRow: {
+      flexDirection: 'row',
+      gap: spacing.xs,
+      paddingTop: spacing.sm,
+    },
+    dot: {
+      width: 4,
+      height: 4,
+      borderRadius: 2,
+      backgroundColor: c.border.subtle,
+    },
+    dotActive: {
+      width: 8,
+      backgroundColor: c.accent.blue,
+    },
+    heroWrap: {
+      width: '100%',
+      maxWidth: 340,
+      alignSelf: 'center',
+    },
+    card: {
+      borderRadius: radius.xl,
+    },
+    cardInner: {
+      padding: spacing.xl,
+      alignItems: 'flex-start',
+    },
+    iconCircle: {
+      width: 64,
+      height: 64,
+      borderRadius: 32,
+      backgroundColor: c.glass.accent,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginBottom: spacing.lg,
+      borderWidth: 1,
+      borderColor: c.border.accent,
+    },
+    label: {
+      ...typography.caption,
+      color: c.text.tertiary,
+      marginBottom: spacing.sm,
+    },
+    title: {
+      ...typography.title1,
+      color: c.text.primary,
+      marginBottom: spacing.sm,
+    },
+    body: {
+      ...typography.body,
+      color: c.text.secondary,
+      marginTop: spacing.xs,
+    },
+    ctaWrap: {
+      width: '100%',
+      alignItems: 'center',
+    },
+    hint: {
+      ...typography.micro,
+      color: c.text.tertiary,
+      marginBottom: spacing.sm,
+    },
+    ctaButton: {
+      width: '100%',
+      maxWidth: 340,
+    },
+    disclaimer: {
+      ...typography.callout,
+      marginTop: spacing.md,
+      color: c.text.tertiary,
+      textAlign: 'center',
+    },
+  });
+}

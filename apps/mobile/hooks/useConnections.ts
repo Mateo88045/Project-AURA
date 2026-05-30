@@ -1,83 +1,69 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import { supabase } from '@chronos/shared/supabase';
 import type { Connection } from '@chronos/shared/types';
-import { getSupabaseOrNull } from '../lib/supabase';
 
-interface Result {
-  data: Connection[];
+interface ConnectionsResult {
+  connections: Connection[];
   loading: boolean;
-  error: Error | null;
+  error: string | null;
   refetch: () => void;
 }
 
-export function useConnections(userId: string | null): Result {
-  const supabase = getSupabaseOrNull();
-  const [data, setData] = useState<Connection[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
-
-  const load = useCallback(async () => {
-    if (!supabase) {
-      setData(MOCK_CONNECTIONS);
-      setLoading(false);
-      return;
-    }
-    if (!userId) {
-      setData([]);
-      setLoading(false);
-      return;
-    }
-    setLoading(true);
-    setError(null);
-    // Important: never select the token columns on the client. They are
-    // server-only and the encrypted variants stay in the DB.
-    const { data: rows, error: err } = await supabase
-      .from('connections')
-      .select('id, user_id, platform, status, last_synced_at, created_at')
-      .eq('user_id', userId);
-    if (err) {
-      setError(new Error(err.message));
-      setLoading(false);
-      return;
-    }
-    type Row = {
-      id: string;
-      user_id: string;
-      platform: string;
-      status: string;
-      last_synced_at: string | null;
-      created_at: string;
-    };
-    setData(
-      (rows ?? []).map((r: Row) => ({
-        id: r.id,
-        userId: r.user_id,
-        platform: r.platform as Connection['platform'],
-        oauthToken: '',
-        refreshToken: '',
-        status: r.status as Connection['status'],
-        lastSyncedAt: r.last_synced_at ?? r.created_at,
-        createdAt: r.created_at,
-      })),
-    );
-    setLoading(false);
-  }, [supabase, userId]);
+export function useConnections(userId: string): ConnectionsResult {
+  const [connections, setConnections] = useState<Connection[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+  const [trigger, setTrigger] = useState(0);
+  const refetch = useCallback(() => setTrigger((t) => t + 1), []);
 
   useEffect(() => {
-    void load();
-  }, [load]);
+    let isMounted = true;
 
-  return { data, loading, error, refetch: load };
+    async function load() {
+      setLoading(true);
+      setError(null);
+
+      try {
+        const { data, error: queryError } = await supabase
+          .from('connections')
+          .select('*')
+          .eq('user_id', userId);
+
+        if (!isMounted) return;
+
+        if (queryError) {
+          setError(queryError.message);
+          setLoading(false);
+          return;
+        }
+
+        const mapped: Connection[] = (data ?? []).map((row) => ({
+          id: row.id,
+          userId: row.user_id,
+          platform: row.platform,
+          oauthToken: row.oauth_token ?? '',
+          refreshToken: row.refresh_token ?? '',
+          canvasApiToken: row.canvas_api_token ?? undefined,
+          status: row.status,
+          lastSyncedAt: row.last_synced_at ?? '',
+          createdAt: row.created_at,
+        }));
+
+        setConnections(mapped);
+        setLoading(false);
+      } catch (err) {
+        if (!isMounted) return;
+        setError(err instanceof Error ? err.message : 'Unknown error');
+        setLoading(false);
+      }
+    }
+
+    load();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [userId, trigger]);
+
+  return { connections, loading, error, refetch };
 }
-
-const MOCK_CONNECTIONS: Connection[] = [
-  {
-    id: 'c1',
-    userId: 'demo-user',
-    platform: 'google_classroom',
-    oauthToken: '',
-    refreshToken: '',
-    status: 'active',
-    lastSyncedAt: new Date(Date.now() - 1000 * 60 * 45).toISOString(),
-    createdAt: '2025-09-15T00:00:00Z',
-  },
-];

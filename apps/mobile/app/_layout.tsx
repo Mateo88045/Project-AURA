@@ -1,106 +1,125 @@
 import '../global.css';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
+import { StyleSheet, View } from 'react-native';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { View } from 'react-native';
-import { Colors } from '@chronos/shared/constants/colors';
-import { ToastProvider } from '../components/ui/ChronosToast';
-import { DemoModeBanner } from '../components/ui/DemoModeBanner';
-import { getAuthToken } from '../lib/storage';
-import { getSupabaseOrNull } from '../lib/supabase';
-import { IS_DEMO_MODE } from '../lib/env';
-import { registerPushToken, subscribeToNotifications } from '../services/notifications';
+import * as Notifications from 'expo-notifications';
+import { ThemeProvider, useTheme } from '../lib/theme';
+import { AuraToastProvider } from '../components/ui/AuraToast';
+import { useAuth } from '../hooks/useAuth';
+import { useOnboardingGate } from '../hooks/useOnboardingGate';
+
+// Handle foreground notifications — show as banners
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: false,
+    shouldShowBanner: true,
+    shouldShowList: true,
+  }),
+});
 
 export default function RootLayout() {
   return (
-    <GestureHandlerRootView style={{ flex: 1, backgroundColor: Colors.bgDark }}>
+    <GestureHandlerRootView style={styles.flex}>
       <SafeAreaProvider>
-        <ToastProvider>
-          <StatusBar style="light" />
-          <AuthAndNotifications />
-          <DemoModeBanner />
-          <Stack
-            screenOptions={{
-              headerShown: false,
-              contentStyle: { backgroundColor: Colors.bgDark },
-              animation: 'fade',
-            }}
-          >
-            <Stack.Screen name="(tabs)" />
-            <Stack.Screen name="onboarding" />
-            <Stack.Screen
-              name="schedule/review"
-              options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
-            />
-            <Stack.Screen name="ai/chat" options={{ animation: 'slide_from_right' }} />
-            <Stack.Screen
-              name="photo/capture"
-              options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
-            />
-            <Stack.Screen name="tasks/[id]" options={{ animation: 'slide_from_right' }} />
-            <Stack.Screen name="briefing" options={{ animation: 'slide_from_bottom' }} />
-            <Stack.Screen name="settings/connections" />
-            <Stack.Screen name="settings/guardrails" />
-            <Stack.Screen name="settings/brain" />
-            <Stack.Screen name="settings/fixed-events" />
-          </Stack>
-        </ToastProvider>
+        <ThemeProvider>
+          <ThemedApp />
+        </ThemeProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );
 }
 
-function AuthAndNotifications() {
+function ThemedApp() {
+  const { colors, resolvedMode } = useTheme();
+  const { isAuthenticated, user, loading: authLoading } = useAuth();
+  const { isComplete, targetRoute, loading: gateLoading } = useOnboardingGate(
+    isAuthenticated ? user?.id ?? null : null,
+  );
   const router = useRouter();
   const segments = useSegments();
-  const [bootstrapped, setBootstrapped] = useState(false);
 
   useEffect(() => {
-    let mounted = true;
-    const supabase = getSupabaseOrNull();
+    if (authLoading || gateLoading) return;
 
-    async function checkAndRoute() {
-      const inOnboarding = segments[0] === 'onboarding';
-      let signedIn = false;
-      if (supabase) {
-        const { data } = await supabase.auth.getSession();
-        signedIn = !!data.session;
-      } else if (IS_DEMO_MODE) {
-        signedIn = !!(await getAuthToken());
-      }
-      if (!mounted) return;
-      if (!signedIn && !inOnboarding) router.replace('/onboarding');
-      setBootstrapped(true);
+    const inAuthGroup = segments[0] === 'auth';
+    const inOnboardingGroup = segments[0] === 'onboarding';
+
+    // Not authenticated → send to auth
+    if (!isAuthenticated) {
+      if (!inAuthGroup) router.replace('/auth');
+      return;
     }
 
-    void checkAndRoute();
+    // Authenticated but onboarding incomplete → send to correct onboarding step
+    if (!isComplete) {
+      // Already in onboarding — let them navigate within it
+      if (inOnboardingGroup) return;
+      router.replace(targetRoute as '/onboarding');
+      return;
+    }
 
-    if (!supabase) return () => {
-      mounted = false;
-    };
+    // Authenticated + onboarding complete → send to main app
+    if (inAuthGroup || inOnboardingGroup) {
+      router.replace('/(tabs)');
+    }
+  }, [isAuthenticated, authLoading, gateLoading, isComplete, targetRoute, segments, router]);
 
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((event: string) => {
-      if (!mounted) return;
-      if (event === 'SIGNED_OUT') router.replace('/onboarding');
-    });
-    return () => {
-      mounted = false;
-      subscription.unsubscribe();
-    };
-    // Intentionally run once on mount; auth state listener handles updates.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  useEffect(() => {
-    if (!bootstrapped) return;
-    registerPushToken().catch(() => {});
-    const unsubscribe = subscribeToNotifications();
-    return unsubscribe;
-  }, [bootstrapped]);
-
-  return <View />;
+  return (
+    <View style={[styles.flex, { backgroundColor: colors.background.primary }]}>
+      <AuraToastProvider>
+        <StatusBar style={resolvedMode === 'light' ? 'dark' : 'light'} />
+        <Stack
+          screenOptions={{
+            headerShown: false,
+            contentStyle: { backgroundColor: colors.background.primary },
+            animation: 'fade',
+            animationDuration: 250,
+          }}
+        >
+          <Stack.Screen name="(tabs)" />
+          <Stack.Screen
+            name="auth"
+            options={{ animation: 'fade' }}
+          />
+          <Stack.Screen
+            name="onboarding"
+            options={{ animation: 'fade_from_bottom' }}
+          />
+          <Stack.Screen
+            name="schedule/review"
+            options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
+          />
+          <Stack.Screen
+            name="briefing"
+            options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
+          />
+          <Stack.Screen
+            name="tasks/[id]/index"
+            options={{ animation: 'ios_from_right' }}
+          />
+          <Stack.Screen
+            name="tasks/[id]/complete"
+            options={{ presentation: 'transparentModal', animation: 'fade' }}
+          />
+          <Stack.Screen
+            name="tasks/new"
+            options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
+          />
+          <Stack.Screen
+            name="tasks/[id]/active"
+            options={{ animation: 'ios_from_right' }}
+          />
+        </Stack>
+      </AuraToastProvider>
+    </View>
+  );
 }
+
+const styles = StyleSheet.create({
+  flex: { flex: 1 },
+});

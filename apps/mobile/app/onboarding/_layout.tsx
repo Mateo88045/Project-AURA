@@ -1,12 +1,13 @@
 import { Stack } from 'expo-router';
-import { Colors } from '@chronos/shared/constants/colors';
+import { useTheme } from '../../lib/theme';
 
 export default function OnboardingLayout() {
+  const { colors } = useTheme();
   return (
     <Stack
       screenOptions={{
         headerShown: false,
-        contentStyle: { backgroundColor: Colors.bgDark },
+        contentStyle: { backgroundColor: colors.background.primary },
         animation: 'slide_from_right',
       }}
     />
