@@ -9,7 +9,7 @@ export default {
   theme: {
     extend: {
       colors: {
-        aura: {
+        chronos: {
           dark: '#0A1118',
           light: '#F1FAEE',
           mist: '#A8DADC',

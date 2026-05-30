@@ -1,5 +1,5 @@
 // ============================================================================
-// Aura — Deterministic Scheduling Engine
+// Chronos — Deterministic Scheduling Engine
 //
 // Per blueprint §6.4 this is PURE TYPESCRIPT. Never calls an LLM. Given a set
 // of tasks, fixed events, and guardrails, it greedily fits work into the

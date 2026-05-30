@@ -2,7 +2,7 @@ import { ReactNode, useEffect } from 'react';
 import { Modal, Pressable, View, Text, StyleSheet, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, withSpring } from 'react-native-reanimated';
-import { Colors } from '@aura/shared/constants/colors';
+import { Colors } from '@chronos/shared/constants/colors';
 
 interface Props {
   open: boolean;
@@ -11,7 +11,7 @@ interface Props {
   children: ReactNode;
 }
 
-export function AuraSheet({ open, onClose, title, children }: Props) {
+export function ChronosSheet({ open, onClose, title, children }: Props) {
   const opacity = useSharedValue(0);
   const translateY = useSharedValue(60);
 

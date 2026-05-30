@@ -1,7 +1,7 @@
 import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
 import { MessageCircle, Camera, BookOpen } from 'lucide-react-native';
-import { Colors } from '@aura/shared/constants/colors';
+import { Colors } from '@chronos/shared/constants/colors';
 import { ScreenContainer } from '../../components/ui/ScreenContainer';
 
 interface Entry {
@@ -16,14 +16,14 @@ export default function AiHubScreen() {
 
   const entries: Entry[] = [
     {
-      title: 'Chat with Aura',
+      title: 'Chat with Chronos',
       body: 'Move things around, free up an evening, add a task — out loud.',
       icon: <MessageCircle color={Colors.mist} size={22} strokeWidth={1.8} />,
       onPress: () => router.push('/ai/chat'),
     },
     {
       title: 'Snap an assignment',
-      body: 'Photograph a worksheet or handout. Aura reads it and schedules it.',
+      body: 'Photograph a worksheet or handout. Chronos reads it and schedules it.',
       icon: <Camera color={Colors.mist} size={22} strokeWidth={1.8} />,
       onPress: () => router.push('/photo/capture'),
     },
@@ -38,7 +38,7 @@ export default function AiHubScreen() {
   return (
     <ScreenContainer>
       <Text style={styles.h1}>AI Hub</Text>
-      <Text style={styles.sub}>Three ways to lean on Aura.</Text>
+      <Text style={styles.sub}>Three ways to lean on Chronos.</Text>
       <View style={{ gap: 12, marginTop: 28 }}>
         {entries.map((e) => (
           <Pressable

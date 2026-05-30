@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
-import type { ConversationMessage } from '@aura/shared/types';
-import type { Json } from '@aura/shared/supabase';
+import type { ConversationMessage } from '@chronos/shared/types';
+import type { Json } from '@chronos/shared/supabase';
 import { getSupabaseOrNull } from '../lib/supabase';
 import { triggerCopilotAction } from '../services/jobs';
 

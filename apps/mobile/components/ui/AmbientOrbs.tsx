@@ -1,5 +1,5 @@
 import { View, StyleSheet } from 'react-native';
-import { Colors } from '@aura/shared/constants/colors';
+import { Colors } from '@chronos/shared/constants/colors';
 
 type Orb = { top: number; left: number; size: number; color: string; opacity: number };
 

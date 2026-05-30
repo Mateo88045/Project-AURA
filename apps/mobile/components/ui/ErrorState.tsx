@@ -1,6 +1,6 @@
 import { View, Text, StyleSheet } from 'react-native';
-import { Colors } from '@aura/shared/constants/colors';
-import { AuraButton } from './AuraButton';
+import { Colors } from '@chronos/shared/constants/colors';
+import { ChronosButton } from './ChronosButton';
 
 interface Props {
   title?: string;
@@ -19,7 +19,7 @@ export function ErrorState({
       <Text style={styles.message}>{message}</Text>
       {onRetry ? (
         <View style={styles.button}>
-          <AuraButton label="Try again" onPress={onRetry} variant="secondary" size="sm" />
+          <ChronosButton label="Try again" onPress={onRetry} variant="secondary" size="sm" />
         </View>
       ) : null}
     </View>

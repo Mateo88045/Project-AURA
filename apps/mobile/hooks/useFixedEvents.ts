@@ -1,11 +1,12 @@
-import { useEffect, useState } from 'react';
-import type { FixedEvent } from '@aura/shared/types';
+import { useCallback, useEffect, useState } from 'react';
+import type { FixedEvent } from '@chronos/shared/types';
 import { getSupabaseOrNull } from '../lib/supabase';
 
 interface Result {
   data: FixedEvent[];
   loading: boolean;
   error: Error | null;
+  refetch: () => void;
 }
 
 export function useFixedEvents(userId: string | null): Result {
@@ -14,60 +15,67 @@ export function useFixedEvents(userId: string | null): Result {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
+  const load = useCallback(async () => {
+    if (!supabase) {
+      setData(MOCK_EVENTS);
+      setLoading(false);
+      return;
+    }
+    if (!userId) {
+      setData([]);
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    const { data: rows, error: err } = await supabase
+      .from('fixed_events')
+      .select('*')
+      .eq('user_id', userId)
+      .order('start_time', { ascending: true });
+    if (err) {
+      setError(new Error(err.message));
+      setLoading(false);
+      return;
+    }
+    type Row = {
+      id: string;
+      user_id: string;
+      title: string;
+      start_time: string;
+      end_time: string;
+      days_of_week: number[];
+      recurrence_rule: string | null;
+      color: string | null;
+      created_at: string;
+    };
+    setData(
+      (rows ?? []).map((r: Row) => ({
+        id: r.id,
+        userId: r.user_id,
+        title: r.title,
+        startTime: r.start_time.slice(0, 5),
+        endTime: r.end_time.slice(0, 5),
+        daysOfWeek: r.days_of_week,
+        recurrenceRule: r.recurrence_rule ?? undefined,
+        color: r.color ?? undefined,
+        createdAt: r.created_at,
+      })),
+    );
+    setLoading(false);
+  }, [supabase, userId]);
+
   useEffect(() => {
     let cancelled = false;
-    async function run() {
-      if (!supabase) {
-        setData(MOCK_EVENTS);
-        setLoading(false);
-        return;
-      }
-      if (!userId) {
-        setData([]);
-        setLoading(false);
-        return;
-      }
-      setLoading(true);
-      const { data: rows, error: err } = await supabase
-        .from('fixed_events')
-        .select('*')
-        .eq('user_id', userId)
-        .order('start_time', { ascending: true });
-      if (cancelled) return;
-      if (err) setError(new Error(err.message));
-      type Row = {
-        id: string;
-        user_id: string;
-        title: string;
-        start_time: string;
-        end_time: string;
-        days_of_week: number[];
-        recurrence_rule: string | null;
-        color: string | null;
-        created_at: string;
-      };
-      setData(
-        (rows ?? []).map((r: Row) => ({
-          id: r.id,
-          userId: r.user_id,
-          title: r.title,
-          startTime: r.start_time.slice(0, 5),
-          endTime: r.end_time.slice(0, 5),
-          daysOfWeek: r.days_of_week,
-          recurrenceRule: r.recurrence_rule ?? undefined,
-          color: r.color ?? undefined,
-          createdAt: r.created_at,
-        })),
-      );
-      setLoading(false);
-    }
-    void run();
+    void load().catch(() => {
+      if (!cancelled) setLoading(false);
+    });
     return () => {
       cancelled = true;
     };
-  }, [supabase, userId]);
+  }, [load]);
 
-  return { data, loading, error };
+  return { data, loading, error, refetch: load };
 }
 
 const MOCK_EVENTS: FixedEvent[] = [

@@ -1,12 +1,33 @@
+import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { Colors } from '@aura/shared/constants/colors';
-import { AuraButton } from '../../components/ui/AuraButton';
+import { Colors } from '@chronos/shared/constants/colors';
+import { ChronosButton } from '../../components/ui/ChronosButton';
 import AmbientOrbs from '../../components/onboarding/AmbientOrbs';
+import { setAuthToken, setUserId } from '../../lib/storage';
 
 export default function OnboardingWelcomeScreen() {
   const router = useRouter();
+  const [skipping, setSkipping] = useState(false);
+
+  /**
+   * Guest mode: lets the user try the app with mock data before committing
+   * to an account. Required by App Store 5.1.1 — apps can't gate trial of
+   * core functionality behind account creation. The auth guard in _layout
+   * reads this token and considers the user "signed in" for navigation
+   * purposes; demo-mode hooks render mock data.
+   */
+  const enterGuestMode = async () => {
+    setSkipping(true);
+    try {
+      await setAuthToken('guest');
+      await setUserId('guest-user');
+      router.replace('/(tabs)');
+    } finally {
+      setSkipping(false);
+    }
+  };
 
   return (
     <SafeAreaView style={styles.root}>
@@ -14,7 +35,7 @@ export default function OnboardingWelcomeScreen() {
 
       <View style={styles.content}>
         <View style={styles.wordmark}>
-          <Text style={styles.wordmarkText}>aura</Text>
+          <Text style={styles.wordmarkText}>chronos</Text>
           <View style={styles.glowDot} />
         </View>
 
@@ -24,20 +45,21 @@ export default function OnboardingWelcomeScreen() {
         </View>
 
         <Text style={styles.subCopy}>
-          Aura connects to your classes, grades your workload, and builds a
+          Chronos connects to your classes, grades your workload, and builds a
           real study plan around your actual life.
         </Text>
       </View>
 
       <View style={styles.footer}>
-        <AuraButton
+        <ChronosButton
           label="Connect your school"
           onPress={() => router.push('/onboarding/connect')}
           fullWidth
         />
-        <AuraButton
-          label="I'll connect later"
-          onPress={() => router.push('/onboarding/connect')}
+        <ChronosButton
+          label="Try it first"
+          onPress={enterGuestMode}
+          loading={skipping}
           variant="ghost"
           fullWidth
         />

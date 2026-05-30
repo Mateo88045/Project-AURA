@@ -1,14 +1,14 @@
 import { useCallback, useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Colors } from '@aura/shared/constants/colors';
+import { Colors } from '@chronos/shared/constants/colors';
 import { ScreenContainer } from '../../components/ui/ScreenContainer';
 import { RiverTimeline } from '../../components/schedule/RiverTimeline';
 import { TimelineBlock } from '../../components/schedule/TimelineBlock';
-import { AuraSkeleton } from '../../components/ui/AuraSkeleton';
+import { ChronosSkeleton } from '../../components/ui/ChronosSkeleton';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { ErrorState } from '../../components/ui/ErrorState';
-import { AuraButton } from '../../components/ui/AuraButton';
+import { ChronosButton } from '../../components/ui/ChronosButton';
 import { useCurrentUser } from '../../hooks/useCurrentUser';
 import { useScheduledBlocks } from '../../hooks/useScheduledBlocks';
 import { useFixedEvents } from '../../hooks/useFixedEvents';
@@ -51,7 +51,7 @@ export default function TodayScreen() {
           <Text style={styles.shadowText}>
             New schedule draft waiting for your review.
           </Text>
-          <AuraButton
+          <ChronosButton
             label="Review"
             size="sm"
             variant="secondary"
@@ -62,10 +62,10 @@ export default function TodayScreen() {
 
       {blocks.loading ? (
         <View style={{ gap: 16, marginTop: 8 }}>
-          <AuraSkeleton height={20} width="40%" />
-          <AuraSkeleton height={56} />
-          <AuraSkeleton height={56} />
-          <AuraSkeleton height={56} />
+          <ChronosSkeleton height={20} width="40%" />
+          <ChronosSkeleton height={56} />
+          <ChronosSkeleton height={56} />
+          <ChronosSkeleton height={56} />
         </View>
       ) : blocks.error ? (
         <ErrorState onRetry={blocks.refetch} />
@@ -74,7 +74,7 @@ export default function TodayScreen() {
           title="Your river is still."
           body="Connect a class platform or add a task to start the flow."
           action={
-            <AuraButton
+            <ChronosButton
               label="Add a task"
               onPress={() => router.push('/ai/chat')}
               variant="primary"

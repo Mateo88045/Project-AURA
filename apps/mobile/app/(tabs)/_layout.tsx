@@ -1,7 +1,7 @@
 import { Tabs } from 'expo-router';
 import { StyleSheet } from 'react-native';
 import { Home, Calendar, Sparkles, Settings as SettingsIcon } from 'lucide-react-native';
-import { Colors } from '@aura/shared/constants/colors';
+import { Colors } from '@chronos/shared/constants/colors';
 
 export default function TabLayout() {
   return (

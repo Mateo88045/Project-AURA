@@ -1,12 +1,12 @@
 {
-  "name": "aura",
+  "name": "chronos",
   "private": true,
   "version": "0.1.0",
-  "description": "Aura — Agentic scheduling app for high school students",
+  "description": "Chronos — Agentic scheduling app for high school students",
   "scripts": {
-    "mobile": "pnpm --filter @aura/mobile start",
-    "mobile:ios": "pnpm --filter @aura/mobile ios",
-    "mobile:android": "pnpm --filter @aura/mobile android",
+    "mobile": "pnpm --filter @chronos/mobile start",
+    "mobile:ios": "pnpm --filter @chronos/mobile ios",
+    "mobile:android": "pnpm --filter @chronos/mobile android",
     "typecheck": "tsc --noEmit",
     "clean": "pnpm -r exec rm -rf node_modules && rm -rf node_modules"
   },

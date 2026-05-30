@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import type { Difficulty, OnboardingAnswers, SubjectStrength } from '@aura/shared/types';
+import type { Difficulty, OnboardingAnswers, SubjectStrength } from '@chronos/shared/types';
 import { getSupabaseOrNull } from '../lib/supabase';
 import { IS_DEMO_MODE } from '../lib/env';
 import { sanitizeDisplayName } from '../lib/validation';

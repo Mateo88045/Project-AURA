@@ -1,11 +1,11 @@
 {
-  "name": "@aura/trigger",
+  "name": "@chronos/trigger",
   "version": "0.1.0",
   "private": true,
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "dependencies": {
-    "@aura/shared": "workspace:*"
+    "@chronos/shared": "workspace:*"
   },
   "devDependencies": {
     "@trigger.dev/sdk": "^3.0.0",

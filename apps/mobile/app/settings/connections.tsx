@@ -1,15 +1,16 @@
 import { useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Colors } from '@aura/shared/constants/colors';
+import { Colors } from '@chronos/shared/constants/colors';
 import { ScreenContainer } from '../../components/ui/ScreenContainer';
 import { ScreenHeader } from '../../components/ui/ScreenHeader';
-import { AuraSkeleton } from '../../components/ui/AuraSkeleton';
-import { AuraButton } from '../../components/ui/AuraButton';
+import { ChronosSkeleton } from '../../components/ui/ChronosSkeleton';
+import { ChronosButton } from '../../components/ui/ChronosButton';
 import { EmptyState } from '../../components/ui/EmptyState';
+import { ErrorState } from '../../components/ui/ErrorState';
 import { useCurrentUser } from '../../hooks/useCurrentUser';
 import { useConnections } from '../../hooks/useConnections';
-import { useToast } from '../../components/ui/AuraToast';
+import { useToast } from '../../components/ui/ChronosToast';
 import { getSupabaseOrNull } from '../../lib/supabase';
 
 const PLATFORM_LABELS = {
@@ -27,7 +28,7 @@ export default function ConnectionsHub() {
   const router = useRouter();
   const toast = useToast();
   const { data: user } = useCurrentUser();
-  const { data, loading } = useConnections(user?.id ?? null);
+  const { data, loading, error, refetch } = useConnections(user?.id ?? null);
   // Optimistic removal: ids disconnected locally while the DB write is in flight
   const [removed, setRemoved] = useState<Set<string>>(new Set());
 
@@ -66,15 +67,20 @@ export default function ConnectionsHub() {
       <ScreenHeader title="Connections" eyebrow="Settings" />
       {loading ? (
         <View style={{ gap: 12 }}>
-          <AuraSkeleton height={72} />
-          <AuraSkeleton height={72} />
+          <ChronosSkeleton height={72} />
+          <ChronosSkeleton height={72} />
         </View>
+      ) : error ? (
+        <ErrorState
+          message="Couldn't load your connections."
+          onRetry={refetch}
+        />
       ) : visible.length === 0 ? (
         <EmptyState
           title="No platforms connected."
           body="Connect Google Classroom or Canvas to start pulling assignments."
           action={
-            <AuraButton
+            <ChronosButton
               label="Connect now"
               onPress={() => router.push('/onboarding/connect')}
               variant="primary"
@@ -102,7 +108,7 @@ export default function ConnectionsHub() {
                     {c.status}
                   </Text>
                 </View>
-                <AuraButton
+                <ChronosButton
                   label="Disconnect"
                   onPress={() => void revoke(c.id)}
                   variant="ghost"
@@ -112,7 +118,7 @@ export default function ConnectionsHub() {
             </View>
           ))}
           <View style={{ marginTop: 16 }}>
-            <AuraButton
+            <ChronosButton
               label="Connect another platform"
               onPress={() => router.push('/onboarding/connect')}
               variant="secondary"

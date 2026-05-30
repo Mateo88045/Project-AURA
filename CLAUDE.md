@@ -1,4 +1,4 @@
-# CLAUDE.md — Aura Development Context
+# CLAUDE.md — Chronos Development Context
 
 > Read this file at the start of every session. It is the single source of truth
 > for all architectural decisions, conventions, and constraints. Never deviate
@@ -8,7 +8,7 @@
 
 ## Blueprint Document — Always Read Before Building
 
-The full product and architecture spec is in **`Aura_MVP_Blueprint_v3.docx`**.
+The full product and architecture spec is in **`Chronos_MVP_Blueprint_v3.docx`**.
 It is always available in your context window.
 
 ### When to reference the blueprint
@@ -49,9 +49,9 @@ The blueprint is the *product and architecture truth*; CLAUDE.md is the
 
 ---
 
-## What Aura Is
+## What Chronos Is
 
-Aura is an agentic scheduling app for U.S. high school students. It autonomously
+Chronos is an agentic scheduling app for U.S. high school students. It autonomously
 connects to educational platforms (Google Classroom, Canvas), pulls assignments,
 grades their difficulty with AI, and dynamically schedules them into the student's
 free time around fixed events (classes, sports, meals).
@@ -60,7 +60,7 @@ free time around fixed events (classes, sports, meals).
 
 **Target user:** U.S. high schoolers (grades 9–12). Assignments are drip-fed
 nightly through platforms like Google Classroom with 24–48 hour turnaround. The
-autonomous daily intake pipeline IS the product. Without it, Aura is just a to-do
+autonomous daily intake pipeline IS the product. Without it, Chronos is just a to-do
 list.
 
 ---
@@ -250,7 +250,7 @@ conversations
 
 ## UI System — The "Anti-Grid" Design Language
 
-Aura's UI is **atmospheric minimalism**. The schedule is a *river, not a grid* —
+Chronos's UI is **atmospheric minimalism**. The schedule is a *river, not a grid* —
 events flow along a glowing vertical thread. No card grids. No spreadsheet layouts.
 Inspired by Apple Weather, Linear, and Things 3.
 
@@ -267,17 +267,17 @@ We do **not** use shadcn/ui directly (it is a web library). We use it as a
 - When building a new component, ask: "What would the shadcn version of this look
   like, and how do I translate that to NativeWind?"
 
-**shadcn components and their Aura RN equivalents to build:**
+**shadcn components and their Chronos RN equivalents to build:**
 
-| shadcn (web reference) | Aura RN Component | Location |
+| shadcn (web reference) | Chronos RN Component | Location |
 |---|---|---|
-| Button | `<AuraButton />` | `/apps/mobile/components/ui/AuraButton.tsx` |
+| Button | `<ChronosButton />` | `/apps/mobile/components/ui/ChronosButton.tsx` |
 | Badge | `<DifficultyBadge />` | `/apps/mobile/components/ui/DifficultyBadge.tsx` |
-| Sheet (bottom) | `<AuraSheet />` | `/apps/mobile/components/ui/AuraSheet.tsx` |
+| Sheet (bottom) | `<ChronosSheet />` | `/apps/mobile/components/ui/ChronosSheet.tsx` |
 | Card | `<TaskCard />` | `/apps/mobile/components/ui/TaskCard.tsx` |
-| Avatar | `<AuraAvatar />` | `/apps/mobile/components/ui/AuraAvatar.tsx` |
-| Skeleton | `<AuraSkeleton />` | `/apps/mobile/components/ui/AuraSkeleton.tsx` |
-| Toast | `<AuraToast />` | `/apps/mobile/components/ui/AuraToast.tsx` |
+| Avatar | `<ChronosAvatar />` | `/apps/mobile/components/ui/ChronosAvatar.tsx` |
+| Skeleton | `<ChronosSkeleton />` | `/apps/mobile/components/ui/ChronosSkeleton.tsx` |
+| Toast | `<ChronosToast />` | `/apps/mobile/components/ui/ChronosToast.tsx` |
 
 ### Color Palette
 
@@ -595,7 +595,7 @@ a screen without confirming each point.
 |---|---|
 | Connections Hub | `/settings/connections` |
 | Guardrails Editor | `/settings/guardrails` |
-| Aura's Brain Viewer | `/settings/brain` |
+| Chronos's Brain Viewer | `/settings/brain` |
 | Task Detail / Edit | `/tasks/[id]` |
 | Post-Task Feedback | `/tasks/[id]/complete` |
 | Sunday Briefing | `/briefing` |

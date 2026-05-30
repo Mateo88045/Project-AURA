@@ -1,7 +1,7 @@
 import { Pressable, Text, ActivityIndicator, View, StyleSheet } from 'react-native';
 import { ReactNode } from 'react';
 import * as Haptics from 'expo-haptics';
-import { Colors } from '@aura/shared/constants/colors';
+import { Colors } from '@chronos/shared/constants/colors';
 
 type Variant = 'primary' | 'secondary' | 'ghost' | 'destructive';
 type Size = 'sm' | 'md' | 'lg';
@@ -19,7 +19,7 @@ interface Props {
   haptic?: boolean;
 }
 
-export function AuraButton({
+export function ChronosButton({
   label,
   onPress,
   variant = 'primary',

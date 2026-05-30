@@ -15,7 +15,7 @@ interface Props {
   style?: object;
 }
 
-export function AuraSkeleton({ width = '100%', height = 14, radius = 6, style }: Props) {
+export function ChronosSkeleton({ width = '100%', height = 14, radius = 6, style }: Props) {
   const shimmer = useSharedValue(0.35);
 
   useEffect(() => {

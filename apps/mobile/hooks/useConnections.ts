@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import type { Connection } from '@aura/shared/types';
+import type { Connection } from '@chronos/shared/types';
 import { getSupabaseOrNull } from '../lib/supabase';
 
 interface Result {
@@ -27,13 +27,18 @@ export function useConnections(userId: string | null): Result {
       return;
     }
     setLoading(true);
+    setError(null);
     // Important: never select the token columns on the client. They are
     // server-only and the encrypted variants stay in the DB.
     const { data: rows, error: err } = await supabase
       .from('connections')
       .select('id, user_id, platform, status, last_synced_at, created_at')
       .eq('user_id', userId);
-    if (err) setError(new Error(err.message));
+    if (err) {
+      setError(new Error(err.message));
+      setLoading(false);
+      return;
+    }
     type Row = {
       id: string;
       user_id: string;

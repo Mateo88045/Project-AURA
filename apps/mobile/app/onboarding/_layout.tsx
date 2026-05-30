@@ -1,5 +1,5 @@
 import { Stack } from 'expo-router';
-import { Colors } from '@aura/shared/constants/colors';
+import { Colors } from '@chronos/shared/constants/colors';
 
 export default function OnboardingLayout() {
   return (

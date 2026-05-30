@@ -5,10 +5,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Camera, X, RefreshCw, Send } from 'lucide-react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { Image } from 'expo-image';
-import { Colors } from '@aura/shared/constants/colors';
+import { Colors } from '@chronos/shared/constants/colors';
 import { AmbientOrbs } from '../../components/ui/AmbientOrbs';
-import { AuraButton } from '../../components/ui/AuraButton';
-import { useToast } from '../../components/ui/AuraToast';
+import { ChronosButton } from '../../components/ui/ChronosButton';
+import { useToast } from '../../components/ui/ChronosToast';
 import { useCurrentUser } from '../../hooks/useCurrentUser';
 import { triggerPhotoIngest } from '../../services/jobs';
 
@@ -40,18 +40,18 @@ export default function PhotoCapture() {
           </View>
           <Text style={styles.permissionTitle}>Camera access needed</Text>
           <Text style={styles.permissionBlurb}>
-            Aura uses the camera to read your assignments off paper handouts.
-            Photos are sent to Aura's secure backend and aren't kept on your device.
+            Chronos uses the camera to read your assignments off paper handouts.
+            Photos are sent to Chronos's secure backend and aren't kept on your device.
           </Text>
           <View style={{ marginTop: 24, gap: 10 }}>
-            <AuraButton
+            <ChronosButton
               label="Allow camera"
               onPress={requestPermission}
               variant="primary"
               size="lg"
               fullWidth
             />
-            <AuraButton label="Not now" onPress={() => router.back()} variant="ghost" fullWidth />
+            <ChronosButton label="Not now" onPress={() => router.back()} variant="ghost" fullWidth />
           </View>
         </View>
       </View>
@@ -79,7 +79,7 @@ export default function PhotoCapture() {
     setSending(true);
     try {
       await triggerPhotoIngest(user.id, photoBase64);
-      toast.show('Photo sent. Aura is reading it now.', 'success');
+      toast.show('Photo sent. Chronos is reading it now.', 'success');
       router.back();
     } catch {
       toast.show('Upload failed. Try again.', 'error');
@@ -122,7 +122,7 @@ export default function PhotoCapture() {
               onPress={submit}
               disabled={sending}
               accessibilityRole="button"
-              accessibilityLabel="Send to Aura"
+              accessibilityLabel="Send to Chronos"
               style={({ pressed }) => [
                 styles.send,
                 sending && { opacity: 0.5 },

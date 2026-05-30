@@ -1,22 +1,35 @@
 import { View, Text, StyleSheet } from 'react-native';
-import { Colors } from '@aura/shared/constants/colors';
+import { Colors } from '@chronos/shared/constants/colors';
 import { ScreenContainer } from '../../components/ui/ScreenContainer';
 import { ScreenHeader } from '../../components/ui/ScreenHeader';
-import { AuraSkeleton } from '../../components/ui/AuraSkeleton';
+import { ChronosSkeleton } from '../../components/ui/ChronosSkeleton';
 import { EmptyState } from '../../components/ui/EmptyState';
+import { ErrorState } from '../../components/ui/ErrorState';
 import { useCurrentUser } from '../../hooks/useCurrentUser';
 
 export default function BrainViewer() {
-  const { data: user, loading } = useCurrentUser();
+  const { data: user, loading, error, refetch } = useCurrentUser();
 
   if (loading) {
     return (
       <ScreenContainer>
-        <ScreenHeader title="Aura's brain" eyebrow="Settings" />
+        <ScreenHeader title="Chronos's brain" eyebrow="Settings" />
         <View style={{ gap: 12 }}>
-          <AuraSkeleton height={120} />
-          <AuraSkeleton height={120} />
+          <ChronosSkeleton height={120} />
+          <ChronosSkeleton height={120} />
         </View>
+      </ScreenContainer>
+    );
+  }
+
+  if (error) {
+    return (
+      <ScreenContainer>
+        <ScreenHeader title="Chronos's brain" eyebrow="Settings" />
+        <ErrorState
+          message="Couldn't load what Chronos knows about you."
+          onRetry={refetch}
+        />
       </ScreenContainer>
     );
   }
@@ -24,10 +37,10 @@ export default function BrainViewer() {
   if (!user || !user.onboardingAnswers) {
     return (
       <ScreenContainer>
-        <ScreenHeader title="Aura's brain" eyebrow="Settings" />
+        <ScreenHeader title="Chronos's brain" eyebrow="Settings" />
         <EmptyState
           title="Nothing here yet."
-          body="Complete the onboarding questionnaire and Aura's brain will fill in here."
+          body="Complete the onboarding questionnaire and Chronos's brain will fill in here."
         />
       </ScreenContainer>
     );
@@ -37,9 +50,9 @@ export default function BrainViewer() {
 
   return (
     <ScreenContainer>
-      <ScreenHeader title="Aura's brain" eyebrow="Settings" />
+      <ScreenHeader title="Chronos's brain" eyebrow="Settings" />
       <Text style={styles.intro}>
-        What Aura knows about you — and uses to schedule your week.
+        What Chronos knows about you — and uses to schedule your week.
       </Text>
 
       <Section title="Subject confidence">

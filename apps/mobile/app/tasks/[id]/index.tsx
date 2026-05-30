@@ -1,11 +1,12 @@
 import { View, Text, StyleSheet } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Colors } from '@aura/shared/constants/colors';
+import { Colors } from '@chronos/shared/constants/colors';
 import { ScreenContainer } from '../../../components/ui/ScreenContainer';
 import { ScreenHeader } from '../../../components/ui/ScreenHeader';
-import { AuraSkeleton } from '../../../components/ui/AuraSkeleton';
-import { AuraButton } from '../../../components/ui/AuraButton';
+import { ChronosSkeleton } from '../../../components/ui/ChronosSkeleton';
+import { ChronosButton } from '../../../components/ui/ChronosButton';
 import { DifficultyBadge } from '../../../components/ui/DifficultyBadge';
+import { ErrorState } from '../../../components/ui/ErrorState';
 import { useTask } from '../../../hooks/useTasks';
 import { durationLabel, relativeDueLabel } from '../../../lib/time';
 
@@ -22,17 +23,26 @@ const TASK_TYPE_LABELS = {
 export default function TaskDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const { data, loading } = useTask(id ?? null);
+  const { data, loading, error, refetch } = useTask(id ?? null);
 
   if (loading) {
     return (
       <ScreenContainer>
         <ScreenHeader title=" " />
         <View style={{ gap: 12 }}>
-          <AuraSkeleton height={28} width="80%" />
-          <AuraSkeleton height={14} width="50%" />
-          <AuraSkeleton height={120} />
+          <ChronosSkeleton height={28} width="80%" />
+          <ChronosSkeleton height={14} width="50%" />
+          <ChronosSkeleton height={120} />
         </View>
+      </ScreenContainer>
+    );
+  }
+
+  if (error) {
+    return (
+      <ScreenContainer>
+        <ScreenHeader title="Task" />
+        <ErrorState message="Couldn't load this task." onRetry={refetch} />
       </ScreenContainer>
     );
   }
@@ -71,15 +81,15 @@ export default function TaskDetail() {
       ) : null}
 
       <View style={{ marginTop: 32, gap: 10 }}>
-        <AuraButton
+        <ChronosButton
           label="Mark complete"
           onPress={() => router.push(`/tasks/${data.id}/complete`)}
           variant="primary"
           size="lg"
           fullWidth
         />
-        <AuraButton
-          label="Reschedule with Aura"
+        <ChronosButton
+          label="Reschedule with Chronos"
           onPress={() => router.push('/ai/chat')}
           variant="secondary"
           fullWidth

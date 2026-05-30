@@ -5,8 +5,8 @@ import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { View } from 'react-native';
-import { Colors } from '@aura/shared/constants/colors';
-import { ToastProvider } from '../components/ui/AuraToast';
+import { Colors } from '@chronos/shared/constants/colors';
+import { ToastProvider } from '../components/ui/ChronosToast';
 import { DemoModeBanner } from '../components/ui/DemoModeBanner';
 import { getAuthToken } from '../lib/storage';
 import { getSupabaseOrNull } from '../lib/supabase';
@@ -44,6 +44,7 @@ export default function RootLayout() {
             <Stack.Screen name="settings/connections" />
             <Stack.Screen name="settings/guardrails" />
             <Stack.Screen name="settings/brain" />
+            <Stack.Screen name="settings/fixed-events" />
           </Stack>
         </ToastProvider>
       </SafeAreaProvider>

@@ -1,4 +1,4 @@
-import type { Task } from '@aura/shared/types';
+import type { Task } from '@chronos/shared/types';
 
 const today = new Date();
 const tomorrow = new Date(today);

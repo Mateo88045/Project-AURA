@@ -1,11 +1,11 @@
 import { View, Text, StyleSheet, Pressable, Alert, Linking } from 'react-native';
 import { useRouter } from 'expo-router';
-import { ChevronRight, User, Link2, ShieldCheck, Brain, Clock, LogOut, FileText, LifeBuoy } from 'lucide-react-native';
-import { Colors } from '@aura/shared/constants/colors';
+import { ChevronRight, User, Link2, ShieldCheck, Brain, Clock, LogOut, FileText, LifeBuoy, CalendarDays } from 'lucide-react-native';
+import { Colors } from '@chronos/shared/constants/colors';
 import { ScreenContainer } from '../../components/ui/ScreenContainer';
-import { AuraAvatar } from '../../components/ui/AuraAvatar';
+import { ChronosAvatar } from '../../components/ui/ChronosAvatar';
 import { useCurrentUser } from '../../hooks/useCurrentUser';
-import { useToast } from '../../components/ui/AuraToast';
+import { useToast } from '../../components/ui/ChronosToast';
 import { signOut } from '../../services/auth';
 import { PRIVACY_POLICY_URL, SUPPORT_URL, TERMS_URL } from '../../lib/env';
 
@@ -67,12 +67,17 @@ export default function SettingsScreen() {
       onPress: () => router.push('/settings/connections'),
     },
     {
+      label: 'Fixed events',
+      icon: <CalendarDays color={Colors.textSecondary} size={18} strokeWidth={1.8} />,
+      onPress: () => router.push('/settings/fixed-events'),
+    },
+    {
       label: 'Guardrails',
       icon: <ShieldCheck color={Colors.textSecondary} size={18} strokeWidth={1.8} />,
       onPress: () => router.push('/settings/guardrails'),
     },
     {
-      label: 'Aura\'s brain',
+      label: 'Chronos\'s brain',
       icon: <Brain color={Colors.textSecondary} size={18} strokeWidth={1.8} />,
       onPress: () => router.push('/settings/brain'),
     },
@@ -108,7 +113,7 @@ export default function SettingsScreen() {
   return (
     <ScreenContainer>
       <View style={styles.userBlock}>
-        <AuraAvatar name={user?.displayName ?? '—'} size={56} />
+        <ChronosAvatar name={user?.displayName ?? '—'} size={56} />
         <View>
           <Text style={styles.name}>{user?.displayName ?? '—'}</Text>
           <Text style={styles.meta}>

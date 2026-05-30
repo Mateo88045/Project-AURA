@@ -17,8 +17,8 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
 import { useEffect } from 'react';
-import { Colors } from '@aura/shared/constants/colors';
-import type { Difficulty } from '@aura/shared/types';
+import { Colors } from '@chronos/shared/constants/colors';
+import type { Difficulty } from '@chronos/shared/types';
 import {
   BEDTIME_OPTIONS,
   EXTRACURRICULARS,
@@ -27,7 +27,7 @@ import {
   TOTAL_STEPS,
   useOnboardingForm,
 } from '../../hooks/useOnboardingForm';
-import { AuraButton } from '../../components/ui/AuraButton';
+import { ChronosButton } from '../../components/ui/ChronosButton';
 import OptionPill from '../../components/ui/OptionPill';
 import SubjectCard from '../../components/ui/SubjectCard';
 import StudyTimeCard from '../../components/ui/StudyTimeCard';
@@ -106,7 +106,7 @@ export default function OnboardingProfileScreen() {
           {form.submitError ? (
             <Text style={styles.errorText}>{form.submitError}</Text>
           ) : null}
-          <AuraButton
+          <ChronosButton
             label={isLastStep ? 'Build My Schedule' : 'Continue'}
             onPress={isLastStep ? handleSubmit : form.advance}
             disabled={!form.canAdvance}
@@ -133,7 +133,7 @@ function Step0Name({
       contentContainerStyle={[styles.step, styles.stepPadded]}
       keyboardShouldPersistTaps="handled"
     >
-      <Text style={styles.stepHeading}>What should{'\n'}Aura call you?</Text>
+      <Text style={styles.stepHeading}>What should{'\n'}Chronos call you?</Text>
       <Text style={styles.stepSub}>We'll personalize everything around you.</Text>
       <TextInput
         style={styles.nameInput}
@@ -179,7 +179,7 @@ function Step1Grade({
       contentContainerStyle={[styles.step, styles.stepPadded]}
     >
       <Text style={styles.stepHeading}>What grade{'\n'}are you in?</Text>
-      <Text style={styles.stepSub}>Aura adjusts workload expectations by grade.</Text>
+      <Text style={styles.stepSub}>Chronos adjusts workload expectations by grade.</Text>
       <View style={styles.pillRow}>
         {GRADES.map((g) => (
           <OptionPill
@@ -253,7 +253,7 @@ function Step3Extracurriculars({
         <Text style={styles.stepHeading}>What do you do{'\n'}after school?</Text>
         {count > 0 && <Text style={styles.countTag}>{count} selected</Text>}
       </View>
-      <Text style={styles.stepSub}>Aura won't schedule homework over your life.</Text>
+      <Text style={styles.stepSub}>Chronos won't schedule homework over your life.</Text>
       <View style={styles.pillWrap}>
         {EXTRACURRICULARS.map((item) => (
           <OptionPill
@@ -339,7 +339,7 @@ function Step5Bedtime({
       style={{ width }}
       contentContainerStyle={[styles.step, styles.stepPadded]}
     >
-      <Text style={styles.stepHeading}>When should Aura{'\n'}stop scheduling?</Text>
+      <Text style={styles.stepHeading}>When should Chronos{'\n'}stop scheduling?</Text>
       <Text style={styles.stepSub}>Nothing gets put on your plate after this time.</Text>
       <View style={styles.pillWrap}>
         {BEDTIME_OPTIONS.map((opt) => (
@@ -399,7 +399,7 @@ function Step6Review({
         You're all set,{' '}
         <Text style={styles.nameHighlight}>{form.displayName}</Text>.
       </Text>
-      <Text style={styles.stepSub}>Here's what Aura knows about you.</Text>
+      <Text style={styles.stepSub}>Here's what Chronos knows about you.</Text>
 
       <View style={styles.summaryCard}>
         <SummaryRow label="Grade" value={`${form.gradeLevel}th Grade`} />

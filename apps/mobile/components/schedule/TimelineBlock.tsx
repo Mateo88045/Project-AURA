@@ -1,8 +1,8 @@
 import { Pressable, View, Text, StyleSheet } from 'react-native';
-import { Colors } from '@aura/shared/constants/colors';
+import { Colors } from '@chronos/shared/constants/colors';
 import { formatClock } from '../../lib/time';
 import { DifficultyBadge } from '../ui/DifficultyBadge';
-import type { Difficulty } from '@aura/shared/types';
+import type { Difficulty } from '@chronos/shared/types';
 
 type Kind = 'fixed' | 'ai' | 'shadow';
 
