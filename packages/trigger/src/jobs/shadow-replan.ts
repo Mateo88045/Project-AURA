@@ -4,13 +4,13 @@ import type {
   Guardrail,
   ScheduledBlock,
   Task,
-} from '@aura/shared/types';
-import { buildSchedule } from '@aura/shared/scheduler';
+} from '@chronos/shared/types';
+import { buildSchedule } from '@chronos/shared/scheduler';
 
 /**
  * Re-plan shadow schedule for a single day (Pipeline A scheduling only — no LLM).
  *
- * The scheduler itself is implemented in @aura/shared/scheduler. This task is
+ * The scheduler itself is implemented in @chronos/shared/scheduler. This task is
  * the I/O wrapper: it loads inputs from Supabase, runs buildSchedule, and
  * writes the resulting chunks back as shadow blocks.
  */

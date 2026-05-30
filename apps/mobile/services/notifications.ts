@@ -3,7 +3,7 @@ import * as Device from 'expo-device';
 import Constants from 'expo-constants';
 import { Platform } from 'react-native';
 import { router } from 'expo-router';
-import { Colors } from '@aura/shared/constants/colors';
+import { Colors } from '@chronos/shared/constants/colors';
 import { getSupabaseOrNull } from '../lib/supabase';
 
 Notifications.setNotificationHandler({
@@ -36,7 +36,7 @@ export async function registerPushToken(): Promise<string | null> {
 
   if (Platform.OS === 'android') {
     await Notifications.setNotificationChannelAsync('default', {
-      name: 'Aura',
+      name: 'Chronos',
       importance: Notifications.AndroidImportance.DEFAULT,
       vibrationPattern: [0, 250, 250, 250],
       lightColor: Colors.mist,

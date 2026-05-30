@@ -5,7 +5,7 @@ import Animated, {
   withSequence,
   withSpring,
 } from 'react-native-reanimated';
-import { Colors } from '@aura/shared/constants/colors';
+import { Colors } from '@chronos/shared/constants/colors';
 
 interface OptionPillProps {
   label: string;
@@ -46,6 +46,7 @@ export default function OptionPill({
         animStyle,
       ]}
       accessibilityRole="button"
+      accessibilityLabel={label}
       accessibilityState={{ selected }}
     >
       <Text style={[styles.label, selected && styles.selectedLabel]}>

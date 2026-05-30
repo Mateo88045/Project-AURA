@@ -1,5 +1,5 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { Colors } from '@aura/shared/constants/colors';
+import { Colors } from '@chronos/shared/constants/colors';
 
 interface StudyTimeCardProps {
   value: 'morning' | 'afternoon' | 'evening';

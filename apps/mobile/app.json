@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "Aura",
-    "slug": "aura",
+    "name": "Chronos",
+    "slug": "chronos",
     "version": "0.1.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "scheme": "aura",
+    "scheme": "chronos",
     "userInterfaceStyle": "dark",
     "newArchEnabled": true,
     "splash": {
@@ -15,10 +15,11 @@
     },
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.aura.app",
+      "bundleIdentifier": "com.chronos.app",
+      "usesAppleSignIn": true,
       "infoPlist": {
-        "NSCameraUsageDescription": "Aura uses the camera to capture photos of your assignments so they can be added to your schedule.",
-        "NSUserNotificationsUsageDescription": "Aura sends reminders for your scheduled study blocks and daily assignment updates.",
+        "NSCameraUsageDescription": "Chronos uses the camera to capture photos of your assignments so they can be added to your schedule.",
+        "NSUserNotificationsUsageDescription": "Chronos sends reminders for your scheduled study blocks and daily assignment updates.",
         "UIBackgroundModes": ["remote-notification"],
         "ITSAppUsesNonExemptEncryption": false
       }
@@ -28,7 +29,7 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#0A1118"
       },
-      "package": "com.aura.app",
+      "package": "com.chronos.app",
       "permissions": [
         "android.permission.CAMERA",
         "android.permission.POST_NOTIFICATIONS",
@@ -38,10 +39,11 @@
     "plugins": [
       "expo-router",
       "expo-secure-store",
+      "expo-apple-authentication",
       [
         "expo-camera",
         {
-          "cameraPermission": "Aura uses the camera to capture photos of your assignments so they can be added to your schedule.",
+          "cameraPermission": "Chronos uses the camera to capture photos of your assignments so they can be added to your schedule.",
           "recordAudioAndroid": false
         }
       ],
@@ -61,9 +63,9 @@
       },
       "supabaseUrl": "https://bvwumzzuvubiacueftbz.supabase.co",
       "supabasePublishableKey": "sb_publishable_if5RMKHlwHLzUu97PaAcbQ_Vgm-rb7u",
-      "supportUrl": "",
-      "privacyPolicyUrl": "",
-      "termsUrl": ""
+      "supportUrl": "https://chronos-app.com/support",
+      "privacyPolicyUrl": "https://chronos-app.com/privacy",
+      "termsUrl": "https://chronos-app.com/terms"
     }
   }
 }

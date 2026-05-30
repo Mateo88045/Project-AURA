@@ -1,8 +1,8 @@
 import { ReactNode } from 'react';
 import { View, StyleSheet, ScrollView, RefreshControl } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Colors } from '@aura/shared/constants/colors';
-import { Layout } from '@aura/shared/constants/layout';
+import { Colors } from '@chronos/shared/constants/colors';
+import { Layout } from '@chronos/shared/constants/layout';
 import { AmbientOrbs } from './AmbientOrbs';
 
 interface Props {

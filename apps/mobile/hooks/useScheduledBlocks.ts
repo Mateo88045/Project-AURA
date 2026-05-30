@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, useMemo } from 'react';
-import type { ScheduledBlock, BlockStatus, Task } from '@aura/shared/types';
+import type { ScheduledBlock, BlockStatus, Task } from '@chronos/shared/types';
 import { getSupabaseOrNull } from '../lib/supabase';
 import { MOCK_TASKS } from './_mockData';
 
@@ -42,7 +42,13 @@ export function useScheduledBlocks(
       .in('status', statuses)
       .order('start_time', { ascending: true })
       .returns<BlockRow[]>();
-    if (err) setError(new Error(err.message));
+    if (err) {
+      setError(new Error(err.message));
+      // Don't clobber existing data on transient failure — keeps last good
+      // state visible while ErrorState renders alongside.
+      setLoading(false);
+      return;
+    }
     setData((rows ?? []).map(rowToBlock));
     setLoading(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps

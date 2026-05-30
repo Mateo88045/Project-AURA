@@ -12,23 +12,38 @@ import {
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ArrowLeft, Send } from 'lucide-react-native';
-import { Colors } from '@aura/shared/constants/colors';
+import { Colors } from '@chronos/shared/constants/colors';
 import { AmbientOrbs } from '../../components/ui/AmbientOrbs';
-import { AuraSkeleton } from '../../components/ui/AuraSkeleton';
+import { ChronosSkeleton } from '../../components/ui/ChronosSkeleton';
+import { useToast } from '../../components/ui/ChronosToast';
 import { useCurrentUser } from '../../hooks/useCurrentUser';
 import { useConversation } from '../../hooks/useConversation';
 
 export default function ChatScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const toast = useToast();
   const { data: user } = useCurrentUser();
-  const { messages, sending, send } = useConversation(user?.id ?? null);
+  const { messages, sending, error, send } = useConversation(user?.id ?? null);
   const [draft, setDraft] = useState('');
   const scrollRef = useRef<ScrollView>(null);
+  const lastSurfacedErrorRef = useRef<Error | null>(null);
 
   useEffect(() => {
     requestAnimationFrame(() => scrollRef.current?.scrollToEnd({ animated: true }));
   }, [messages.length, sending]);
+
+  // Surface copilot failures to the user via toast. Compared by reference so
+  // the same error isn't shown repeatedly on re-render.
+  useEffect(() => {
+    if (error && error !== lastSurfacedErrorRef.current) {
+      lastSurfacedErrorRef.current = error;
+      toast.show(
+        error.message || "Chronos couldn't reach the copilot. Try again in a moment.",
+        'error',
+      );
+    }
+  }, [error, toast]);
 
   const onSend = () => {
     const text = draft.trim();
@@ -49,7 +64,7 @@ export default function ChatScreen() {
             <ArrowLeft color={Colors.textSecondary} size={20} />
           </Pressable>
           <View>
-            <Text style={styles.title}>Aura</Text>
+            <Text style={styles.title}>Chronos</Text>
             <Text style={styles.subtitle}>Always-on copilot</Text>
           </View>
         </View>
@@ -74,7 +89,7 @@ export default function ChatScreen() {
           ))}
           {sending ? (
             <View style={[styles.bubble, styles.assistantBubble, { paddingVertical: 14 }]}>
-              <AuraSkeleton width={120} height={10} />
+              <ChronosSkeleton width={120} height={10} />
             </View>
           ) : null}
         </ScrollView>

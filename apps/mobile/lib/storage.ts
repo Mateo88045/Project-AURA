@@ -1,8 +1,8 @@
 import * as SecureStore from 'expo-secure-store';
 
-const AUTH_TOKEN_KEY = 'aura.auth.token';
-const REFRESH_TOKEN_KEY = 'aura.auth.refresh';
-const USER_ID_KEY = 'aura.auth.userId';
+const AUTH_TOKEN_KEY = 'chronos.auth.token';
+const REFRESH_TOKEN_KEY = 'chronos.auth.refresh';
+const USER_ID_KEY = 'chronos.auth.userId';
 
 export async function getAuthToken(): Promise<string | null> {
   return SecureStore.getItemAsync(AUTH_TOKEN_KEY);

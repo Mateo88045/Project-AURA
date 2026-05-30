@@ -1,4 +1,4 @@
-import type { OnboardingAnswers } from '@aura/shared/types';
+import type { OnboardingAnswers } from '@chronos/shared/types';
 import { getSupabaseOrNull } from '../lib/supabase';
 import { IS_DEMO_MODE } from '../lib/env';
 

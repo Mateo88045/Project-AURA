@@ -1,5 +1,5 @@
 {
-  "name": "@aura/mobile",
+  "name": "@chronos/mobile",
   "version": "0.1.0",
   "private": true,
   "main": "expo-router/entry",
@@ -11,11 +11,12 @@
     "lint": "eslint ."
   },
   "dependencies": {
-    "@aura/shared": "workspace:*",
+    "@chronos/shared": "workspace:*",
     "@expo/metro-runtime": "~6.1.2",
     "@react-native-async-storage/async-storage": "^2.2.0",
     "@supabase/supabase-js": "^2.106.2",
     "expo": "~54.0.35",
+    "expo-apple-authentication": "~8.0.6",
     "expo-camera": "~17.0.10",
     "expo-constants": "~18.0.13",
     "expo-dev-client": "~6.0.21",

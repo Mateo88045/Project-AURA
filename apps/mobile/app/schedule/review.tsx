@@ -3,15 +3,16 @@ import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { X } from 'lucide-react-native';
 import { Pressable } from 'react-native';
-import { Colors } from '@aura/shared/constants/colors';
+import { Colors } from '@chronos/shared/constants/colors';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AmbientOrbs } from '../../components/ui/AmbientOrbs';
 import { RiverTimeline } from '../../components/schedule/RiverTimeline';
 import { TimelineBlock } from '../../components/schedule/TimelineBlock';
-import { AuraButton } from '../../components/ui/AuraButton';
-import { AuraSkeleton } from '../../components/ui/AuraSkeleton';
+import { ChronosButton } from '../../components/ui/ChronosButton';
+import { ChronosSkeleton } from '../../components/ui/ChronosSkeleton';
 import { EmptyState } from '../../components/ui/EmptyState';
-import { useToast } from '../../components/ui/AuraToast';
+import { ErrorState } from '../../components/ui/ErrorState';
+import { useToast } from '../../components/ui/ChronosToast';
 import { useCurrentUser } from '../../hooks/useCurrentUser';
 import { useScheduledBlocks } from '../../hooks/useScheduledBlocks';
 import { approveShadowSchedule } from '../../services/jobs';
@@ -65,13 +66,18 @@ export default function ScheduleReview() {
         {blocks.loading ? (
           <View style={{ gap: 14 }}>
             {[0, 1, 2, 3].map((i) => (
-              <AuraSkeleton key={i} height={64} />
+              <ChronosSkeleton key={i} height={64} />
             ))}
           </View>
+        ) : blocks.error ? (
+          <ErrorState
+            message="Couldn't load the draft schedule. Try again in a moment."
+            onRetry={blocks.refetch}
+          />
         ) : blocks.data.length === 0 ? (
           <EmptyState
             title="Nothing to review."
-            body="Aura hasn't drafted any new blocks for today yet."
+            body="Chronos hasn't drafted any new blocks for today yet."
           />
         ) : (
           <>
@@ -96,7 +102,7 @@ export default function ScheduleReview() {
       </ScrollView>
 
       <View style={[styles.footer, { paddingBottom: insets.bottom + 16 }]}>
-        <AuraButton
+        <ChronosButton
           label="Tweak in chat"
           onPress={() => {
             router.back();
@@ -105,7 +111,7 @@ export default function ScheduleReview() {
           variant="ghost"
         />
         <View style={{ flex: 1 }}>
-          <AuraButton
+          <ChronosButton
             label="Approve schedule"
             onPress={approve}
             loading={submitting}

@@ -1,15 +1,16 @@
 import { useState } from 'react';
 import { View, Text, StyleSheet, TextInput, Pressable } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Colors } from '@aura/shared/constants/colors';
+import { Colors } from '@chronos/shared/constants/colors';
 import { ScreenContainer } from '../../../components/ui/ScreenContainer';
 import { ScreenHeader } from '../../../components/ui/ScreenHeader';
-import { AuraButton } from '../../../components/ui/AuraButton';
-import { useToast } from '../../../components/ui/AuraToast';
+import { ChronosButton } from '../../../components/ui/ChronosButton';
+import { ErrorState } from '../../../components/ui/ErrorState';
+import { useToast } from '../../../components/ui/ChronosToast';
 import { useTask } from '../../../hooks/useTasks';
 import { completeTask } from '../../../services/jobs';
 import { useAuth } from '../../../hooks/useAuth';
-import type { UserFeedback } from '@aura/shared/types';
+import type { UserFeedback } from '@chronos/shared/types';
 
 const FEEDBACK_LABELS: Record<UserFeedback, string> = {
   too_short: 'Too little',
@@ -21,7 +22,7 @@ export default function CompleteTask() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const toast = useToast();
-  const { data: task } = useTask(id ?? null);
+  const { data: task, error: taskError, refetch: refetchTask } = useTask(id ?? null);
   const { userId } = useAuth();
   const [actual, setActual] = useState('');
   const [feedback, setFeedback] = useState<UserFeedback | null>(null);
@@ -42,6 +43,15 @@ export default function CompleteTask() {
       setSubmitting(false);
     }
   };
+
+  if (taskError) {
+    return (
+      <ScreenContainer>
+        <ScreenHeader title="How'd it go?" eyebrow="Wrap up" />
+        <ErrorState message="Couldn't load that task." onRetry={refetchTask} />
+      </ScreenContainer>
+    );
+  }
 
   return (
     <ScreenContainer>
@@ -73,24 +83,29 @@ export default function CompleteTask() {
         <View>
           <Text style={styles.label}>How did the estimate feel?</Text>
           <View style={styles.chipRow}>
-            {(['too_short', 'about_right', 'too_long'] as UserFeedback[]).map((f) => (
-              <Pressable
-                key={f}
-                onPress={() => setFeedback(f)}
-                accessibilityRole="button"
-                style={[styles.chip, feedback === f && styles.chipActive]}
-              >
-                <Text style={[styles.chipText, feedback === f && styles.chipTextActive]}>
-                  {FEEDBACK_LABELS[f]}
-                </Text>
-              </Pressable>
-            ))}
+            {(['too_short', 'about_right', 'too_long'] as UserFeedback[]).map((f) => {
+              const isSelected = feedback === f;
+              return (
+                <Pressable
+                  key={f}
+                  onPress={() => setFeedback(f)}
+                  accessibilityRole="button"
+                  accessibilityLabel={FEEDBACK_LABELS[f]}
+                  accessibilityState={{ selected: isSelected }}
+                  style={[styles.chip, isSelected && styles.chipActive]}
+                >
+                  <Text style={[styles.chipText, isSelected && styles.chipTextActive]}>
+                    {FEEDBACK_LABELS[f]}
+                  </Text>
+                </Pressable>
+              );
+            })}
           </View>
         </View>
       </View>
 
       <View style={{ marginTop: 36 }}>
-        <AuraButton
+        <ChronosButton
           label="Save & continue"
           onPress={submit}
           loading={submitting}

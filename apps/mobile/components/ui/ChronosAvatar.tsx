@@ -1,5 +1,5 @@
 import { View, Text, StyleSheet } from 'react-native';
-import { Colors } from '@aura/shared/constants/colors';
+import { Colors } from '@chronos/shared/constants/colors';
 
 interface Props {
   name: string;
@@ -12,7 +12,7 @@ function initials(name: string): string {
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }
 
-export function AuraAvatar({ name, size = 40 }: Props) {
+export function ChronosAvatar({ name, size = 40 }: Props) {
   return (
     <View
       style={[

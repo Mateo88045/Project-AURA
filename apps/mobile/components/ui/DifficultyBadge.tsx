@@ -1,6 +1,6 @@
 import { View, Text, StyleSheet } from 'react-native';
-import { Colors } from '@aura/shared/constants/colors';
-import type { Difficulty } from '@aura/shared/types';
+import { Colors } from '@chronos/shared/constants/colors';
+import type { Difficulty } from '@chronos/shared/types';
 
 interface Props {
   difficulty: Difficulty;

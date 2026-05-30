@@ -1,11 +1,12 @@
-import { useEffect, useState } from 'react';
-import type { Guardrail } from '@aura/shared/types';
+import { useCallback, useEffect, useState } from 'react';
+import type { Guardrail } from '@chronos/shared/types';
 import { getSupabaseOrNull } from '../lib/supabase';
 
 interface Result {
   data: Guardrail[];
   loading: boolean;
   error: Error | null;
+  refetch: () => void;
 }
 
 export function useGuardrails(userId: string | null): Result {
@@ -14,53 +15,60 @@ export function useGuardrails(userId: string | null): Result {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
+  const load = useCallback(async () => {
+    if (!supabase) {
+      setData(MOCK_GUARDRAILS);
+      setLoading(false);
+      return;
+    }
+    if (!userId) {
+      setData([]);
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    const { data: rows, error: err } = await supabase
+      .from('guardrails')
+      .select('*')
+      .eq('user_id', userId);
+    if (err) {
+      setError(new Error(err.message));
+      setLoading(false);
+      return;
+    }
+    type Row = {
+      id: string;
+      user_id: string;
+      rule_type: string;
+      value: unknown;
+      active: boolean;
+      created_at: string;
+    };
+    setData(
+      (rows ?? []).map((r: Row) => ({
+        id: r.id,
+        userId: r.user_id,
+        ruleType: r.rule_type as Guardrail['ruleType'],
+        value: (r.value as Record<string, unknown>) ?? {},
+        active: r.active,
+        createdAt: r.created_at,
+      })),
+    );
+    setLoading(false);
+  }, [supabase, userId]);
+
   useEffect(() => {
     let cancelled = false;
-    async function run() {
-      if (!supabase) {
-        setData(MOCK_GUARDRAILS);
-        setLoading(false);
-        return;
-      }
-      if (!userId) {
-        setData([]);
-        setLoading(false);
-        return;
-      }
-      setLoading(true);
-      const { data: rows, error: err } = await supabase
-        .from('guardrails')
-        .select('*')
-        .eq('user_id', userId);
-      if (cancelled) return;
-      if (err) setError(new Error(err.message));
-      type Row = {
-        id: string;
-        user_id: string;
-        rule_type: string;
-        value: unknown;
-        active: boolean;
-        created_at: string;
-      };
-      setData(
-        (rows ?? []).map((r: Row) => ({
-          id: r.id,
-          userId: r.user_id,
-          ruleType: r.rule_type as Guardrail['ruleType'],
-          value: (r.value as Record<string, unknown>) ?? {},
-          active: r.active,
-          createdAt: r.created_at,
-        })),
-      );
-      setLoading(false);
-    }
-    void run();
+    void load().catch(() => {
+      if (!cancelled) setLoading(false);
+    });
     return () => {
       cancelled = true;
     };
-  }, [supabase, userId]);
+  }, [load]);
 
-  return { data, loading, error };
+  return { data, loading, error, refetch: load };
 }
 
 const MOCK_GUARDRAILS: Guardrail[] = [

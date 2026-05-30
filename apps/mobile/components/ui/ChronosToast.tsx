@@ -2,7 +2,7 @@ import { createContext, useCallback, useContext, useState, useEffect, ReactNode 
 import { View, Text, StyleSheet, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring, withTiming } from 'react-native-reanimated';
-import { Colors } from '@aura/shared/constants/colors';
+import { Colors } from '@chronos/shared/constants/colors';
 
 type Variant = 'info' | 'success' | 'error';
 interface ToastItem { id: number; message: string; variant: Variant }

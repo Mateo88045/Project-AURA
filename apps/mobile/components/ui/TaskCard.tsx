@@ -1,7 +1,7 @@
 import { Pressable, View, Text, StyleSheet } from 'react-native';
-import { Colors } from '@aura/shared/constants/colors';
-import { Layout } from '@aura/shared/constants/layout';
-import type { Task } from '@aura/shared/types';
+import { Colors } from '@chronos/shared/constants/colors';
+import { Layout } from '@chronos/shared/constants/layout';
+import type { Task } from '@chronos/shared/types';
 import { DifficultyBadge } from './DifficultyBadge';
 import { durationLabel, relativeDueLabel } from '../../lib/time';
 

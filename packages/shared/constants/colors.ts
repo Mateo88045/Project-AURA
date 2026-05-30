@@ -1,5 +1,5 @@
 // /packages/shared/constants/colors.ts
-// Aura color palette — "Atmospheric Minimalism"
+// Chronos color palette — "Atmospheric Minimalism"
 // Never hardcode hex values in components — always import from here.
 
 export const Colors = {

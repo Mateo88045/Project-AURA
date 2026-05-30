@@ -3,7 +3,7 @@
   "compilerOptions": {
     "strict": true,
     "paths": {
-      "@aura/shared/*": ["../../packages/shared/*"],
+      "@chronos/shared/*": ["../../packages/shared/*"],
       "@/*": ["./*"]
     }
   },

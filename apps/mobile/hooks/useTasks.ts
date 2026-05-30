@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import type { Task, TaskStatus } from '@aura/shared/types';
+import type { Task, TaskStatus } from '@chronos/shared/types';
 import { getSupabaseOrNull } from '../lib/supabase';
 import { rowToTask } from './useScheduledBlocks';
 import { MOCK_TASKS } from './_mockData';
@@ -38,7 +38,11 @@ export function useTasks(userId: string | null, status?: TaskStatus): Result {
       .order('due_date', { ascending: true });
     if (status) q = q.eq('status', status);
     const { data: rows, error: err } = await q;
-    if (err) setError(new Error(err.message));
+    if (err) {
+      setError(new Error(err.message));
+      setLoading(false);
+      return;
+    }
     setData((rows ?? []).map(rowToTask));
     setLoading(false);
   }, [supabase, userId, status]);
@@ -56,35 +60,42 @@ export function useTask(taskId: string | null) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
+  const load = useCallback(async () => {
+    if (!supabase) {
+      setData(MOCK_TASKS.find((x) => x.id === taskId) ?? null);
+      setLoading(false);
+      return;
+    }
+    if (!taskId) {
+      setData(null);
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    const { data: row, error: err } = await supabase
+      .from('tasks')
+      .select('*')
+      .eq('id', taskId)
+      .maybeSingle();
+    if (err) {
+      setError(new Error(err.message));
+      setLoading(false);
+      return;
+    }
+    setData(row ? rowToTask(row) : null);
+    setLoading(false);
+  }, [supabase, taskId]);
+
   useEffect(() => {
     let cancelled = false;
-    async function run() {
-      if (!supabase) {
-        setData(MOCK_TASKS.find((x) => x.id === taskId) ?? null);
-        setLoading(false);
-        return;
-      }
-      if (!taskId) {
-        setData(null);
-        setLoading(false);
-        return;
-      }
-      setLoading(true);
-      const { data: row, error: err } = await supabase
-        .from('tasks')
-        .select('*')
-        .eq('id', taskId)
-        .maybeSingle();
-      if (cancelled) return;
-      if (err) setError(new Error(err.message));
-      setData(row ? rowToTask(row) : null);
-      setLoading(false);
-    }
-    void run();
+    void load().catch(() => {
+      if (!cancelled) setLoading(false);
+    });
     return () => {
       cancelled = true;
     };
-  }, [supabase, taskId]);
+  }, [load]);
 
-  return { data, loading, error };
+  return { data, loading, error, refetch: load };
 }

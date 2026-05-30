@@ -4,8 +4,8 @@ import Animated, {
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
-import type { Difficulty } from '@aura/shared/types';
-import { Colors, difficultyColor } from '@aura/shared/constants/colors';
+import type { Difficulty } from '@chronos/shared/types';
+import { Colors, difficultyColor } from '@chronos/shared/constants/colors';
 
 interface SubjectCardProps {
   subject: string;

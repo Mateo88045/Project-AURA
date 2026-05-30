@@ -1,21 +1,23 @@
 import { useState } from 'react';
 import { View, Text, StyleSheet, Switch } from 'react-native';
-import { Colors } from '@aura/shared/constants/colors';
+import { Colors } from '@chronos/shared/constants/colors';
 import { ScreenContainer } from '../../components/ui/ScreenContainer';
 import { ScreenHeader } from '../../components/ui/ScreenHeader';
-import { AuraSkeleton } from '../../components/ui/AuraSkeleton';
+import { ChronosSkeleton } from '../../components/ui/ChronosSkeleton';
+import { EmptyState } from '../../components/ui/EmptyState';
+import { ErrorState } from '../../components/ui/ErrorState';
 import { useCurrentUser } from '../../hooks/useCurrentUser';
 import { useGuardrails } from '../../hooks/useGuardrails';
-import { useToast } from '../../components/ui/AuraToast';
+import { useToast } from '../../components/ui/ChronosToast';
 import { getSupabaseOrNull } from '../../lib/supabase';
-import type { Guardrail } from '@aura/shared/types';
+import type { Guardrail } from '@chronos/shared/types';
 
 function describe(g: Guardrail): { title: string; body: string } {
   switch (g.ruleType) {
     case 'no_work_after':
       return {
         title: 'No work after',
-        body: `Aura won't schedule blocks past ${(g.value as { time: string }).time}.`,
+        body: `Chronos won't schedule blocks past ${(g.value as { time: string }).time}.`,
       };
     case 'buffer_after_event':
       return {
@@ -33,7 +35,7 @@ function describe(g: Guardrail): { title: string; body: string } {
 export default function GuardrailsEditor() {
   const toast = useToast();
   const { data: user } = useCurrentUser();
-  const { data, loading } = useGuardrails(user?.id ?? null);
+  const { data, loading, error, refetch } = useGuardrails(user?.id ?? null);
   // Optimistic overrides: id → active state while the DB write is in flight
   const [overrides, setOverrides] = useState<Record<string, boolean>>({});
 
@@ -69,14 +71,24 @@ export default function GuardrailsEditor() {
     <ScreenContainer>
       <ScreenHeader title="Guardrails" eyebrow="Settings" />
       <Text style={styles.intro}>
-        Rules Aura will never break when scheduling your week.
+        Rules Chronos will never break when scheduling your week.
       </Text>
       {loading ? (
         <View style={{ gap: 12, marginTop: 24 }}>
-          <AuraSkeleton height={70} />
-          <AuraSkeleton height={70} />
-          <AuraSkeleton height={70} />
+          <ChronosSkeleton height={70} />
+          <ChronosSkeleton height={70} />
+          <ChronosSkeleton height={70} />
         </View>
+      ) : error ? (
+        <ErrorState
+          message="Couldn't load your guardrails."
+          onRetry={refetch}
+        />
+      ) : data.length === 0 ? (
+        <EmptyState
+          title="No guardrails yet."
+          body="Chronos will add sensible defaults the first time it schedules your week."
+        />
       ) : (
         <View style={{ gap: 10, marginTop: 24 }}>
           {data.map((g) => {

@@ -8,7 +8,7 @@ import { createClient, SupabaseClient, SupportedStorage } from '@supabase/supaba
 import type { Database } from './supabase/database.types';
 
 export type { Database, Json } from './supabase/database.types';
-export type AuraSupabase = SupabaseClient<Database>;
+export type ChronosSupabase = SupabaseClient<Database>;
 
 export interface CreateClientOptions {
   url: string;
@@ -16,11 +16,11 @@ export interface CreateClientOptions {
   storage: SupportedStorage;
 }
 
-export function createAuraClient({
+export function createChronosClient({
   url,
   publishableKey,
   storage,
-}: CreateClientOptions): AuraSupabase {
+}: CreateClientOptions): ChronosSupabase {
   if (!url || !publishableKey) {
     throw new Error(
       '[supabase] Missing SUPABASE_URL or SUPABASE_PUBLISHABLE_KEY — check app.json extras / env.',
@@ -36,7 +36,7 @@ export function createAuraClient({
     },
     db: { schema: 'public' },
     global: {
-      headers: { 'x-application-name': 'aura-mobile' },
+      headers: { 'x-application-name': 'chronos-mobile' },
     },
   });
 }

@@ -1,11 +1,12 @@
 import { useMemo } from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Colors } from '@aura/shared/constants/colors';
+import { Colors } from '@chronos/shared/constants/colors';
 import { ScreenContainer } from '../../components/ui/ScreenContainer';
-import { AuraSkeleton } from '../../components/ui/AuraSkeleton';
+import { ChronosSkeleton } from '../../components/ui/ChronosSkeleton';
+import { ErrorState } from '../../components/ui/ErrorState';
 import { useCurrentUser } from '../../hooks/useCurrentUser';
-import { useScheduledBlocks } from '../../hooks/useScheduledBlocks';
+import { useWeekScheduledBlocks } from '../../hooks/useWeekScheduledBlocks';
 import { useFixedEvents } from '../../hooks/useFixedEvents';
 import { addDays, isSameDay, startOfWeek, todayKey, minutesBetween } from '../../lib/time';
 
@@ -13,14 +14,16 @@ export default function WeekScreen() {
   const router = useRouter();
   const { data: user } = useCurrentUser();
   const fixed = useFixedEvents(user?.id ?? null);
-  const todayBlocks = useScheduledBlocks(user?.id ?? null, todayKey());
 
   const days = useMemo(() => {
     const start = startOfWeek();
     return Array.from({ length: 7 }, (_, i) => addDays(start, i));
   }, []);
 
-  const loading = todayBlocks.loading || fixed.loading;
+  const dayKeys = useMemo(() => days.map((d) => todayKey(d)), [days]);
+  const week = useWeekScheduledBlocks(user?.id ?? null, dayKeys);
+
+  const loading = week.loading || fixed.loading;
 
   return (
     <ScreenContainer>
@@ -30,8 +33,15 @@ export default function WeekScreen() {
       {loading ? (
         <View style={{ gap: 14, marginTop: 24 }}>
           {[0, 1, 2, 3, 4, 5, 6].map((i) => (
-            <AuraSkeleton key={i} height={72} radius={14} />
+            <ChronosSkeleton key={i} height={72} radius={14} />
           ))}
+        </View>
+      ) : week.error ? (
+        <View style={{ marginTop: 24 }}>
+          <ErrorState
+            message="Couldn't load this week's schedule."
+            onRetry={week.refetch}
+          />
         </View>
       ) : (
         <View style={{ gap: 12, marginTop: 24 }}>
@@ -44,11 +54,11 @@ export default function WeekScreen() {
               const [eh, em] = e.endTime.split(':').map(Number);
               return acc + (eh * 60 + em) - (sh * 60 + sm);
             }, 0);
-            const aiMins = isToday
-              ? todayBlocks.data
-                  .filter((b) => !!b.taskId)
-                  .reduce((acc, b) => acc + minutesBetween(b.startTime, b.endTime), 0)
-              : 0;
+            const dayKey = todayKey(d);
+            const blocksForDay = week.byDay[dayKey] ?? [];
+            const aiMins = blocksForDay
+              .filter((b) => !!b.taskId)
+              .reduce((acc, b) => acc + minutesBetween(b.startTime, b.endTime), 0);
             const density = Math.min(1, (fixedMins + aiMins) / (12 * 60));
 
             return (

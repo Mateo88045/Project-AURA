@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import type { User } from '@aura/shared/types';
+import type { User } from '@chronos/shared/types';
 import { getSupabaseOrNull } from '../lib/supabase';
 import { useAuth } from './useAuth';
 
@@ -35,7 +35,11 @@ export function useCurrentUser(): Result {
       .select('*')
       .eq('id', userId)
       .maybeSingle();
-    if (err) setError(new Error(err.message));
+    if (err) {
+      setError(new Error(err.message));
+      setLoading(false);
+      return;
+    }
     setData(row ? rowToUser(row) : null);
     setLoading(false);
   }, [supabase, userId]);

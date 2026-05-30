@@ -9,7 +9,7 @@
 //   3. Parse structured JSON response: { difficulty, estimated_minutes, task_type }
 //   4. Write graded results back to Supabase tasks table
 
-import type { Task, GraderResult } from '@aura/shared/types';
+import type { Task, GraderResult } from '@chronos/shared/types';
 
 export async function gradeTaskBatch(
   _tasks: Pick<Task, 'title' | 'subject' | 'description'>[],

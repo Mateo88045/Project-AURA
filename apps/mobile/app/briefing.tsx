@@ -1,17 +1,18 @@
 import { View, Text, StyleSheet } from 'react-native';
-import { Colors } from '@aura/shared/constants/colors';
+import { Colors } from '@chronos/shared/constants/colors';
 import { ScreenContainer } from '../components/ui/ScreenContainer';
 import { ScreenHeader } from '../components/ui/ScreenHeader';
 import { TaskCard } from '../components/ui/TaskCard';
-import { AuraSkeleton } from '../components/ui/AuraSkeleton';
+import { ChronosSkeleton } from '../components/ui/ChronosSkeleton';
 import { EmptyState } from '../components/ui/EmptyState';
+import { ErrorState } from '../components/ui/ErrorState';
 import { useCurrentUser } from '../hooks/useCurrentUser';
 import { useTasks } from '../hooks/useTasks';
 import { durationLabel } from '../lib/time';
 
 export default function Briefing() {
   const { data: user } = useCurrentUser();
-  const { data: tasks, loading } = useTasks(user?.id ?? null);
+  const { data: tasks, loading, error, refetch } = useTasks(user?.id ?? null);
 
   const upcoming = tasks.filter((t) => t.status !== 'completed');
   const totalMins = upcoming.reduce((acc, t) => acc + t.estimatedMinutes, 0);
@@ -23,13 +24,18 @@ export default function Briefing() {
 
       {loading ? (
         <View style={{ gap: 12 }}>
-          <AuraSkeleton height={80} />
-          <AuraSkeleton height={80} />
+          <ChronosSkeleton height={80} />
+          <ChronosSkeleton height={80} />
         </View>
+      ) : error ? (
+        <ErrorState
+          message="Couldn't pull this week's briefing."
+          onRetry={refetch}
+        />
       ) : upcoming.length === 0 ? (
         <EmptyState
           title="A clear week."
-          body="No assignments pulled in yet. Aura will pick things up overnight."
+          body="No assignments pulled in yet. Chronos will pick things up overnight."
         />
       ) : (
         <>

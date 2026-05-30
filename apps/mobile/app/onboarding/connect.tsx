@@ -1,12 +1,19 @@
-import { useState } from 'react';
-import { View, Text, StyleSheet, TextInput } from 'react-native';
+import { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, TextInput, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Colors } from '@aura/shared/constants/colors';
+import * as AppleAuthentication from 'expo-apple-authentication';
+import { Colors } from '@chronos/shared/constants/colors';
 import { ScreenContainer } from '../../components/ui/ScreenContainer';
-import { AuraButton } from '../../components/ui/AuraButton';
-import { useToast } from '../../components/ui/AuraToast';
+import { ChronosButton } from '../../components/ui/ChronosButton';
+import { useToast } from '../../components/ui/ChronosToast';
 import { sanitizeCanvasUrl, isValidEmail } from '../../lib/validation';
-import { signInWithEmail, signInWithGoogle, verifyEmailCode } from '../../services/auth';
+import {
+  isAppleSignInAvailable,
+  signInWithApple,
+  signInWithEmail,
+  signInWithGoogle,
+  verifyEmailCode,
+} from '../../services/auth';
 import { IS_DEMO_MODE } from '../../lib/env';
 
 type Mode = 'choose' | 'email' | 'email-otp' | 'canvas';
@@ -21,6 +28,36 @@ export default function OnboardingConnect() {
   const [canvasPat, setCanvasPat] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [appleAvailable, setAppleAvailable] = useState(false);
+
+  useEffect(() => {
+    void isAppleSignInAvailable().then(setAppleAvailable);
+  }, []);
+
+  const handleApple = async () => {
+    setSubmitting(true);
+    setError(null);
+    try {
+      if (IS_DEMO_MODE) {
+        toast.show('Demo mode — skipping Apple sign-in.', 'info');
+        router.push('/onboarding/profile');
+        return;
+      }
+      await signInWithApple();
+      router.push('/onboarding/profile');
+    } catch (e) {
+      // User-cancelled flows return a code of ERR_REQUEST_CANCELED. Don't show
+      // a scary error for that — they just changed their mind.
+      const err = e as { code?: string; message?: string };
+      if (err.code === 'ERR_REQUEST_CANCELED') {
+        // silent
+      } else {
+        setError(err.message ?? 'Apple sign-in failed.');
+      }
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   const handleGoogle = async () => {
     setSubmitting(true);
@@ -113,13 +150,22 @@ export default function OnboardingConnect() {
   if (mode === 'choose') {
     return (
       <ScreenContainer>
-        <Text style={styles.h1}>Sign in to Aura</Text>
+        <Text style={styles.h1}>Sign in to Chronos</Text>
         <Text style={styles.sub}>
           Use Google to also connect Classroom in one step, or email if you'd rather
           keep school separate.
         </Text>
         <View style={{ gap: 12, marginTop: 32 }}>
-          <AuraButton
+          {Platform.OS === 'ios' && appleAvailable ? (
+            <AppleAuthentication.AppleAuthenticationButton
+              buttonType={AppleAuthentication.AppleAuthenticationButtonType.CONTINUE}
+              buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.WHITE}
+              cornerRadius={8}
+              style={styles.appleButton}
+              onPress={handleApple}
+            />
+          ) : null}
+          <ChronosButton
             label="Continue with Google"
             onPress={handleGoogle}
             loading={submitting}
@@ -127,7 +173,7 @@ export default function OnboardingConnect() {
             size="lg"
             fullWidth
           />
-          <AuraButton
+          <ChronosButton
             label="Continue with email"
             onPress={() => {
               setError(null);
@@ -137,7 +183,7 @@ export default function OnboardingConnect() {
             size="lg"
             fullWidth
           />
-          <AuraButton
+          <ChronosButton
             label="I use Canvas"
             onPress={() => {
               setError(null);
@@ -174,7 +220,7 @@ export default function OnboardingConnect() {
           </View>
           {error ? <Text style={styles.error}>{error}</Text> : null}
           <View style={{ gap: 10, marginTop: 8 }}>
-            <AuraButton
+            <ChronosButton
               label="Send code"
               onPress={handleSendCode}
               loading={submitting}
@@ -182,7 +228,7 @@ export default function OnboardingConnect() {
               size="lg"
               fullWidth
             />
-            <AuraButton label="Back" onPress={() => setMode('choose')} variant="ghost" />
+            <ChronosButton label="Back" onPress={() => setMode('choose')} variant="ghost" />
           </View>
         </View>
       </ScreenContainer>
@@ -210,7 +256,7 @@ export default function OnboardingConnect() {
           </View>
           {error ? <Text style={styles.error}>{error}</Text> : null}
           <View style={{ gap: 10, marginTop: 8 }}>
-            <AuraButton
+            <ChronosButton
               label="Sign in"
               onPress={handleVerifyCode}
               loading={submitting}
@@ -218,13 +264,13 @@ export default function OnboardingConnect() {
               size="lg"
               fullWidth
             />
-            <AuraButton
+            <ChronosButton
               label="Resend code"
               onPress={handleSendCode}
               variant="ghost"
               disabled={submitting}
             />
-            <AuraButton label="Back" onPress={() => setMode('email')} variant="ghost" />
+            <ChronosButton label="Back" onPress={() => setMode('email')} variant="ghost" />
           </View>
         </View>
       </ScreenContainer>
@@ -268,7 +314,7 @@ export default function OnboardingConnect() {
         </View>
         {error ? <Text style={styles.error}>{error}</Text> : null}
         <View style={{ gap: 10, marginTop: 8 }}>
-          <AuraButton
+          <ChronosButton
             label="Connect"
             onPress={handleCanvas}
             loading={submitting}
@@ -276,7 +322,7 @@ export default function OnboardingConnect() {
             size="lg"
             fullWidth
           />
-          <AuraButton label="Back" onPress={() => setMode('choose')} variant="ghost" />
+          <ChronosButton label="Back" onPress={() => setMode('choose')} variant="ghost" />
         </View>
       </View>
     </ScreenContainer>
@@ -305,4 +351,5 @@ const styles = StyleSheet.create({
     fontSize: 15,
   },
   error: { color: Colors.red, fontSize: 13, fontWeight: '500', marginTop: 12 },
+  appleButton: { height: 52, width: '100%' },
 });

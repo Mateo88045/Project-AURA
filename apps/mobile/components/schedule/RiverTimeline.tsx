@@ -1,7 +1,7 @@
 import { ReactNode, useMemo } from 'react';
 import { View, StyleSheet } from 'react-native';
-import { Colors } from '@aura/shared/constants/colors';
-import { Layout } from '@aura/shared/constants/layout';
+import { Colors } from '@chronos/shared/constants/colors';
+import { Layout } from '@chronos/shared/constants/layout';
 import { nowPercentOfDay } from '../../lib/time';
 
 interface Props {

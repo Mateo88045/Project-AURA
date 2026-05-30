@@ -1,5 +1,5 @@
 // ============================================================================
-// Aura — Shared TypeScript Interfaces
+// Chronos — Shared TypeScript Interfaces
 // All interfaces match the database schema in CLAUDE.md exactly.
 // Never define types inline in components — always import from here.
 // ============================================================================
