@@ -511,7 +511,7 @@ export default function BrainViewerScreen() {
 
         {/* Title */}
         <Animated.View entering={FadeInUp.delay(180).duration(500)} style={styles.titleBlock}>
-          <Text style={styles.eyebrow}>AURA&apos;S BRAIN</Text>
+          <Text style={styles.eyebrow}>CHRONOS&apos;S BRAIN</Text>
           <Text style={styles.title}>What I&apos;ve learned</Text>
           <Text style={styles.subtitle}>
             Every time you finish a task, Chronos updates its model of how you work.

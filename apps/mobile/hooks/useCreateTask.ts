@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { supabase } from '@chronos/shared/supabase';
-import type { Difficulty, TaskType } from '@chronos/shared/types';
+import type { Difficulty, TaskSource, TaskType } from '@chronos/shared/types';
 
 export interface CreateTaskInput {
   title: string;
@@ -9,6 +9,8 @@ export interface CreateTaskInput {
   taskType: TaskType;
   estimatedMinutes: number;
   difficulty: Difficulty;
+  /** Where the task came from. Defaults to 'manual'. */
+  source?: TaskSource;
 }
 
 interface CreateTaskResult {
@@ -36,7 +38,7 @@ export function useCreateTask(userId: string): CreateTaskResult {
           task_type: input.taskType,
           estimated_minutes: input.estimatedMinutes,
           difficulty: input.difficulty,
-          source: 'manual',
+          source: input.source ?? 'manual',
           status: 'pending',
         });
 

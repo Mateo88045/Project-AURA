@@ -13,6 +13,16 @@ export type ChatApiResponse = {
   router?: unknown;
 };
 
+/** Error carrying the server's machine-readable `code` (e.g. 'daily_limit'). */
+export class CopilotError extends Error {
+  code?: string;
+  constructor(message: string, code?: string) {
+    super(message);
+    this.name = 'CopilotError';
+    this.code = code;
+  }
+}
+
 export async function sendCopilotMessage(
   userId: string,
   messages: ChatMessagePayload[],
@@ -26,7 +36,7 @@ export async function sendCopilotMessage(
 
   const json = (await res.json().catch(() => null)) as
     | ChatApiResponse
-    | { error?: string }
+    | { error?: string; code?: string }
     | null;
 
   if (!res.ok) {
@@ -34,7 +44,11 @@ export async function sendCopilotMessage(
       json && typeof json === 'object' && 'error' in json && json.error
         ? String(json.error)
         : `HTTP ${res.status}`;
-    throw new Error(msg);
+    const code =
+      json && typeof json === 'object' && 'code' in json && json.code
+        ? String(json.code)
+        : undefined;
+    throw new CopilotError(msg, code);
   }
 
   if (

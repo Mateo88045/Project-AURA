@@ -5,16 +5,29 @@
 
 import { createClient } from '@supabase/supabase-js';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import Constants from 'expo-constants';
 
 export type { Database, Json } from './supabase/database.types';
 
-const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL ?? '';
-const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? '';
+// Prefer EXPO_PUBLIC_* env vars (set in apps/mobile/.env or EAS), but fall back
+// to the public values baked into app.json `extra` so the app connects out of
+// the box without a local .env. Both the URL and the publishable/anon key are
+// public client credentials — safe to ship in the binary.
+const extra = (Constants.expoConfig?.extra ?? {}) as {
+  supabaseUrl?: string;
+  supabasePublishableKey?: string;
+};
+
+const supabaseUrl =
+  process.env.EXPO_PUBLIC_SUPABASE_URL ?? extra.supabaseUrl ?? '';
+const supabaseAnonKey =
+  process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? extra.supabasePublishableKey ?? '';
 
 if (!supabaseUrl || !supabaseAnonKey) {
   console.warn(
-    '[Supabase] Missing EXPO_PUBLIC_SUPABASE_URL or EXPO_PUBLIC_SUPABASE_ANON_KEY. ' +
-      'Copy .env.example to .env and fill in values.',
+    '[Supabase] Missing Supabase URL or key. Set EXPO_PUBLIC_SUPABASE_URL / ' +
+      'EXPO_PUBLIC_SUPABASE_ANON_KEY, or app.json extra.supabaseUrl / ' +
+      'extra.supabasePublishableKey.',
   );
 }
 

@@ -6,6 +6,7 @@ import {
   Switch,
   StyleSheet,
   Text,
+  Alert,
   type ViewStyle,
 } from 'react-native';
 import { useRouter, type Href } from 'expo-router';
@@ -27,9 +28,12 @@ import { AmbientOrbs } from '../../components/ui/AmbientOrbs';
 import { GlassCard } from '../../components/ui/GlassCard';
 import { AuraSymbol } from '../../components/ui/AuraSymbol';
 import { AuraAvatar } from '../../components/ui/AuraAvatar';
+import { AuraSheet } from '../../components/ui/AuraSheet';
+import { supabase } from '@chronos/shared/supabase';
 import { useUserProfile } from '../../hooks/useUserProfile';
 import { useConnections } from '../../hooks/useConnections';
 import { requestSundayBriefing } from '../../services/jobs';
+import { openManageSubscriptions, restorePurchases } from '../../services/purchases';
 import { haptic } from '../../lib/haptics';
 import { useTheme, type ThemeMode } from '../../lib/theme';
 import { useAuth } from '../../hooks/useAuth';
@@ -37,6 +41,26 @@ import { scheduleDailyBriefing, cancelDailyBriefing } from '../../lib/notificati
 import type { ConnectionStatus } from '@chronos/shared/types';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+
+// Preset daily-trigger times offered in the picker sheet (24h → label)
+const TRIGGER_TIME_OPTIONS: { value: string; label: string }[] = [
+  { value: '17:00', label: '5:00 PM' },
+  { value: '18:00', label: '6:00 PM' },
+  { value: '19:00', label: '7:00 PM' },
+  { value: '19:30', label: '7:30 PM' },
+  { value: '20:00', label: '8:00 PM' },
+  { value: '21:00', label: '9:00 PM' },
+];
+
+function formatTriggerTime(value: string): string {
+  const match = TRIGGER_TIME_OPTIONS.find((o) => o.value === value);
+  if (match) return match.label;
+  const [hStr, mStr] = value.split(':');
+  const h = Number(hStr);
+  const suffix = h >= 12 ? 'PM' : 'AM';
+  const h12 = h % 12 === 0 ? 12 : h % 12;
+  return `${h12}:${mStr ?? '00'} ${suffix}`;
+}
 
 // ---------------------------------------------------------------------------
 // In-file primitives: section label, row, status dot
@@ -322,9 +346,61 @@ export default function SettingsScreen() {
 
   const [briefingBusy, setBriefingBusy] = useState(false);
   const [dailyBriefingEnabled, setDailyBriefingEnabled] = useState(true);
-  const { user: authUser, signOut } = useAuth();
-  const { user, loading: userLoading } = useUserProfile(authUser?.id ?? '');
+  const [timePickerOpen, setTimePickerOpen] = useState(false);
+  const [triggerOverride, setTriggerOverride] = useState<string | null>(null);
+  const { user: authUser, signOut, isGuest } = useAuth();
+  const [deleting, setDeleting] = useState(false);
+
+  function confirmDeleteAccount() {
+    Alert.alert(
+      'Delete account',
+      'This permanently deletes your account and all your tasks, schedule, and chats. This cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: () => { void deleteAccount(); },
+        },
+      ],
+    );
+  }
+
+  async function deleteAccount() {
+    if (deleting) return;
+    setDeleting(true);
+    haptic.primaryCTA();
+    try {
+      const { error: fnError } = await supabase.functions.invoke('delete-account');
+      if (fnError) {
+        Alert.alert('Couldn’t delete account', 'Please try again or contact support.');
+        return;
+      }
+      await signOut();
+    } catch {
+      Alert.alert('Couldn’t delete account', 'Please try again or contact support.');
+    } finally {
+      setDeleting(false);
+    }
+  }
+  const { user, loading: userLoading, refetch: refetchUser } = useUserProfile(authUser?.id ?? '');
   const { connections } = useConnections(authUser?.id ?? '');
+
+  const triggerTime = triggerOverride ?? user?.dailyTriggerTime ?? '19:30';
+
+  async function handleSelectTriggerTime(time: string) {
+    haptic.selection();
+    setTriggerOverride(time);
+    setTimePickerOpen(false);
+    if (authUser?.id) {
+      // Best-effort persist; guest mode has no row, so failures are ignored.
+      const { error: updateError } = await supabase
+        .from('users')
+        .update({ daily_trigger_time: time })
+        .eq('id', authUser.id);
+      if (!updateError) refetchUser();
+    }
+  }
 
   function handleToggleBriefingNotification(value: boolean) {
     setDailyBriefingEnabled(value);
@@ -350,6 +426,36 @@ export default function SettingsScreen() {
   const gradeLine = user
     ? `Grade ${user.gradeLevel} · ${user.timezone.split('/')[1]?.replace('_', ' ') ?? user.timezone}`
     : '—';
+
+  const [restoring, setRestoring] = useState(false);
+
+  async function handleManageSubscription() {
+    haptic.selection();
+    try {
+      await openManageSubscriptions();
+    } catch {
+      Alert.alert('Couldn’t open', 'Manage your subscription in Settings → Apple ID → Subscriptions.');
+    }
+  }
+
+  async function handleRestore() {
+    if (restoring) return;
+    setRestoring(true);
+    haptic.secondary();
+    try {
+      const result = await restorePurchases();
+      if (result.status === 'restored') {
+        haptic.success();
+        Alert.alert('Subscription restored', 'Your Chronos Pro access is active again.');
+      } else if (result.status === 'preview') {
+        Alert.alert('Not available yet', 'In-app purchases aren’t enabled in this build.');
+      } else {
+        Alert.alert('Nothing to restore', 'No active subscription was found on this Apple ID.');
+      }
+    } finally {
+      setRestoring(false);
+    }
+  }
 
   async function runBriefing() {
     if (briefingBusy) return;
@@ -479,9 +585,10 @@ export default function SettingsScreen() {
               icon="clock.fill"
               tint="steel"
               label="Daily trigger time"
-              subtitle={user?.dailyTriggerTime ?? '7:30 PM'}
+              subtitle={formatTriggerTime(triggerTime)}
               onPress={() => {
-                /* stub — opens time picker */
+                haptic.selection();
+                setTimePickerOpen(true);
               }}
               colors={colors}
               styles={styles}
@@ -493,9 +600,7 @@ export default function SettingsScreen() {
               tint="hard"
               label="Guardrails"
               subtitle="Quiet hours & daily limits"
-              onPress={() => {
-                /* stub — /settings/guardrails */
-              }}
+              onPress={() => router.push('/settings/guardrails' as Href)}
               colors={colors}
               styles={styles}
               tintMap={tintMap}
@@ -507,9 +612,7 @@ export default function SettingsScreen() {
               label="Chronos's brain"
               subtitle="How it learns from you"
               isLast
-              onPress={() => {
-                /* stub — /settings/brain */
-              }}
+              onPress={() => router.push('/settings/brain' as Href)}
               colors={colors}
               styles={styles}
               tintMap={tintMap}
@@ -564,20 +667,28 @@ export default function SettingsScreen() {
           </GlassCard>
         </Animated.View>
 
-        {/* Account */}
-        <SectionLabel delay={380} styles={styles}>ACCOUNT</SectionLabel>
-        <Animated.View entering={FadeInUp.delay(400).duration(500)}>
+        {/* Subscription */}
+        <SectionLabel delay={360} styles={styles}>SUBSCRIPTION</SectionLabel>
+        <Animated.View entering={FadeInUp.delay(380).duration(500)}>
           <GlassCard intensity="light" style={styles.groupCard}>
             <Row
-              icon="arrow.right.square.fill"
-              tint="hard"
-              label="Sign out"
-              destructive
-              trailing="none"
+              icon="crown.fill"
+              tint="moderate"
+              label="Manage subscription"
+              subtitle="Change plan or cancel"
+              onPress={() => { void handleManageSubscription(); }}
+              colors={colors}
+              styles={styles}
+              tintMap={tintMap}
+              pressTint={pressTint}
+            />
+            <Row
+              icon="arrow.clockwise"
+              tint="steel"
+              label={restoring ? 'Restoring…' : 'Restore purchases'}
+              subtitle="Already subscribed? Restore on this device"
               isLast
-              onPress={() => {
-                signOut();
-              }}
+              onPress={() => { void handleRestore(); }}
               colors={colors}
               styles={styles}
               tintMap={tintMap}
@@ -586,12 +697,86 @@ export default function SettingsScreen() {
           </GlassCard>
         </Animated.View>
 
+        {/* Account */}
+        <SectionLabel delay={400} styles={styles}>ACCOUNT</SectionLabel>
+        <Animated.View entering={FadeInUp.delay(400).duration(500)}>
+          <GlassCard intensity="light" style={styles.groupCard}>
+            <Row
+              icon="arrow.right.square.fill"
+              tint="hard"
+              label="Sign out"
+              destructive
+              trailing="none"
+              isLast={isGuest}
+              onPress={() => {
+                signOut();
+              }}
+              colors={colors}
+              styles={styles}
+              tintMap={tintMap}
+              pressTint={pressTint}
+            />
+            {!isGuest && (
+              <Row
+                icon="trash.fill"
+                tint="hard"
+                label={deleting ? 'Deleting…' : 'Delete account'}
+                subtitle="Permanently erase your data"
+                destructive
+                trailing="none"
+                isLast
+                onPress={confirmDeleteAccount}
+                colors={colors}
+                styles={styles}
+                tintMap={tintMap}
+                pressTint={pressTint}
+              />
+            )}
+          </GlassCard>
+        </Animated.View>
+
         {/* Footer */}
         <Animated.View entering={FadeIn.delay(460).duration(500)} style={styles.footer}>
-          <Text style={styles.footerLine}>AURA · VERSION 1.0</Text>
+          <Text style={styles.footerLine}>CHRONOS · VERSION 1.0</Text>
           <Text style={styles.footerSub}>The calendar manages the student.</Text>
         </Animated.View>
       </ScrollView>
+
+      {/* Daily trigger time picker */}
+      <AuraSheet visible={timePickerOpen} onClose={() => setTimePickerOpen(false)}>
+        <Text style={styles.sheetTitle}>Daily trigger time</Text>
+        <Text style={styles.sheetSubtitle}>
+          When Chronos plans tomorrow and sends your briefing.
+        </Text>
+        <View style={styles.sheetOptions}>
+          {TRIGGER_TIME_OPTIONS.map((option) => {
+            const active = option.value === triggerTime;
+            return (
+              <Pressable
+                key={option.value}
+                onPress={() => {
+                  void handleSelectTriggerTime(option.value);
+                }}
+                style={[styles.sheetOption, active && styles.sheetOptionActive]}
+                accessibilityRole="button"
+                accessibilityLabel={option.label}
+              >
+                <Text
+                  style={[
+                    styles.sheetOptionText,
+                    active && { color: colors.accent.blue, fontWeight: '600' },
+                  ]}
+                >
+                  {option.label}
+                </Text>
+                {active ? (
+                  <AuraSymbol name="checkmark" size={16} color={colors.accent.blue} weight="semibold" />
+                ) : null}
+              </Pressable>
+            );
+          })}
+        </View>
+      </AuraSheet>
     </View>
   );
 }
@@ -807,6 +992,40 @@ function makeStyles(c: ThemeColors) {
       ...typography.callout,
       color: c.text.tertiary,
       fontStyle: 'italic',
+    },
+
+    // Time picker sheet
+    sheetTitle: {
+      ...typography.title2,
+      color: c.text.primary,
+    },
+    sheetSubtitle: {
+      ...typography.callout,
+      color: c.text.secondary,
+      marginTop: spacing.xs,
+      marginBottom: spacing.md,
+    },
+    sheetOptions: {
+      gap: spacing.xs,
+    },
+    sheetOption: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingVertical: spacing.md,
+      paddingHorizontal: spacing.md,
+      borderRadius: radius.md,
+      backgroundColor: c.glass.light,
+      borderWidth: 1,
+      borderColor: c.border.subtle,
+    },
+    sheetOptionActive: {
+      borderColor: c.accent.blue,
+      backgroundColor: c.glass.accent,
+    },
+    sheetOptionText: {
+      ...typography.body,
+      color: c.text.primary,
     },
   });
 }

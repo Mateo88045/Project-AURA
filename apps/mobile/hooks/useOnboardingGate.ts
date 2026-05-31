@@ -3,16 +3,21 @@ import { supabase } from '@chronos/shared/supabase';
 import { GUEST_USER_ID } from '../lib/guest';
 
 /** Onboarding progress values — each screen increments by 1. */
-export type OnboardingStep = 0 | 1 | 2 | 3 | 4;
+export type OnboardingStep = 0 | 1 | 2 | 3 | 4 | 5 | 6;
+
+/** The step value that means onboarding (incl. paywall) is fully complete. */
+const COMPLETE_STEP = 6;
 
 /** Maps a step value to the route the user should resume at.
  *  Step = highest completed step, so the route is the NEXT screen. */
 const STEP_ROUTES: Record<OnboardingStep, string> = {
-  0: '/onboarding',            // Nothing done → welcome
-  1: '/onboarding/profile',    // Connect done → profile next
-  2: '/onboarding/schedule',   // Profile done → schedule next
-  3: '/onboarding/preferences',// Schedule done → preferences next
-  4: '/(tabs)',                 // All done → main app
+  0: '/onboarding',              // Nothing done → welcome
+  1: '/onboarding/profile',      // Connect done → profile next
+  2: '/onboarding/schedule',     // Profile done → schedule next
+  3: '/onboarding/preferences',  // Schedule done → preferences next
+  4: '/onboarding/questionnaire',// Preferences done → questionnaire next
+  5: '/onboarding/paywall',      // Questionnaire done → paywall next
+  6: '/(tabs)',                  // All done → main app
 };
 
 interface OnboardingGateResult {
@@ -36,9 +41,10 @@ export function useOnboardingGate(userId: string | null): OnboardingGateResult {
     }
 
     // Guest users skip onboarding entirely — they're exploring with no account
-    // (Guideline 5.1.1), so there's no Supabase row to read. Treat as complete.
+    // (Guideline 5.1.1), so there's no Supabase row to read. Treat as complete
+    // (including the paywall — guests get the free exploration tier).
     if (userId === GUEST_USER_ID) {
-      setStep(4);
+      setStep(COMPLETE_STEP);
       setLoading(false);
       return;
     }
@@ -59,7 +65,7 @@ export function useOnboardingGate(userId: string | null): OnboardingGateResult {
         // Default to step 0.
         setStep(0);
       } else {
-        setStep(Math.min(data.onboarding_step, 4) as OnboardingStep);
+        setStep(Math.min(data.onboarding_step, COMPLETE_STEP) as OnboardingStep);
       }
       setLoading(false);
     }
@@ -72,7 +78,7 @@ export function useOnboardingGate(userId: string | null): OnboardingGateResult {
   }, [userId]);
 
   async function advance() {
-    if (!userId || step >= 4) return;
+    if (!userId || step >= COMPLETE_STEP) return;
     const nextStep = (step + 1) as OnboardingStep;
 
     await supabase
@@ -86,7 +92,7 @@ export function useOnboardingGate(userId: string | null): OnboardingGateResult {
   return {
     step,
     loading,
-    isComplete: step >= 4,
+    isComplete: step >= COMPLETE_STEP,
     targetRoute: STEP_ROUTES[step],
     advance,
   };

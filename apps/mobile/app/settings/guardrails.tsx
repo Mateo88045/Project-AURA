@@ -415,18 +415,22 @@ export default function GuardrailsEditorScreen() {
             <TimeChip
               label="FROM"
               value={formatHour(state.noWorkAfter.startHour)}
-              onPress={() => {
-                /* stub — opens time picker */
-              }}
+              onPress={() =>
+                update('noWorkAfter', {
+                  startHour: (state.noWorkAfter.startHour + 1) % 24,
+                })
+              }
               timeChipStyles={timeChipStyles}
             />
             <AuraSymbol name="arrow.right" size={16} color={colors.text.tertiary} />
             <TimeChip
               label="TO"
               value={formatHour(state.noWorkAfter.endHour)}
-              onPress={() => {
-                /* stub — opens time picker */
-              }}
+              onPress={() =>
+                update('noWorkAfter', {
+                  endHour: (state.noWorkAfter.endHour + 1) % 24,
+                })
+              }
               timeChipStyles={timeChipStyles}
             />
           </View>

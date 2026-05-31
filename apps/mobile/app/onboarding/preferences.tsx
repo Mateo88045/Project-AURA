@@ -9,7 +9,7 @@ import {
   Platform,
   ScrollView,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, type Href } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
@@ -115,7 +115,7 @@ export default function OnboardingPreferencesScreen() {
 
     await requestNotificationPermissions();
     setSubmitting(false);
-    router.replace('/(tabs)');
+    router.push('/onboarding/questionnaire' as Href);
   }
 
   return (
@@ -155,7 +155,7 @@ export default function OnboardingPreferencesScreen() {
               <GlassCard intensity="light" style={styles.card}>
                 <View style={styles.cardInner}>
                   <Animated.View entering={FadeInDown.delay(STAGGER_MS * 2).duration(320)}>
-                    <Text style={styles.label}>STEP 4 OF 4 · ALMOST THERE</Text>
+                    <Text style={styles.label}>STEP 4 · YOUR RHYTHM</Text>
                   </Animated.View>
                   <Animated.View entering={FadeInDown.delay(STAGGER_MS * 3).duration(320)}>
                     <Text style={styles.title}>A few last things.</Text>
@@ -270,7 +270,7 @@ export default function OnboardingPreferencesScreen() {
           >
             <View style={styles.ctaButton}>
               <AuraButton
-                label="Finish setup"
+                label="Continue"
                 size="lg"
                 fullWidth
                 onPress={() => { void handleFinish(); }}

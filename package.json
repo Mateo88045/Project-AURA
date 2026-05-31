@@ -7,7 +7,8 @@
     "mobile": "pnpm --filter @chronos/mobile start",
     "mobile:ios": "pnpm --filter @chronos/mobile ios",
     "mobile:android": "pnpm --filter @chronos/mobile android",
-    "typecheck": "tsc --noEmit",
+    "api": "pnpm --filter @chronos/api dev",
+    "typecheck": "pnpm --filter @chronos/mobile typecheck && pnpm --filter @chronos/api typecheck",
     "clean": "pnpm -r exec rm -rf node_modules && rm -rf node_modules"
   },
   "engines": {

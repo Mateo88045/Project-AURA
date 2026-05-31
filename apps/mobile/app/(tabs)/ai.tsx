@@ -383,7 +383,7 @@ export default function AIHubScreen() {
       >
         {/* Header */}
         <Animated.View entering={FadeIn.duration(400)} style={styles.header}>
-          <Text style={styles.eyebrow}>AURA</Text>
+          <Text style={styles.eyebrow}>CHRONOS</Text>
           <Text style={styles.title}>How can I help?</Text>
           <Text style={styles.subtitle}>
             Ask me to explain, simplify, or adjust your plan.
@@ -458,9 +458,7 @@ export default function AIHubScreen() {
               title="Snap a homework page"
               subtitle="Photograph any assignment — I'll grade and schedule it"
               tint="mist"
-              onPress={() => {
-                /* stub — opens camera */
-              }}
+              onPress={() => router.push('/tasks/scan' as Href)}
               colors={colors}
               tints={tints}
               cardStyles={cardStyles}
@@ -470,9 +468,7 @@ export default function AIHubScreen() {
               title="Plan my week"
               subtitle="Review Sunday's briefing and line up the next seven days"
               tint="amber"
-              onPress={() => {
-                /* stub — /briefing */
-              }}
+              onPress={() => router.push('/briefing' as Href)}
               colors={colors}
               tints={tints}
               cardStyles={cardStyles}

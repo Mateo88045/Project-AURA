@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { View, ScrollView, Pressable, StyleSheet, Text } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, type Href } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, {
   FadeIn,
@@ -181,7 +181,12 @@ export default function ShadowScheduleReviewScreen() {
             <Pressable
               onPress={() => {
                 haptic.secondary();
-                // TODO: open edit flow
+                router.push(
+                  ('/(tabs)/ai/chat?prompt=' +
+                    encodeURIComponent("Help me adjust today's plan.") +
+                    '&context=' +
+                    encodeURIComponent('Editing shadow plan')) as Href,
+                );
               }}
               style={styles.editBtn}
               accessibilityRole="button"

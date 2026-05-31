@@ -12,8 +12,8 @@
     "android": "expo run:android"
   },
   "dependencies": {
-    "@chronos/shared": "workspace:*",
     "@babel/runtime": "^7.28.6",
+    "@chronos/shared": "workspace:*",
     "@expo/metro-runtime": "~6.1.2",
     "@react-native-async-storage/async-storage": "2.2.0",
     "class-variance-authority": "^0.7.1",
@@ -28,6 +28,7 @@
     "expo-glass-effect": "~0.1.10",
     "expo-haptics": "~15.0.8",
     "expo-image": "~3.0.11",
+    "expo-image-picker": "~17.0.11",
     "expo-linear-gradient": "~15.0.8",
     "expo-linking": "~8.0.12",
     "expo-notifications": "~0.32.17",

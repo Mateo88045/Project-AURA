@@ -320,7 +320,7 @@ export default function BriefingScreen() {
         </Animated.View>
 
         {/* Chronos's note */}
-        <Text style={styles.sectionLabel}>AURA&apos;S NOTE</Text>
+        <Text style={styles.sectionLabel}>CHRONOS&apos;S NOTE</Text>
         <Animated.View entering={FadeInDown.delay(640).duration(500)}>
           <GlassCard intensity="regular" borderAccent style={styles.noteCard}>
             <LinearGradient

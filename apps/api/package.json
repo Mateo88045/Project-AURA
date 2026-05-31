@@ -1,0 +1,24 @@
+{
+  "name": "@chronos/api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch --env-file=.env.local src/index.ts",
+    "start": "tsx --env-file=.env.local src/index.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.39.0",
+    "@chronos/shared": "workspace:*",
+    "@google/generative-ai": "^0.21.0",
+    "@hono/node-server": "^1.13.7",
+    "@trigger.dev/sdk": "^3.3.17",
+    "hono": "^4.6.12"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.3.0"
+  }
+}

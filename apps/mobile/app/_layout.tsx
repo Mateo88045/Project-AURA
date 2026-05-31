@@ -111,6 +111,10 @@ function ThemedApp() {
             options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
           />
           <Stack.Screen
+            name="tasks/scan"
+            options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
+          />
+          <Stack.Screen
             name="tasks/[id]/active"
             options={{ animation: 'ios_from_right' }}
           />

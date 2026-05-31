@@ -37,6 +37,7 @@ import { AuraSymbol } from '../../../components/ui/AuraSymbol';
 import { haptic } from '../../../lib/haptics';
 import {
   sendCopilotMessage,
+  CopilotError,
   type ChatMessagePayload,
 } from '../../../services/chatApi';
 import { useAuth } from '../../../hooks/useAuth';
@@ -84,7 +85,7 @@ function TypingIndicator({
   return (
     <Animated.View entering={FadeIn.duration(200)} style={typingStyles.bubble}>
       <View style={typingStyles.avatar}>
-        <Text style={typingStyles.avatarLetter}>A</Text>
+        <Text style={typingStyles.avatarLetter}>C</Text>
       </View>
       <GlassCard intensity="light" style={typingStyles.card}>
         <View style={typingStyles.dotsRow}>
@@ -179,7 +180,7 @@ function Bubble({ row, showAvatar, index, bubbleStyles }: BubbleProps) {
         <View style={bubbleStyles.avatarSlot}>
           {showAvatar ? (
             <View style={bubbleStyles.avatar}>
-              <Text style={bubbleStyles.avatarLetter}>A</Text>
+              <Text style={bubbleStyles.avatarLetter}>C</Text>
             </View>
           ) : null}
         </View>
@@ -348,7 +349,9 @@ export default function AIChatScreen() {
         ]);
         haptic.success();
       } catch (e) {
-        lastFailedInput.current = text;
+        // Daily-cap errors aren't retryable, so don't arm the Retry button.
+        const isLimit = e instanceof CopilotError && e.code === 'daily_limit';
+        lastFailedInput.current = isLimit ? null : text;
         setError(e instanceof Error ? e.message : 'Something went wrong');
       } finally {
         setLoading(false);
@@ -376,6 +379,22 @@ export default function AIChatScreen() {
     setError(null);
     void sendMessage(lastFailedInput.current);
   }, [sendMessage]);
+
+  const startNewConversation = useCallback(() => {
+    haptic.secondary();
+    setInput('');
+    setError(null);
+    lastFailedInput.current = null;
+    hasAutoSent.current = true;
+    setRows([
+      {
+        id: 'welcome',
+        role: 'assistant',
+        content:
+          "Hey — I'm Chronos. Ask about your schedule or tell me what to move.",
+      },
+    ]);
+  }, []);
 
   const canSend = input.trim().length > 0 && !loading;
 
@@ -406,7 +425,7 @@ export default function AIChatScreen() {
           </Pressable>
           <View style={styles.headerCenter}>
             <View style={styles.headerAvatar}>
-              <Text style={styles.headerAvatarLetter}>A</Text>
+              <Text style={styles.headerAvatarLetter}>C</Text>
             </View>
             <View>
               <Text style={styles.headerTitle}>Chronos</Text>
@@ -417,10 +436,10 @@ export default function AIChatScreen() {
             hitSlop={12}
             style={styles.headerBtn}
             accessibilityRole="button"
-            accessibilityLabel="More"
-            onPress={() => haptic.selection()}
+            accessibilityLabel="New conversation"
+            onPress={startNewConversation}
           >
-            <AuraSymbol name="ellipsis" size={20} color={colors.text.secondary} />
+            <AuraSymbol name="square.and.pencil" size={20} color={colors.text.secondary} />
           </Pressable>
         </Animated.View>
 
@@ -554,12 +573,15 @@ export default function AIChatScreen() {
           <GlassCard intensity="thick" borderAccent style={styles.inputBar}>
             <Pressable
               hitSlop={10}
-              onPress={() => haptic.secondary()}
+              onPress={() => {
+                haptic.secondary();
+                router.push('/tasks/scan');
+              }}
               accessibilityRole="button"
-              accessibilityLabel="Attach photo"
+              accessibilityLabel="Scan a homework page"
               style={styles.inputIconBtn}
             >
-              <AuraSymbol name="plus.circle.fill" size={22} color={colors.text.secondary} />
+              <AuraSymbol name="camera.fill" size={20} color={colors.text.secondary} />
             </Pressable>
             <TextInput
               value={input}
@@ -592,15 +614,17 @@ export default function AIChatScreen() {
                 />
               </AnimatedPressable>
             ) : (
-              <Pressable
-                hitSlop={10}
-                style={styles.inputIconBtn}
-                accessibilityRole="button"
-                accessibilityLabel="Voice"
-                onPress={() => haptic.secondary()}
+              <View
+                style={[styles.sendBtn, styles.sendBtnDisabled]}
+                accessibilityElementsHidden
               >
-                <AuraSymbol name="mic.fill" size={18} color={colors.text.secondary} />
-              </Pressable>
+                <AuraSymbol
+                  name="arrow.up"
+                  size={16}
+                  color={colors.text.tertiary}
+                  weight="bold"
+                />
+              </View>
             )}
           </GlassCard>
         </View>
@@ -762,6 +786,9 @@ function makeStyles(c: ThemeColors) {
       backgroundColor: c.accent.blue,
       alignItems: 'center',
       justifyContent: 'center',
+    },
+    sendBtnDisabled: {
+      backgroundColor: c.glass.light,
     },
 
     // Context pill (list header)

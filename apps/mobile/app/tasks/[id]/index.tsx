@@ -5,9 +5,11 @@ import {
   Pressable,
   StyleSheet,
   Text,
+  Alert,
   type ViewStyle,
 } from 'react-native';
 import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
+import { supabase } from '@chronos/shared/supabase';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, {
@@ -391,7 +393,8 @@ export default function TaskDetailScreen() {
             variant="outline"
             size="md"
             onPress={() => {
-              /* stub */
+              haptic.secondary();
+              router.push('/schedule/review' as Href);
             }}
             style={styles.secondaryBtn}
           />
@@ -400,7 +403,23 @@ export default function TaskDetailScreen() {
             variant="ghost"
             size="md"
             onPress={() => {
-              /* stub */
+              haptic.secondary();
+              Alert.alert(
+                'Remove task',
+                `“${task.title}” and its scheduled time will be deleted.`,
+                [
+                  { text: 'Cancel', style: 'cancel' },
+                  {
+                    text: 'Remove',
+                    style: 'destructive',
+                    onPress: async () => {
+                      await supabase.from('tasks').delete().eq('id', task.id);
+                      haptic.success();
+                      router.back();
+                    },
+                  },
+                ],
+              );
             }}
             style={styles.secondaryBtn}
           />
