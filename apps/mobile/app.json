@@ -20,7 +20,8 @@
         "NSCameraUsageDescription": "Aura uses the camera to capture photos of your assignments so they can be added to your schedule.",
         "NSUserNotificationsUsageDescription": "Aura sends reminders for your scheduled study blocks and daily assignment updates.",
         "UIBackgroundModes": ["remote-notification"],
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSSupportsLiveActivities": true
       }
     },
     "android": {
@@ -50,7 +51,8 @@
         {
           "color": "#A8DADC"
         }
-      ]
+      ],
+      "@bacons/apple-targets"
     ],
     "experiments": {
       "typedRoutes": true
