@@ -7,6 +7,7 @@ import { AuraSkeleton } from '../../../components/ui/AuraSkeleton';
 import { AuraButton } from '../../../components/ui/AuraButton';
 import { DifficultyBadge } from '../../../components/ui/DifficultyBadge';
 import { useTask } from '../../../hooks/useTasks';
+import { useTaskSession, useIsTaskInSession } from '../../../hooks/useTaskSession';
 import { durationLabel, relativeDueLabel } from '../../../lib/time';
 
 const TASK_TYPE_LABELS = {
@@ -23,6 +24,8 @@ export default function TaskDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { data, loading } = useTask(id ?? null);
+  const { start, pause, resume, isRunning } = useTaskSession();
+  const inSession = useIsTaskInSession(id ?? null);
 
   if (loading) {
     return (
@@ -71,17 +74,35 @@ export default function TaskDetail() {
       ) : null}
 
       <View style={{ marginTop: 32, gap: 10 }}>
+        {inSession ? (
+          <AuraButton
+            label={isRunning ? 'Pause focus session' : 'Resume focus session'}
+            onPress={isRunning ? pause : resume}
+            variant="primary"
+            size="lg"
+            fullWidth
+          />
+        ) : (
+          <AuraButton
+            label="Start focus session"
+            onPress={() => {
+              void start(data);
+            }}
+            variant="primary"
+            size="lg"
+            fullWidth
+          />
+        )}
         <AuraButton
           label="Mark complete"
           onPress={() => router.push(`/tasks/${data.id}/complete`)}
-          variant="primary"
-          size="lg"
+          variant="secondary"
           fullWidth
         />
         <AuraButton
           label="Reschedule with Aura"
           onPress={() => router.push('/ai/chat')}
-          variant="secondary"
+          variant="ghost"
           fullWidth
         />
       </View>

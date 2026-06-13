@@ -192,6 +192,66 @@ export interface CopilotAction {
 }
 
 // ---------------------------------------------------------------------------
+// Task Sessions (live "focus session" + iOS Live Activity)
+// ---------------------------------------------------------------------------
+export type TaskSessionStatus = 'running' | 'paused' | 'completed';
+
+/**
+ * Status shown on the native Live Activity's final frame. Adds `cancelled`
+ * (used when a session is abandoned, replaced, or dropped on sign-out) so the
+ * card never claims completion for a task that wasn't finished.
+ */
+export type LiveActivityStatus = TaskSessionStatus | 'cancelled';
+
+/**
+ * A live focus session for a single task — what powers the DoorDash-style
+ * widget. The React layer (`useTaskSession`) is the single source of truth;
+ * the native iOS Live Activity (ActivityKit) only mirrors this state.
+ */
+export interface TaskSession {
+  taskId: string;
+  userId: string;
+  title: string;
+  subject: string;
+  difficulty: Difficulty;
+  /** ISO 8601 — when the session was first started. */
+  startedAt: string;
+  /** Total planned focus time in ms (estimatedMinutes + any extensions). */
+  plannedMs: number;
+  /**
+   * Focused time accrued in ms as of the last pause/resume transition. While
+   * the session is running, live elapsed = elapsedMs + (now - runStartedAt).
+   */
+  elapsedMs: number;
+  status: TaskSessionStatus;
+}
+
+/**
+ * The dynamic payload pushed to the native Live Activity. Timestamps are epoch
+ * milliseconds so they cross the JS↔Swift bridge without locale parsing.
+ * `startsAt`/`endsAt` drive SwiftUI's self-animating `ProgressView(timerInterval:)`,
+ * so the countdown bar advances natively with no per-second push updates.
+ */
+export interface LiveActivityContentState {
+  title: string;
+  subject: string;
+  difficulty: Difficulty;
+  /** Epoch ms marking the start of the visible countdown window. */
+  startsAt: number;
+  /** Epoch ms when the countdown reaches zero. */
+  endsAt: number;
+  paused: boolean;
+  /** Remaining ms, frozen while paused so the card shows a static value. */
+  remainingMs: number;
+  status: LiveActivityStatus;
+}
+
+/** Static, immutable attributes for a Live Activity instance. */
+export interface LiveActivityAttributes {
+  taskId: string;
+}
+
+// ---------------------------------------------------------------------------
 // Scheduling Engine Types
 // ---------------------------------------------------------------------------
 

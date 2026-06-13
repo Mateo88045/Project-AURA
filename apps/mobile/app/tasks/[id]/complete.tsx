@@ -18,12 +18,14 @@ const FEEDBACK_LABELS: Record<UserFeedback, string> = {
 };
 
 export default function CompleteTask() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, actual: actualParam } = useLocalSearchParams<{ id: string; actual?: string }>();
   const router = useRouter();
   const toast = useToast();
   const { data: task } = useTask(id ?? null);
   const { userId } = useAuth();
-  const [actual, setActual] = useState('');
+  // Pre-filled from the focus session's tracked time when arriving from the
+  // live widget; otherwise the student types it in.
+  const [actual, setActual] = useState(actualParam ?? '');
   const [feedback, setFeedback] = useState<UserFeedback | null>(null);
   const [submitting, setSubmitting] = useState(false);
 

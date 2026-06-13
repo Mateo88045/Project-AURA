@@ -8,6 +8,8 @@ import { View } from 'react-native';
 import { Colors } from '@aura/shared/constants/colors';
 import { ToastProvider } from '../components/ui/AuraToast';
 import { DemoModeBanner } from '../components/ui/DemoModeBanner';
+import { TaskSessionProvider } from '../hooks/useTaskSession';
+import { ActiveTaskWidget } from '../components/tasks/ActiveTaskWidget';
 import { getAuthToken } from '../lib/storage';
 import { getSupabaseOrNull } from '../lib/supabase';
 import { IS_DEMO_MODE } from '../lib/env';
@@ -18,33 +20,36 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1, backgroundColor: Colors.bgDark }}>
       <SafeAreaProvider>
         <ToastProvider>
-          <StatusBar style="light" />
-          <AuthAndNotifications />
-          <DemoModeBanner />
-          <Stack
-            screenOptions={{
-              headerShown: false,
-              contentStyle: { backgroundColor: Colors.bgDark },
-              animation: 'fade',
-            }}
-          >
-            <Stack.Screen name="(tabs)" />
-            <Stack.Screen name="onboarding" />
-            <Stack.Screen
-              name="schedule/review"
-              options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
-            />
-            <Stack.Screen name="ai/chat" options={{ animation: 'slide_from_right' }} />
-            <Stack.Screen
-              name="photo/capture"
-              options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
-            />
-            <Stack.Screen name="tasks/[id]" options={{ animation: 'slide_from_right' }} />
-            <Stack.Screen name="briefing" options={{ animation: 'slide_from_bottom' }} />
-            <Stack.Screen name="settings/connections" />
-            <Stack.Screen name="settings/guardrails" />
-            <Stack.Screen name="settings/brain" />
-          </Stack>
+          <TaskSessionProvider>
+            <StatusBar style="light" />
+            <AuthAndNotifications />
+            <DemoModeBanner />
+            <Stack
+              screenOptions={{
+                headerShown: false,
+                contentStyle: { backgroundColor: Colors.bgDark },
+                animation: 'fade',
+              }}
+            >
+              <Stack.Screen name="(tabs)" />
+              <Stack.Screen name="onboarding" />
+              <Stack.Screen
+                name="schedule/review"
+                options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
+              />
+              <Stack.Screen name="ai/chat" options={{ animation: 'slide_from_right' }} />
+              <Stack.Screen
+                name="photo/capture"
+                options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
+              />
+              <Stack.Screen name="tasks/[id]" options={{ animation: 'slide_from_right' }} />
+              <Stack.Screen name="briefing" options={{ animation: 'slide_from_bottom' }} />
+              <Stack.Screen name="settings/connections" />
+              <Stack.Screen name="settings/guardrails" />
+              <Stack.Screen name="settings/brain" />
+            </Stack>
+            <ActiveTaskWidget />
+          </TaskSessionProvider>
         </ToastProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
