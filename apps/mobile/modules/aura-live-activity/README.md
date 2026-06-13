@@ -60,6 +60,11 @@ pnpm --filter @aura/mobile exec expo run:ios --device
 `app.json` already sets `ios.infoPlist.NSSupportsLiveActivities: true` and
 registers the `@bacons/apple-targets` plugin.
 
+> **Set `ios.appleTeamId` in `app.json`.** `@bacons/apple-targets` needs your
+> Apple Developer Team ID to sign the widget extension; without it `expo
+> prebuild` warns and the iOS build can fail. Find it in Xcode (Signing &
+> Capabilities) or the Apple Developer portal and add it under `expo.ios`.
+
 ### ⚠️ Shared attributes
 
 `AuraTaskAttributes` must be the **same type** in the app target (this module)

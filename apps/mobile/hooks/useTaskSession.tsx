@@ -20,6 +20,7 @@ import {
   updateTaskActivity,
   endTaskActivity,
 } from '../services/liveActivity';
+import { useAuth } from './useAuth';
 
 const STORAGE_KEY = 'aura.taskSession.v1';
 
@@ -146,14 +147,20 @@ export function TaskSessionProvider({ children }: { children: ReactNode }) {
 
   const start = useCallback(
     async (task: Task) => {
-      // Replace any in-flight session.
-      if (activityIdRef.current && sessionRef.current) {
-        const prev = sessionRef.current;
-        await endTaskActivity(
-          activityIdRef.current,
-          buildContentState(prev, runStartedAtRef.current, Date.now()),
-        );
+      // Tear down any in-flight session first, using captured locals so a
+      // concurrent action can't target the old (about-to-end) activity. Cleared
+      // synchronously and ended fire-and-forget so the new session shows at once.
+      const previousId = activityIdRef.current;
+      const previousSession = sessionRef.current;
+      activityIdRef.current = null;
+      if (previousId && previousSession) {
+        void endTaskActivity(previousId, {
+          ...buildContentState(previousSession, runStartedAtRef.current, Date.now()),
+          status: 'cancelled',
+          paused: false,
+        });
       }
+
       const startMs = Date.now();
       const plannedMs = Math.max(1, task.estimatedMinutes) * 60_000;
       const next: TaskSession = {
@@ -168,15 +175,33 @@ export function TaskSessionProvider({ children }: { children: ReactNode }) {
         status: 'running',
       };
       runStartedAtRef.current = startMs;
+      sessionRef.current = next;
       setSession(next);
       setNow(startMs);
       persist(next, startMs);
       void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
+
       const id = await startTaskActivity(
         { taskId: task.id },
         buildContentState(next, startMs, startMs),
       );
-      activityIdRef.current = id;
+      if (sessionRef.current?.taskId === task.id) {
+        activityIdRef.current = id;
+        // A pause/extend may have landed during the await — reconcile the card.
+        if (sessionRef.current !== next) {
+          void updateTaskActivity(
+            id,
+            buildContentState(sessionRef.current, runStartedAtRef.current, Date.now()),
+          );
+        }
+      } else if (id) {
+        // The session was completed/replaced mid-await; don't leak the activity.
+        void endTaskActivity(id, {
+          ...buildContentState(next, startMs, Date.now()),
+          status: 'cancelled',
+          paused: false,
+        });
+      }
     },
     [persist],
   );
@@ -188,6 +213,7 @@ export function TaskSessionProvider({ children }: { children: ReactNode }) {
     const accrued = computeElapsed(prev, runStartedAtRef.current, pausedAt);
     const next: TaskSession = { ...prev, elapsedMs: accrued, status: 'paused' };
     runStartedAtRef.current = null;
+    sessionRef.current = next;
     setSession(next);
     persist(next, null);
     void updateTaskActivity(
@@ -203,6 +229,7 @@ export function TaskSessionProvider({ children }: { children: ReactNode }) {
     const resumedAt = Date.now();
     runStartedAtRef.current = resumedAt;
     const next: TaskSession = { ...prev, status: 'running' };
+    sessionRef.current = next;
     setSession(next);
     setNow(resumedAt);
     persist(next, resumedAt);
@@ -222,6 +249,7 @@ export function TaskSessionProvider({ children }: { children: ReactNode }) {
         ...prev,
         plannedMs: prev.plannedMs + minutes * 60_000,
       };
+      sessionRef.current = next;
       setSession(next);
       persist(next, runStartedAtRef.current);
       void updateTaskActivity(
@@ -234,20 +262,26 @@ export function TaskSessionProvider({ children }: { children: ReactNode }) {
   );
 
   const clearSession = useCallback(
-    async (finalStatus: 'completed') => {
+    async (finalStatus: 'completed' | 'cancelled') => {
       const prev = sessionRef.current;
+      const id = activityIdRef.current;
+      const runStartedAt = runStartedAtRef.current;
       const atMs = Date.now();
-      if (activityIdRef.current && prev) {
-        await endTaskActivity(activityIdRef.current, {
-          ...buildContentState(prev, runStartedAtRef.current, atMs),
-          status: finalStatus,
-          paused: false,
-        });
-      }
+      // Clear local state + storage synchronously, BEFORE awaiting the native
+      // end. This means a second tap immediately sees no session, and an app
+      // kill mid-await can't rehydrate an already-finished session.
+      sessionRef.current = null;
       activityIdRef.current = null;
       runStartedAtRef.current = null;
       setSession(null);
       persist(null, null);
+      if (id && prev) {
+        await endTaskActivity(id, {
+          ...buildContentState(prev, runStartedAt, atMs),
+          status: finalStatus,
+          paused: false,
+        });
+      }
     },
     [persist],
   );
@@ -265,9 +299,20 @@ export function TaskSessionProvider({ children }: { children: ReactNode }) {
   }, [clearSession]);
 
   const cancel = useCallback(() => {
-    void clearSession('completed');
+    void clearSession('cancelled');
     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
   }, [clearSession]);
+
+  // Drop the session when the user signs out, so the app-wide widget never
+  // lingers over onboarding or another account. Demo mode keeps a stable user,
+  // so this only fires on a real sign-out (userId → null).
+  const { userId, loading: authLoading } = useAuth();
+  useEffect(() => {
+    if (authLoading) return;
+    if (userId === null && sessionRef.current) {
+      void clearSession('cancelled');
+    }
+  }, [userId, authLoading, clearSession]);
 
   const elapsedMs = session
     ? computeElapsed(session, runStartedAtRef.current, now)

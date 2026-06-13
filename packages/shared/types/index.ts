@@ -197,6 +197,13 @@ export interface CopilotAction {
 export type TaskSessionStatus = 'running' | 'paused' | 'completed';
 
 /**
+ * Status shown on the native Live Activity's final frame. Adds `cancelled`
+ * (used when a session is abandoned, replaced, or dropped on sign-out) so the
+ * card never claims completion for a task that wasn't finished.
+ */
+export type LiveActivityStatus = TaskSessionStatus | 'cancelled';
+
+/**
  * A live focus session for a single task — what powers the DoorDash-style
  * widget. The React layer (`useTaskSession`) is the single source of truth;
  * the native iOS Live Activity (ActivityKit) only mirrors this state.
@@ -236,7 +243,7 @@ export interface LiveActivityContentState {
   paused: boolean;
   /** Remaining ms, frozen while paused so the card shows a static value. */
   remainingMs: number;
-  status: TaskSessionStatus;
+  status: LiveActivityStatus;
 }
 
 /** Static, immutable attributes for a Live Activity instance. */
