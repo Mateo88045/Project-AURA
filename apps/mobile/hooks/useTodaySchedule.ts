@@ -2,83 +2,8 @@ import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '@chronos/shared/supabase';
 import type { FixedEvent, ScheduledBlock } from '@chronos/shared/types';
 import { mapRowToTask } from './useTasksForDay';
-
-// ---------------------------------------------------------------------------
-// Mock data — used when Supabase tables aren't seeded yet
-// TODO: remove once real data is flowing
-// ---------------------------------------------------------------------------
-function getMockData(day: string): { blocks: ScheduledBlock[]; events: FixedEvent[] } {
-  const userId = 'user-1';
-  const blocks: ScheduledBlock[] = [
-    {
-      id: 'mock-block-1',
-      userId,
-      taskId: 'mock-task-1',
-      task: {
-        id: 'mock-task-1', userId, title: 'AP Chemistry Problem Set',
-        subject: 'Chemistry', source: 'manual', dueDate: `${day}T23:59:00.000Z`,
-        difficulty: 4, estimatedMinutes: 90, taskType: 'problem_set',
-        status: 'scheduled', createdAt: `${day}T00:00:00.000Z`, updatedAt: `${day}T00:00:00.000Z`,
-      },
-      startTime: `${day}T15:00:00.000Z`,
-      endTime: `${day}T16:30:00.000Z`,
-      status: 'approved', day,
-      createdAt: `${day}T00:00:00.000Z`,
-    },
-    {
-      id: 'mock-block-2',
-      userId,
-      taskId: 'mock-task-2',
-      task: {
-        id: 'mock-task-2', userId, title: 'History Essay Outline',
-        subject: 'History', source: 'google_classroom', dueDate: `${day}T23:59:00.000Z`,
-        difficulty: 3, estimatedMinutes: 60, taskType: 'essay',
-        status: 'scheduled', createdAt: `${day}T00:00:00.000Z`, updatedAt: `${day}T00:00:00.000Z`,
-      },
-      startTime: `${day}T17:00:00.000Z`,
-      endTime: `${day}T18:00:00.000Z`,
-      status: 'approved', day,
-      createdAt: `${day}T00:00:00.000Z`,
-    },
-    {
-      id: 'mock-block-3',
-      userId,
-      taskId: 'mock-task-3',
-      task: {
-        id: 'mock-task-3', userId, title: 'Calculus Reading Ch. 7',
-        subject: 'Math', source: 'canvas', dueDate: `${day}T23:59:00.000Z`,
-        difficulty: 2, estimatedMinutes: 45, taskType: 'reading',
-        status: 'scheduled', createdAt: `${day}T00:00:00.000Z`, updatedAt: `${day}T00:00:00.000Z`,
-      },
-      startTime: `${day}T19:00:00.000Z`,
-      endTime: `${day}T19:45:00.000Z`,
-      status: 'shadow', day,
-      createdAt: `${day}T00:00:00.000Z`,
-    },
-  ];
-  const dowIndex = new Date(`${day}T12:00:00Z`).getUTCDay();
-  const events: FixedEvent[] = [
-    {
-      id: 'mock-event-1', userId, title: 'AP Chemistry',
-      startTime: '08:00', endTime: '09:00',
-      daysOfWeek: [1, 2, 3, 4, 5],
-      createdAt: `${day}T00:00:00.000Z`,
-    },
-    {
-      id: 'mock-event-2', userId, title: 'Lunch',
-      startTime: '12:00', endTime: '13:00',
-      daysOfWeek: [0, 1, 2, 3, 4, 5, 6],
-      createdAt: `${day}T00:00:00.000Z`,
-    },
-    {
-      id: 'mock-event-3', userId, title: 'Soccer Practice',
-      startTime: '16:30', endTime: '18:00',
-      daysOfWeek: [1, 3, 5],
-      createdAt: `${day}T00:00:00.000Z`,
-    },
-  ].filter(e => e.daysOfWeek.includes(dowIndex));
-  return { blocks, events };
-}
+import { isGuestId } from '../lib/guest';
+import { getDemoFixedEventsForDay, getDemoScheduledBlocksForDay } from '../lib/demoData';
 
 interface TodayScheduleResult {
   scheduledBlocks: ScheduledBlock[];
@@ -103,6 +28,17 @@ export function useTodaySchedule(userId: string, day: string): TodayScheduleResu
       setLoading(true);
       setError(null);
 
+      // Guest mode has no real Supabase user row — never query a uuid column
+      // with the guest sentinel id. Serve the fixed demo dataset instead.
+      if (isGuestId(userId)) {
+        if (isMounted) {
+          setScheduledBlocks(getDemoScheduledBlocksForDay(day));
+          setFixedEvents(getDemoFixedEventsForDay(day));
+          setLoading(false);
+        }
+        return;
+      }
+
       try {
         // Fetch scheduled blocks with joined task data, plus fixed events in parallel
         const [blocksResult, eventsResult] = await Promise.all([
@@ -122,13 +58,8 @@ export function useTodaySchedule(userId: string, day: string): TodayScheduleResu
         if (!isMounted) return;
 
         if (blocksResult.error || eventsResult.error) {
-          // DB not seeded yet — fall back to mock data so the UI is usable
-          const mock = getMockData(day);
-          if (isMounted) {
-            setScheduledBlocks(mock.blocks);
-            setFixedEvents(mock.events);
-            setLoading(false);
-          }
+          setError(blocksResult.error?.message ?? eventsResult.error?.message ?? 'Unknown error');
+          setLoading(false);
           return;
         }
 
@@ -163,11 +94,9 @@ export function useTodaySchedule(userId: string, day: string): TodayScheduleResu
         setScheduledBlocks(mappedBlocks);
         setFixedEvents(mappedEvents);
         setLoading(false);
-      } catch {
+      } catch (err) {
         if (!isMounted) return;
-        const mock = getMockData(day);
-        setScheduledBlocks(mock.blocks);
-        setFixedEvents(mock.events);
+        setError(err instanceof Error ? err.message : 'Unknown error');
         setLoading(false);
       }
     }

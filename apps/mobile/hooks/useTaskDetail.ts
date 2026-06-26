@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '@chronos/shared/supabase';
 import type { Task } from '@chronos/shared/types';
 import { mapRowToTask } from './useTasksForDay';
+import { getDemoTaskById, isDemoTaskId } from '../lib/demoData';
 
 interface TaskDetailResult {
   task: Task | null;
@@ -23,6 +24,16 @@ export function useTaskDetail(taskId: string): TaskDetailResult {
     async function load() {
       setLoading(true);
       setError(null);
+
+      // Demo tasks (served to guest sessions) live in-memory and were never
+      // written to Supabase — looking them up by id there always 400s.
+      if (isDemoTaskId(taskId)) {
+        if (isMounted) {
+          setTask(getDemoTaskById(taskId) ?? null);
+          setLoading(false);
+        }
+        return;
+      }
 
       try {
         const { data, error: queryError } = await supabase

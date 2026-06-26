@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { supabase } from '@chronos/shared/supabase';
 import type { Difficulty, TaskSource, TaskType } from '@chronos/shared/types';
+import { isGuestId } from '../lib/guest';
 
 export interface CreateTaskInput {
   title: string;
@@ -27,6 +28,15 @@ export function useCreateTask(userId: string): CreateTaskResult {
     setLoading(true);
     setError(null);
 
+    if (isGuestId(userId)) {
+      // Guest mode has no real user row to attach a task to — inserting
+      // with the sentinel id would 400 on the uuid column.
+      const message = 'Sign in to save tasks beyond this session.';
+      setError(message);
+      setLoading(false);
+      throw new Error(message);
+    }
+
     try {
       const { error: insertError } = await supabase
         .from('tasks')
@@ -42,14 +52,16 @@ export function useCreateTask(userId: string): CreateTaskResult {
           status: 'pending',
         });
 
+      setLoading(false);
+
       if (insertError) {
         setError(insertError.message);
+        throw new Error(insertError.message);
       }
-
-      setLoading(false);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create task');
       setLoading(false);
+      setError(err instanceof Error ? err.message : 'Failed to create task');
+      throw err;
     }
   }
 

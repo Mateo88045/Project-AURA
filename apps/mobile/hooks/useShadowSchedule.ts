@@ -2,6 +2,8 @@ import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '@chronos/shared/supabase';
 import type { ScheduledBlock } from '@chronos/shared/types';
 import { mapRowToTask } from './useTasksForDay';
+import { isGuestId } from '../lib/guest';
+import { getDemoScheduledBlocksForDay } from '../lib/demoData';
 
 interface ShadowScheduleResult {
   shadowBlocks: ScheduledBlock[];
@@ -26,6 +28,14 @@ export function useShadowSchedule(
     async function load() {
       setLoading(true);
       setError(null);
+
+      if (isGuestId(userId)) {
+        if (isMounted) {
+          setShadowBlocks(getDemoScheduledBlocksForDay(day).filter((b) => b.status === 'shadow'));
+          setLoading(false);
+        }
+        return;
+      }
 
       try {
         const { data, error: queryError } = await supabase

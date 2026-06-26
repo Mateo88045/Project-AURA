@@ -15,7 +15,15 @@ const extra = (Constants.expoConfig?.extra ?? {}) as {
 };
 
 export function getAuraApiBaseUrl(): string {
-  return process.env.EXPO_PUBLIC_AURA_API_URL ?? extra.auraApiUrl ?? DEFAULT_DEV_API;
+  // `??` only falls through on null/undefined, not on '' — and app.json ships
+  // `extra.auraApiUrl: ""` until a real API URL is configured, so an explicit
+  // empty-string check is required or the chain "resolves" to a relative,
+  // unreachable URL instead of the local dev default.
+  return (
+    process.env.EXPO_PUBLIC_AURA_API_URL ||
+    extra.auraApiUrl ||
+    DEFAULT_DEV_API
+  );
 }
 
 export function getAuraApiHeaders(userId: string): Record<string, string> {

@@ -18,11 +18,12 @@ const isExpoGo = Constants.appOwnership === 'expo';
 WebBrowser.maybeCompleteAuthSession();
 
 // The redirect URI Supabase will send the user back to after OAuth.
-// In a custom dev client / standalone build this becomes `aura://auth/callback`.
-// In Expo Go it becomes the `exp://...` URL Expo Go is currently running on.
-// `makeRedirectUri` picks the right one automatically when given a scheme; both
-// values must be added to Supabase Auth → URL Configuration → Redirect URLs.
-const redirectUri = makeRedirectUri({ scheme: 'aura', path: 'auth/callback' });
+// In a custom dev client / standalone build this becomes `chronos://auth/callback`
+// (must match the `scheme` in app.json). In Expo Go it becomes the `exp://...`
+// URL Expo Go is currently running on. `makeRedirectUri` picks the right one
+// automatically when given a scheme; both values must be added to Supabase
+// Auth → URL Configuration → Redirect URLs.
+const redirectUri = makeRedirectUri({ scheme: 'chronos', path: 'auth/callback' });
 
 // ---------------------------------------------------------------------------
 // Google OAuth — opens an in-app browser, Supabase handles the flow

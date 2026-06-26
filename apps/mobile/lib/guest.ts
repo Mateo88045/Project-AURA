@@ -16,6 +16,15 @@ const GUEST_KEY = 'chronos_guest_mode';
 /** Stable synthetic id used while in guest mode. Never written to Supabase. */
 export const GUEST_USER_ID = 'guest-user';
 
+/**
+ * True when `id` is the guest sentinel, not a real Supabase uuid.
+ * Every hook that filters a Postgres query by user id must check this first —
+ * a guest id sent to a uuid column throws `invalid input syntax for type uuid`.
+ */
+export function isGuestId(id: string | null | undefined): boolean {
+  return id === GUEST_USER_ID;
+}
+
 type GuestListener = (isGuest: boolean) => void;
 const listeners = new Set<GuestListener>();
 

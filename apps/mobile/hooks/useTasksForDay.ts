@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '@chronos/shared/supabase';
 import type { Task } from '@chronos/shared/types';
+import { isGuestId } from '../lib/guest';
+import { getDemoTasksForDay } from '../lib/demoData';
 
 interface TasksForDayResult {
   tasks: Task[];
@@ -43,6 +45,14 @@ export function useTasksForDay(userId: string, day: string): TasksForDayResult {
     async function load() {
       setLoading(true);
       setError(null);
+
+      if (isGuestId(userId)) {
+        if (isMounted) {
+          setTasks(getDemoTasksForDay(day));
+          setLoading(false);
+        }
+        return;
+      }
 
       try {
         const { data, error: queryError } = await supabase

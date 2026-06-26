@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '@chronos/shared/supabase';
 import type { Connection } from '@chronos/shared/types';
+import { isGuestId } from '../lib/guest';
 
 interface ConnectionsResult {
   connections: Connection[];
@@ -22,6 +23,14 @@ export function useConnections(userId: string): ConnectionsResult {
     async function load() {
       setLoading(true);
       setError(null);
+
+      if (isGuestId(userId)) {
+        if (isMounted) {
+          setConnections([]);
+          setLoading(false);
+        }
+        return;
+      }
 
       try {
         const { data, error: queryError } = await supabase

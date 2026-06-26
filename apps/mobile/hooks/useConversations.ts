@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '@chronos/shared/supabase';
 import type { Conversation } from '@chronos/shared/types';
+import { isGuestId } from '../lib/guest';
 
 interface ConversationsResult {
   conversations: Conversation[];
@@ -22,6 +23,16 @@ export function useConversations(userId: string): ConversationsResult {
     async function load() {
       setLoading(true);
       setError(null);
+
+      // Guest mode has no real conversation rows to read — show the empty
+      // state rather than querying with a non-uuid sentinel id.
+      if (isGuestId(userId)) {
+        if (isMounted) {
+          setConversations([]);
+          setLoading(false);
+        }
+        return;
+      }
 
       try {
         const { data, error: queryError } = await supabase

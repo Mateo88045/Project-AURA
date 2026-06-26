@@ -1,6 +1,24 @@
 import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '@chronos/shared/supabase';
 import type { User } from '@chronos/shared/types';
+import { GUEST_USER_ID, isGuestId } from '../lib/guest';
+
+const GUEST_PROFILE: User = {
+  id: GUEST_USER_ID,
+  email: '',
+  displayName: 'Guest',
+  gradeLevel: 11,
+  onboardingAnswers: {
+    subjects: [],
+    extracurriculars: [],
+    averageHomeworkHours: 0,
+    preferredStudyTime: 'evening',
+  },
+  dailyTriggerTime: '20:00',
+  timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+  createdAt: new Date().toISOString(),
+  updatedAt: new Date().toISOString(),
+};
 
 interface UserProfileResult {
   user: User | null;
@@ -22,6 +40,14 @@ export function useUserProfile(userId: string): UserProfileResult {
     async function load() {
       setLoading(true);
       setError(null);
+
+      if (isGuestId(userId)) {
+        if (isMounted) {
+          setUser(GUEST_PROFILE);
+          setLoading(false);
+        }
+        return;
+      }
 
       try {
         const { data, error: queryError } = await supabase

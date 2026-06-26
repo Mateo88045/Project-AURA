@@ -30,6 +30,7 @@ import { AuraButton } from '../../../components/ui/AuraButton';
 import { AuraSkeleton } from '../../../components/ui/AuraSkeleton';
 import { useTaskDetail } from '../../../hooks/useTaskDetail';
 import { haptic } from '../../../lib/haptics';
+import { isDemoTaskId } from '../../../lib/demoData';
 import type { TaskSource, TaskType } from '@chronos/shared/types';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
@@ -413,7 +414,9 @@ export default function TaskDetailScreen() {
                     text: 'Remove',
                     style: 'destructive',
                     onPress: async () => {
-                      await supabase.from('tasks').delete().eq('id', task.id);
+                      if (!isDemoTaskId(task.id)) {
+                        await supabase.from('tasks').delete().eq('id', task.id);
+                      }
                       haptic.success();
                       router.back();
                     },

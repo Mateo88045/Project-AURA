@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { supabase } from '@chronos/shared/supabase';
 import type { Task } from '@chronos/shared/types';
 import { mapRowToTask } from './useTasksForDay';
+import { getDemoTaskById, isDemoTaskId } from '../lib/demoData';
 
 interface ActiveTaskResult {
   task: Task | null;
@@ -30,6 +31,14 @@ export function useActiveTask(taskId: string, userId: string): ActiveTaskResult 
     async function load() {
       setLoading(true);
       setError(null);
+
+      if (isDemoTaskId(taskId)) {
+        if (isMounted) {
+          setTask(getDemoTaskById(taskId) ?? null);
+          setLoading(false);
+        }
+        return;
+      }
 
       try {
         const { data, error: queryError } = await supabase
@@ -79,6 +88,7 @@ export function useActiveTask(taskId: string, userId: string): ActiveTaskResult 
   const start = useCallback(async () => {
     if (startedRef.current) return;
     startedRef.current = true;
+    if (isDemoTaskId(taskId)) return;
     const { error: updateError } = await supabase
       .from('tasks')
       .update({ status: 'in_progress' })

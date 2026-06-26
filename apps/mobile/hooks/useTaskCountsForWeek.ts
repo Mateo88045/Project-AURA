@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '@chronos/shared/supabase';
+import { isGuestId } from '../lib/guest';
+import { getDemoTaskCounts } from '../lib/demoData';
 
 interface TaskCountsResult {
   counts: Record<string, number>; // dayIso (YYYY-MM-DD) -> task count
@@ -32,6 +34,14 @@ export function useTaskCountsForWeek(
     async function load() {
       setLoading(true);
       setError(null);
+
+      if (isGuestId(userId)) {
+        if (isMounted) {
+          setCounts(getDemoTaskCounts(days));
+          setLoading(false);
+        }
+        return;
+      }
 
       try {
         const startDay = days[0];
