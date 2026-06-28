@@ -9,6 +9,7 @@ import { ocrRouter } from './routes/ocr.js';
 
 const app = new Hono();
 
+// TODO SECURITY: Restrict origin to app bundle scheme before production deploy
 app.use('/*', cors({ origin: '*' }));
 
 app.get('/health', (c) => c.json({ ok: true }));

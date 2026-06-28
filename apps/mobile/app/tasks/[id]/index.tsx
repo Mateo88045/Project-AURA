@@ -148,22 +148,6 @@ function makeChipStyles(c: ThemeColors) {
 }
 
 // ---------------------------------------------------------------------------
-// Mock scheduled blocks for the task (would come from useScheduledBlocks)
-// ---------------------------------------------------------------------------
-
-interface MockBlock {
-  id: string;
-  day: string;
-  start: string;
-  end: string;
-}
-
-const MOCK_BLOCKS: MockBlock[] = [
-  { id: 'b1', day: 'Tonight', start: '7:30 PM', end: '8:50 PM' },
-  { id: 'b2', day: 'Tomorrow', start: '4:00 PM', end: '5:20 PM' },
-];
-
-// ---------------------------------------------------------------------------
 // Screen
 // ---------------------------------------------------------------------------
 
@@ -355,25 +339,10 @@ export default function TaskDetailScreen() {
         </Animated.Text>
         <Animated.View entering={FadeInDown.delay(440).duration(500)}>
           <GlassCard intensity="light" style={styles.blocksCard}>
-            {MOCK_BLOCKS.map((b, i) => (
-              <View key={b.id}>
-                <View style={styles.blockRow}>
-                  <View style={styles.blockDot} />
-                  <View style={styles.blockTextCol}>
-                    <Text style={styles.blockDay}>{b.day}</Text>
-                    <Text style={styles.blockTime}>
-                      {b.start} – {b.end}
-                    </Text>
-                  </View>
-                  <AuraSymbol
-                    name="chevron.right"
-                    size={14}
-                    color={colors.text.tertiary}
-                  />
-                </View>
-                {i < MOCK_BLOCKS.length - 1 ? <View style={styles.blockDivider} /> : null}
-              </View>
-            ))}
+            <View style={styles.blocksEmpty}>
+              <AuraSymbol name="calendar.badge.clock" size={20} color={colors.text.tertiary} />
+              <Text style={styles.blocksEmptyText}>Scheduling happens nightly. Check back tomorrow.</Text>
+            </View>
           </GlassCard>
         </Animated.View>
 
@@ -554,6 +523,18 @@ function makeStyles(c: ThemeColors) {
     // Blocks
     blocksCard: {
       paddingVertical: 4,
+    },
+    blocksEmpty: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 10,
+      paddingHorizontal: spacing.cardPadding,
+      paddingVertical: 18,
+    },
+    blocksEmptyText: {
+      ...typography.callout,
+      color: c.text.secondary,
+      flex: 1,
     },
     blockRow: {
       flexDirection: 'row',

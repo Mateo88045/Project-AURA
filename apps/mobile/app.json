@@ -61,6 +61,7 @@
         "projectId": ""
       },
       "supabaseUrl": "https://bvwumzzuvubiacueftbz.supabase.co",
+      "//supabasePublishableKey": "CONSIDER: Move to EXPO_PUBLIC_SUPABASE_* env vars for easier key rotation.",
       "supabasePublishableKey": "sb_publishable_if5RMKHlwHLzUu97PaAcbQ_Vgm-rb7u",
       "auraApiUrl": "",
       "auraApiKey": "",

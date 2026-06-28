@@ -1,3 +1,4 @@
+// LAUNCH BLOCKER: RevenueCat is not wired. See LAUNCH_CHECKLIST.md §2 for step-by-step instructions. The paywall will error in production until this is done.
 /**
  * Subscription / in-app-purchase abstraction for Chronos.
  *

@@ -30,6 +30,8 @@ import { AuraButton } from '../components/ui/AuraButton';
 import { CountUpText } from '../components/ui/CountUpText';
 import { haptic } from '../lib/haptics';
 
+const IS_MOCK_DATA = true;
+
 // ---------------------------------------------------------------------------
 // Stat card — big number over a label, with a delayed count-up feel via
 // scale spring on mount
@@ -254,6 +256,13 @@ export default function BriefingScreen() {
           </Pressable>
         </Animated.View>
 
+        {IS_MOCK_DATA && (
+          <View style={styles.mockBanner}>
+            <AuraSymbol name="wand.and.stars" size={14} color={colors.accent.amber} />
+            <Text style={styles.mockBannerText}>Sample data — your real summary will appear after your first week.</Text>
+          </View>
+        )}
+
         {/* Hero */}
         <Animated.View entering={FadeInDown.delay(60).duration(500)}>
           <Text style={styles.eyebrow}>
@@ -416,6 +425,25 @@ function makeStyles(c: ThemeColors) {
       backgroundColor: c.glass.light,
       borderWidth: 1,
       borderColor: c.border.subtle,
+    },
+
+    // Mock banner
+    mockBanner: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+      paddingVertical: 10,
+      paddingHorizontal: 12,
+      borderRadius: 10,
+      backgroundColor: c.accent.amber + '14',
+      borderWidth: 1,
+      borderColor: c.accent.amber + '33',
+      marginBottom: spacing.lg,
+    },
+    mockBannerText: {
+      ...typography.callout,
+      color: c.text.secondary,
+      flex: 1,
     },
 
     // Hero

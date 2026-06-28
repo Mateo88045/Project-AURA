@@ -438,29 +438,6 @@ interface VelocityData {
   confidence: number;
 }
 
-const MOCK_VELOCITY: VelocityData[] = [
-  { subject: 'US History', tintKey: 'coral',   multiplier: 1.22, confidence: 0.8 },
-  { subject: 'Calculus',   tintKey: 'blue',    multiplier: 0.94, confidence: 0.9 },
-  { subject: 'Biology',    tintKey: 'emerald', multiplier: 1.02, confidence: 0.7 },
-  { subject: 'English',    tintKey: 'violet',  multiplier: 1.08, confidence: 0.6 },
-  { subject: 'Spanish',    tintKey: 'amber',   multiplier: 0.88, confidence: 0.5 },
-];
-
-interface PeakData {
-  label: string;
-  score: number;
-  tintKey: AccentKey;
-}
-
-const MOCK_PEAKS: PeakData[] = [
-  { label: '6A',  score: 0.15, tintKey: 'sky' },
-  { label: '9A',  score: 0.35, tintKey: 'sky' },
-  { label: '12P', score: 0.55, tintKey: 'sky' },
-  { label: '3P',  score: 0.82, tintKey: 'sky' },
-  { label: '6P',  score: 0.96, tintKey: 'sky' },
-  { label: '9P',  score: 0.64, tintKey: 'sky' },
-];
-
 // ---------------------------------------------------------------------------
 // Screen
 // ---------------------------------------------------------------------------
@@ -519,78 +496,13 @@ export default function BrainViewerScreen() {
           </Text>
         </Animated.View>
 
-        {/* Velocity — time estimates per subject */}
-        <Text style={styles.sectionLabel}>VELOCITY PER SUBJECT</Text>
+        {/* Empty state — pace data not yet learned */}
         <Animated.View entering={FadeInUp.delay(240).duration(500)}>
-          <GlassCard intensity="light" style={styles.velocityCard}>
-            <View style={styles.velocityHeader}>
-              <Text style={styles.velocityHeaderLabel}>FASTER</Text>
-              <Text style={styles.velocityHeaderLabel}>ON TARGET</Text>
-              <Text style={styles.velocityHeaderLabel}>SLOWER</Text>
-            </View>
-            <View style={styles.velocityList}>
-              {MOCK_VELOCITY.map((v, i) => (
-                <VelocityRow
-                  key={v.subject}
-                  subject={v.subject}
-                  tint={colors.accent[v.tintKey]}
-                  multiplier={v.multiplier}
-                  confidence={v.confidence}
-                  delay={280 + i * 70}
-                  colors={colors}
-                  velocityStyles={velocityStyles}
-                />
-              ))}
-            </View>
-          </GlassCard>
-        </Animated.View>
-
-        {/* Peak productivity times */}
-        <Text style={styles.sectionLabel}>PEAK TIMES</Text>
-        <Animated.View entering={FadeInUp.delay(620).duration(500)}>
-          <GlassCard intensity="light" style={styles.peakCard}>
-            <Text style={styles.peakTitle}>You&apos;re strongest in the late afternoon</Text>
-            <View style={styles.peakChart}>
-              {MOCK_PEAKS.map((p, i) => (
-                <PeakBar
-                  key={p.label}
-                  label={p.label}
-                  score={p.score}
-                  tint={colors.accent[p.tintKey]}
-                  delay={700 + i * 60}
-                  peakStyles={peakStyles}
-                />
-              ))}
-            </View>
-          </GlassCard>
-        </Animated.View>
-
-        {/* Insights — narrative findings */}
-        <Text style={styles.sectionLabel}>RECENT INSIGHTS</Text>
-        <Animated.View entering={FadeInUp.delay(780).duration(500)}>
-          <GlassCard intensity="light" style={styles.insightsCard}>
-            <InsightRow
-              icon="waveform"
-              tint={colors.accent.sky}
-              title="Essays run long for you"
-              body="History and English writing tasks consistently take 20–25% longer than the initial estimate. Next week I'll pad those blocks by default."
-              insightStyles={insightStyles}
-            />
-            <InsightRow
-              icon="bolt.fill"
-              tint={colors.accent.amber}
-              title="You're faster in short bursts"
-              body="Problem sets finished 12% faster when scheduled in 45-minute blocks vs 90-minute blocks."
-              insightStyles={insightStyles}
-            />
-            <InsightRow
-              icon="moon.fill"
-              tint={colors.accent.blue}
-              title="Late-night work drifts"
-              body="Tasks scheduled after 9 PM are 3× more likely to get rescheduled. I'll avoid putting anything important there."
-              isLast
-              insightStyles={insightStyles}
-            />
+          <GlassCard intensity="light" style={{ padding: spacing.cardPadding, alignItems: 'center', gap: 8 }}>
+            <AuraSymbol name="brain" size={24} color={colors.text.tertiary} />
+            <Text style={{ ...typography.bodyMedium, color: colors.text.secondary, textAlign: 'center' }}>
+              Chronos learns your pace after you complete a few tasks. Check back soon.
+            </Text>
           </GlassCard>
         </Animated.View>
 

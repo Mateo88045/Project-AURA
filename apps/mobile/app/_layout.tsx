@@ -10,6 +10,7 @@ import { ThemeProvider, useTheme } from '../lib/theme';
 import { AuraToastProvider } from '../components/ui/AuraToast';
 import { useAuth } from '../hooks/useAuth';
 import { useOnboardingGate } from '../hooks/useOnboardingGate';
+import { ErrorBoundary } from '../components/ui/ErrorBoundary';
 
 // Handle foreground notifications — show as banners
 Notifications.setNotificationHandler({
@@ -27,7 +28,9 @@ export default function RootLayout() {
     <GestureHandlerRootView style={styles.flex}>
       <SafeAreaProvider>
         <ThemeProvider>
-          <ThemedApp />
+          <ErrorBoundary>
+            <ThemedApp />
+          </ErrorBoundary>
         </ThemeProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
