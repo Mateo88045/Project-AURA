@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { isGuestId } from '../lib/guest';
 
 // TODO: Supabase — derive from task_completions WHERE completed_at grouped by date
 // Rolling logic: if last completion was today or yesterday → streak continues, else resets.
@@ -60,7 +61,7 @@ export function useStreak(userId: string): StreakResult {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!userId) { setLoading(false); return; }
+    if (!userId || isGuestId(userId)) { setLoading(false); return; }
     loadStreak(userId).then((s) => {
       setStored(s);
       setLoading(false);

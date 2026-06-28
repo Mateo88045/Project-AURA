@@ -25,6 +25,7 @@ import { useCreateTask } from '../../hooks/useCreateTask';
 import { useAuraToast } from '../../components/ui/AuraToast';
 import { haptic } from '../../lib/haptics';
 import { useAuth } from '../../hooks/useAuth';
+import DateTimePicker from '@react-native-community/datetimepicker';
 const STAGGER_MS = 40;
 const TASK_TYPES: { value: TaskType; label: string }[] = [
   { value: 'essay', label: 'Essay' },
@@ -63,6 +64,7 @@ export default function NewTaskScreen() {
   const [taskType, setTaskType] = useState<TaskType>('other');
   const [estimatedMinutes, setEstimatedMinutes] = useState<number>(30);
   const [difficulty, setDifficulty] = useState<Difficulty>(3);
+  const [showDatePicker, setShowDatePicker] = useState(false);
 
   const canSave = title.trim().length > 0 && subject.trim().length > 0;
 
@@ -158,16 +160,7 @@ export default function NewTaskScreen() {
               <View style={styles.field}>
                 <Text style={styles.fieldLabel}>DUE DATE</Text>
                 <Pressable
-                  onPress={() => {
-                    haptic.selection();
-                    // TODO: Open date picker — DateTimePicker or custom glass picker
-                    // For now, advance by 1 day as a stub interaction
-                    setDueDate((prev) => {
-                      const d = new Date(prev);
-                      d.setDate(d.getDate() + 1);
-                      return d;
-                    });
-                  }}
+                  onPress={() => { haptic.selection(); setShowDatePicker(true); }}
                   style={styles.datePill}
                   accessibilityRole="button"
                 >
@@ -291,6 +284,20 @@ export default function NewTaskScreen() {
             />
           </Animated.View>
         </ScrollView>
+        {showDatePicker && (
+          <DateTimePicker
+            value={dueDate}
+            mode="date"
+            display="spinner"
+            minimumDate={new Date()}
+            onChange={(event, selectedDate) => {
+              setShowDatePicker(false);
+              if (event.type === 'set' && selectedDate) {
+                setDueDate(selectedDate);
+              }
+            }}
+          />
+        )}
       </KeyboardAvoidingView>
     </View>
   );

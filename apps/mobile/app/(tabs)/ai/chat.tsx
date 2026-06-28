@@ -357,7 +357,7 @@ export default function AIChatScreen() {
         setLoading(false);
       }
     },
-    [loading, rows],
+    [loading, rows, authUser],
   );
 
   const send = useCallback(() => {

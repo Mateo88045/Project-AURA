@@ -112,6 +112,15 @@ function buildRows(blocks: ScheduledBlock[], events: FixedEvent[]): TimelineRow[
     });
   }
 
+  rows.sort((a, b) => {
+    const toMs = (clock: Clock) => {
+      const [h, m] = clock.hh.split(':').map(Number);
+      const base = (h % 12) * 60 + (m ?? 0);
+      return clock.mer === 'PM' ? base + 720 : base;
+    };
+    return toMs(a.clock) - toMs(b.clock);
+  });
+
   return rows;
 }
 
@@ -218,7 +227,7 @@ export default function TodayScreen() {
             <AuraSymbol name="bell.fill" size={20} color={colors.text.secondary} />
             {unreadCount > 0 && (
               <View style={[styles.bellBadge, { backgroundColor: colors.accent.coral }]}>
-                <Text style={styles.bellBadgeText}>{unreadCount > 9 ? '9+' : unreadCount}</Text>
+                <Text style={styles.bellBadgeText} allowFontScaling={false}>{unreadCount > 9 ? '9+' : unreadCount}</Text>
               </View>
             )}
           </Pressable>

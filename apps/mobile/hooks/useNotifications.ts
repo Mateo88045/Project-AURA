@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { isGuestId } from '../lib/guest';
 
 export type AuraNotificationType =
   | 'sync_complete'
@@ -43,7 +44,7 @@ export function useNotifications(userId: string): NotificationsResult {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!userId) {
+    if (!userId || isGuestId(userId)) {
       setLoading(false);
       return;
     }

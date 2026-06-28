@@ -8,6 +8,7 @@ import {
   type ReactNode,
 } from 'react';
 import { AppState, type AppStateStatus } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   darkColors,
   lightColors,
@@ -65,16 +66,10 @@ interface ThemeContextValue {
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
 // ---------------------------------------------------------------------------
-// In-memory mode persistence
-//
-// Holds the user's selection across re-renders and navigations within a
-// single app session. Survives Fast Refresh but not full relaunches.
-//
-// TODO: persist across launches via @react-native-async-storage/async-storage
-//       (not currently a dependency). Read on mount → setModeState, write on
-//       every setMode call.
+// Mode persistence — in-memory cache + AsyncStorage for cold launches.
 // ---------------------------------------------------------------------------
 
+const THEME_STORAGE_KEY = 'chronos:theme_mode';
 let cachedMode: ThemeMode = 'dark';
 
 // ---------------------------------------------------------------------------
@@ -90,6 +85,15 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
   const [autoResolved, setAutoResolved] = useState<ResolvedMode>(() =>
     resolveAutoMode(),
   );
+
+  useEffect(() => {
+    AsyncStorage.getItem(THEME_STORAGE_KEY).then((stored) => {
+      if (stored === 'light' || stored === 'dark' || stored === 'auto') {
+        cachedMode = stored;
+        setModeState(stored);
+      }
+    }).catch(() => {});
+  }, []);
 
   // Auto-mode refresh: re-evaluate time on AppState → active and every 5
   // minutes while foregrounded. Cheap — just reads the clock.
@@ -118,6 +122,7 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
   const setMode = useCallback((next: ThemeMode) => {
     cachedMode = next;
     setModeState(next);
+    void AsyncStorage.setItem(THEME_STORAGE_KEY, next);
   }, []);
 
   const resolvedMode: ResolvedMode = mode === 'auto' ? autoResolved : mode;

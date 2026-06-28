@@ -68,7 +68,13 @@ function formatDue(iso: string): { label: string; relative: string } {
     minute: '2-digit',
   });
   const relative =
-    hours < 1 ? 'Due now' : hours < 24 ? `in ${hours}h` : `in ${Math.round(hours / 24)}d`;
+    hours < 0
+      ? 'Overdue'
+      : hours < 1
+        ? 'Due now'
+        : hours < 24
+          ? `in ${hours}h`
+          : `in ${Math.round(hours / 24)}d`;
   return { label, relative };
 }
 
