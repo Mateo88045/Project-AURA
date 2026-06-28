@@ -39,6 +39,7 @@ import { haptic } from '../../lib/haptics';
 import { useTheme, type ThemeMode } from '../../lib/theme';
 import { useAuth } from '../../hooks/useAuth';
 import { scheduleDailyBriefing, cancelDailyBriefing } from '../../lib/notifications';
+import { useAuraToast } from '../../components/ui/AuraToast';
 import type { ConnectionStatus } from '@chronos/shared/types';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
@@ -351,6 +352,7 @@ export default function SettingsScreen() {
   const [triggerOverride, setTriggerOverride] = useState<string | null>(null);
   const { user: authUser, signOut, isGuest } = useAuth();
   const [deleting, setDeleting] = useState(false);
+  const toast = useAuraToast();
 
   function confirmDeleteAccount() {
     Alert.alert(
@@ -404,11 +406,20 @@ export default function SettingsScreen() {
   }
 
   function handleToggleBriefingNotification(value: boolean) {
-    setDailyBriefingEnabled(value);
     haptic.selection();
     if (value) {
-      void scheduleDailyBriefing('07:30');
+      scheduleDailyBriefing('07:30').then((granted) => {
+        if (!granted) {
+          setDailyBriefingEnabled(false);
+          toast.show('Enable notifications in Settings to get briefings', 'error');
+        } else {
+          setDailyBriefingEnabled(true);
+        }
+      }).catch(() => {
+        setDailyBriefingEnabled(false);
+      });
     } else {
+      setDailyBriefingEnabled(false);
       void cancelDailyBriefing();
     }
   }

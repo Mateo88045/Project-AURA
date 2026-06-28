@@ -256,7 +256,9 @@ export default function BriefingScreen() {
 
         {/* Hero */}
         <Animated.View entering={FadeInDown.delay(60).duration(500)}>
-          <Text style={styles.eyebrow}>SUNDAY BRIEFING</Text>
+          <Text style={styles.eyebrow}>
+            {new Date().toLocaleDateString(undefined, { weekday: 'long' }).toUpperCase()} BRIEFING
+          </Text>
           <Text style={styles.title}>Last week, in review</Text>
           <Text style={styles.subtitle}>
             You stayed on plan 6 out of 7 days. Here&apos;s what the week looked like.

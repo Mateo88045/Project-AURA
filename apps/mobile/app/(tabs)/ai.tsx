@@ -328,8 +328,10 @@ function makeChipStyles(c: ThemeColors) {
 
 function relativeTime(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime();
-  const hours = Math.floor(diff / 3_600_000);
-  if (hours < 1) return 'Now';
+  const minutes = Math.floor(diff / 60_000);
+  if (minutes < 1) return 'Now';
+  if (minutes < 60) return `${minutes}m`;
+  const hours = Math.floor(minutes / 60);
   if (hours < 24) return `${hours}h`;
   const days = Math.floor(hours / 24);
   if (days < 7) return `${days}d`;
@@ -599,6 +601,7 @@ function makeStyles(c: ThemeColors) {
     chipsRow: {
       gap: 8,
       paddingVertical: spacing.md,
+      paddingLeft: spacing.screenPadding,
       paddingRight: spacing.screenPadding,
     },
 

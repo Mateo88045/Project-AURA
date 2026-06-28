@@ -21,7 +21,7 @@ at **privacy@chronos-app.com**.
 ### Account information
 - Your name, email address, and grade level (from sign-in or onboarding).
 - Your school's name (if you connect a class platform).
-- Your Apple, Google, or email-OTP authentication identifier.
+- Your Apple or Google authentication identifier.
 
 ### Schedule and assignment data
 - Assignments pulled from your connected Google Classroom or Canvas account.

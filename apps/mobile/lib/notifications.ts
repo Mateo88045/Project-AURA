@@ -14,12 +14,14 @@ export async function requestNotificationPermissions(): Promise<boolean> {
  * Schedules a repeating daily briefing notification at the given HH:MM time.
  * Cancels any previous daily briefing before scheduling the new one.
  */
-export async function scheduleDailyBriefing(timeHHMM: string): Promise<void> {
+export async function scheduleDailyBriefing(timeHHMM: string): Promise<boolean> {
+  const granted = await requestNotificationPermissions();
+  if (!granted) return false;
+
   const [hStr, mStr = '00'] = timeHHMM.split(':');
   const hour = parseInt(hStr, 10);
   const minute = parseInt(mStr, 10);
 
-  // Cancel previous so we don't stack duplicates
   await cancelDailyBriefing();
 
   await Notifications.scheduleNotificationAsync({
@@ -35,6 +37,7 @@ export async function scheduleDailyBriefing(timeHHMM: string): Promise<void> {
       minute,
     },
   });
+  return true;
 }
 
 /**
