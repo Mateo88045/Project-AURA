@@ -33,6 +33,7 @@ import { haptic } from '../../lib/haptics';
 import { useAuth } from '../../hooks/useAuth';
 import { initiateGoogleOAuth, saveCanvasToken } from '../../services/oauthService';
 import { useAuraToast } from '../../components/ui/AuraToast';
+import { supabase } from '@chronos/shared/supabase';
 import type { Connection, ConnectionStatus, Platform } from '@chronos/shared/types';
 
 // ---------------------------------------------------------------------------
@@ -159,7 +160,7 @@ function PlatformTile({
   const meta = platformMeta[platform];
   const connected = connection !== null && connection.status !== 'error';
   const lastSync = connection?.lastSyncedAt ? formatRelativeTime(connection.lastSyncedAt) : null;
-  const courseCount = connected ? 6 : 0; // stub
+  const courseCount = 0;
   const statusLabel: string = !connection
     ? 'Not connected'
     : connection.status === 'active'
@@ -325,92 +326,6 @@ function makeTileStyles(c: ThemeColors) {
 }
 
 // ---------------------------------------------------------------------------
-// Sync history (mock)
-// ---------------------------------------------------------------------------
-
-interface SyncEvent {
-  id: string;
-  platform: Platform;
-  relative: string;
-  summary: string;
-  isError?: boolean;
-}
-
-const MOCK_SYNC_EVENTS: SyncEvent[] = [
-  { id: 's1', platform: 'google_classroom', relative: '2h ago', summary: '3 new assignments pulled' },
-  { id: 's2', platform: 'google_classroom', relative: 'Yesterday', summary: '1 assignment updated' },
-  { id: 's3', platform: 'google_classroom', relative: '2d ago', summary: 'No changes' },
-  { id: 's4', platform: 'google_classroom', relative: '3d ago', summary: '5 new assignments pulled' },
-];
-
-interface SyncRowProps {
-  event: SyncEvent;
-  isLast: boolean;
-  colors: ThemeColors;
-  historyStyles: ReturnType<typeof makeHistoryStyles>;
-  platformMeta: Record<Platform, PlatformMeta>;
-}
-
-function SyncRow({ event, isLast, colors, historyStyles, platformMeta }: SyncRowProps) {
-  const meta = platformMeta[event.platform];
-  const tint = event.isError ? colors.accent.coral : meta.tint;
-  return (
-    <>
-      <View style={historyStyles.row}>
-        <View style={[historyStyles.rowDot, { backgroundColor: tint }]} />
-        <View style={historyStyles.rowTextCol}>
-          <Text style={historyStyles.rowTitle} numberOfLines={1}>
-            {event.summary}
-          </Text>
-          <Text style={historyStyles.rowSub}>{meta.name}</Text>
-        </View>
-        <Text style={historyStyles.rowTime}>{event.relative}</Text>
-      </View>
-      {!isLast ? <View style={historyStyles.divider} /> : null}
-    </>
-  );
-}
-
-function makeHistoryStyles(c: ThemeColors) {
-  return StyleSheet.create({
-    row: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 12,
-      paddingHorizontal: spacing.cardPadding,
-      paddingVertical: 14,
-    },
-    rowDot: {
-      width: 8,
-      height: 8,
-      borderRadius: 4,
-    },
-    rowTextCol: {
-      flex: 1,
-    },
-    rowTitle: {
-      ...typography.bodyMedium,
-      color: c.text.primary,
-    },
-    rowSub: {
-      ...typography.callout,
-      color: c.text.tertiary,
-      marginTop: 2,
-    },
-    rowTime: {
-      ...typography.caption,
-      color: c.text.tertiary,
-      fontVariant: ['tabular-nums'],
-    },
-    divider: {
-      height: StyleSheet.hairlineWidth,
-      backgroundColor: c.border.subtle,
-      marginLeft: spacing.cardPadding + 20,
-    },
-  });
-}
-
-// ---------------------------------------------------------------------------
 // Screen
 // ---------------------------------------------------------------------------
 
@@ -420,7 +335,6 @@ export default function ConnectionsHubScreen() {
   const { colors } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const tileStyles = useMemo(() => makeTileStyles(colors), [colors]);
-  const historyStyles = useMemo(() => makeHistoryStyles(colors), [colors]);
   const platformMeta = useMemo(() => getPlatformMeta(colors), [colors]);
 
   const { user: authUser } = useAuth();
@@ -451,9 +365,18 @@ export default function ConnectionsHubScreen() {
     setTimeout(() => setSyncingPlatform(null), 600);
   }
 
-  function handleDisconnect(_platform: Platform) {
+  async function handleDisconnect(_platform: Platform) {
     haptic.secondary();
-    // TODO: Supabase — update connections set status='error' where user_id=authUser?.id and platform=_platform
+    const { error } = await supabase
+      .from('connections')
+      .update({ status: 'error' })
+      .eq('user_id', authUser?.id ?? '')
+      .eq('platform', _platform);
+    if (error) {
+      toast.show('Could not disconnect — try again', 'error');
+    } else {
+      toast.show('Disconnected', 'info');
+    }
   }
 
   async function handleConnect(platform: Platform) {
@@ -462,8 +385,20 @@ export default function ConnectionsHubScreen() {
       setConnectingGoogle(true);
       const result = await initiateGoogleOAuth();
       setConnectingGoogle(false);
-      // TODO: Supabase — create connections row for google_classroom
       if (result) {
+        const { error: connError } = await supabase
+          .from('connections')
+          .upsert(
+            {
+              user_id: authUser?.id ?? '',
+              platform: 'google_classroom',
+              oauth_token: result.providerToken,
+              refresh_token: result.providerRefreshToken,
+              status: 'active',
+            },
+            { onConflict: 'user_id,platform' },
+          );
+        if (connError) console.warn('[Connections] Failed to save GC connection:', connError.message);
         toast.show('Google Classroom connected', 'success');
       } else {
         toast.show('Something went wrong — try again', 'error');
@@ -566,21 +501,12 @@ export default function ConnectionsHubScreen() {
               <View style={styles.historyEmpty}>
                 <Text style={styles.historyEmptyText}>Loading…</Text>
               </View>
-            ) : MOCK_SYNC_EVENTS.length === 0 ? (
-              <View style={styles.historyEmpty}>
-                <Text style={styles.historyEmptyText}>No sync events yet</Text>
-              </View>
             ) : (
-              MOCK_SYNC_EVENTS.map((e, i) => (
-                <SyncRow
-                  key={e.id}
-                  event={e}
-                  isLast={i === MOCK_SYNC_EVENTS.length - 1}
-                  colors={colors}
-                  historyStyles={historyStyles}
-                  platformMeta={platformMeta}
-                />
-              ))
+              <View style={styles.historyEmpty}>
+                <Text style={styles.historyEmptyText}>
+                  Sync events will appear here after your first nightly sync.
+                </Text>
+              </View>
             )}
           </GlassCard>
         </Animated.View>
@@ -612,6 +538,7 @@ export default function ConnectionsHubScreen() {
             onChangeText={setCanvasTokenInput}
             autoCapitalize="none"
             autoCorrect={false}
+            secureTextEntry={true}
           />
           <AuraButton
             label={savingCanvas ? 'Saving…' : 'Save token'}

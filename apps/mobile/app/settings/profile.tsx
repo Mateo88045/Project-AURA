@@ -30,6 +30,9 @@ import { useUserProfile } from '../../hooks/useUserProfile';
 import { haptic } from '../../lib/haptics';
 import { useAuth } from '../../hooks/useAuth';
 import { isGuestId, saveGuestProfile } from '../../lib/guest';
+import { supabase } from '@chronos/shared/supabase';
+import { useAuraToast } from '../../components/ui/AuraToast';
+import { AuraSkeleton } from '../../components/ui/AuraSkeleton';
 
 export default function ProfileSettingsScreen() {
   const router = useRouter();
@@ -39,6 +42,7 @@ export default function ProfileSettingsScreen() {
 
   const { user: authUser } = useAuth();
   const { user, loading: profileLoading } = useUserProfile(authUser?.id ?? '');
+  const toast = useAuraToast();
 
   const [name, setName] = useState('');
   const [stageId, setStageId] = useState<string>(DEFAULT_STAGE_ID);
@@ -71,23 +75,49 @@ export default function ProfileSettingsScreen() {
     const gradeLevel = selectedStage.gradeLevel;
 
     if (authUser && isGuestId(authUser.id)) {
-      // Guests have no Supabase row — persist locally so the edits actually
-      // transfer through the rest of the app on the next render.
       await saveGuestProfile({
         displayName: trimmedName,
         gradeLevel,
         dailyTriggerTime: wakeTime,
       });
+      setSaving(false);
+      haptic.success();
+      toast.show('Profile updated', 'success');
+      router.back();
+      return;
     }
 
-    // TODO: Supabase — upsert into users set display_name=trimmedName,
-    // grade_level=gradeLevel, daily_trigger_time=wakeTime where id=authUser.id
+    const { error } = await supabase
+      .from('users')
+      .update({
+        display_name: trimmedName,
+        grade_level: gradeLevel,
+        daily_trigger_time: wakeTime.trim() || '07:00',
+      })
+      .eq('id', authUser?.id ?? '');
 
     setSaving(false);
-    router.back();
+    if (error) {
+      toast.show('Could not save — try again', 'error');
+    } else {
+      haptic.success();
+      toast.show('Profile updated', 'success');
+      router.back();
+    }
   }
 
-  if (profileLoading) return null;
+  if (profileLoading) {
+    return (
+      <View style={styles.root}>
+        <AmbientOrbs />
+        <View style={{ paddingTop: insets.top + 60, paddingHorizontal: spacing.screenPadding, gap: spacing.md }}>
+          <AuraSkeleton height={20} />
+          <AuraSkeleton height={48} />
+          <AuraSkeleton height={48} />
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.root}>

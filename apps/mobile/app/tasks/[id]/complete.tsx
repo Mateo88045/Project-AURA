@@ -39,6 +39,7 @@ import { useStreak } from '../../../hooks/useStreak';
 import { useAuth } from '../../../hooks/useAuth';
 import { haptic } from '../../../lib/haptics';
 import type { UserFeedback } from '@chronos/shared/types';
+import { supabase } from '@chronos/shared/supabase';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -495,7 +496,26 @@ export default function TaskCompleteScreen() {
     setConfettiPlaying(true);
     setTimeout(() => setConfettiPlaying(false), 2200);
 
-    // TODO: Supabase — insert into task_completions with { task_id, user_id, estimated_minutes, actual_minutes, user_feedback, completed_at }
+    if (task) {
+      const { error: completionError } = await supabase
+        .from('task_completions')
+        .insert({
+          task_id: task.id,
+          user_id: authUser?.id ?? '',
+          estimated_minutes: task.estimatedMinutes,
+          actual_minutes: actualMinutes,
+          user_feedback: feedback,
+          completed_at: new Date().toISOString(),
+        });
+      if (completionError) console.warn('[Complete] Failed to save completion:', completionError.message);
+
+      await supabase
+        .from('tasks')
+        .update({ status: 'completed' })
+        .eq('id', task.id)
+        .eq('user_id', authUser?.id ?? '');
+    }
+
     const streakResult = await incrementStreak();
 
     toast.show('Nice work!', 'success');

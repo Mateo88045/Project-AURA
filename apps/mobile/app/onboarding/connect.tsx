@@ -135,14 +135,7 @@ export default function OnboardingConnectScreen() {
         return;
       }
 
-      // TODO: Supabase — upsert connections row for google_classroom
-      // Table: connections
-      // Columns: user_id, platform, oauth_token, refresh_token, status
-      // Conflict target: (user_id, platform)
-      // Note: oauth_token = Google access token (provider_token from Supabase session)
-      //       refresh_token = Google refresh token (provider_refresh_token)
-      //       Backend Trigger.dev Classroom fetch job reads these to call the API.
-      await supabase.from('connections').upsert(
+      const { error: connError } = await supabase.from('connections').upsert(
         {
           user_id: userId,
           platform: 'google_classroom',
@@ -152,6 +145,7 @@ export default function OnboardingConnectScreen() {
         },
         { onConflict: 'user_id,platform' },
       );
+      if (connError) console.warn('[Connect] Failed to save GC connection:', connError.message);
 
       haptic.success();
       setSubmitting(false);

@@ -24,6 +24,7 @@ import { AmbientOrbs } from '../../components/ui/AmbientOrbs';
 import { haptic } from '../../lib/haptics';
 import { useAuth } from '../../hooks/useAuth';
 import { useAuraToast } from '../../components/ui/AuraToast';
+import { supabase } from '@chronos/shared/supabase';
 
 function formatTime(iso: string): string {
   return new Date(iso).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
@@ -59,8 +60,7 @@ export default function ShadowScheduleReviewScreen() {
     ),
   }));
 
-  function handleApprove() {
-    haptic.success();
+  async function handleApprove() {
     approveScale.value = withSequence(
       withSpring(1.02, { damping: 15, stiffness: 400 }),
       withSpring(1, { damping: 15, stiffness: 400 }),
@@ -69,8 +69,21 @@ export default function ShadowScheduleReviewScreen() {
       withTiming(1, { duration: 200 }),
       withTiming(0, { duration: 200 }),
     );
+
+    const { error: updateError } = await supabase
+      .from('scheduled_blocks')
+      .update({ status: 'approved' })
+      .eq('user_id', authUser?.id ?? '')
+      .eq('day', dayIso)
+      .eq('status', 'shadow');
+
+    if (updateError) {
+      toast.show('Could not approve schedule — try again', 'error');
+      return;
+    }
+
+    haptic.success();
     toast.show('Schedule locked in', 'success');
-    // TODO: Supabase — update scheduled_blocks set status = 'approved' where day = dayIso
     setTimeout(() => router.back(), 500);
   }
 

@@ -28,6 +28,9 @@ import { AmbientOrbs } from '../../components/ui/AmbientOrbs';
 import { GlassCard } from '../../components/ui/GlassCard';
 import { AuraSymbol } from '../../components/ui/AuraSymbol';
 import { haptic } from '../../lib/haptics';
+import { supabase } from '@chronos/shared/supabase';
+import { useAuth } from '../../hooks/useAuth';
+import { isGuestId } from '../../lib/guest';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -333,20 +336,46 @@ export default function GuardrailsEditorScreen() {
   const cardStyles = useMemo(() => makeCardStyles(colors), [colors]);
   const timeChipStyles = useMemo(() => makeTimeChipStyles(colors), [colors]);
   const stepperStyles = useMemo(() => makeStepperStyles(colors), [colors]);
+  const { user: authUser } = useAuth();
 
-  // Stub state — would come from useGuardrails(userId)
   const [state, setState] = useState<GuardrailState>({
     noWorkAfter: { active: true, startHour: 21, endHour: 7 },
     bufferAfterEvent: { active: true, minutes: 15 },
     maxHoursPerDay: { active: false, hours: 4 },
   });
 
+  const ruleTypeMap = {
+    noWorkAfter: 'no_work_after',
+    bufferAfterEvent: 'buffer_after_event',
+    maxHoursPerDay: 'max_hours_per_day',
+  } as const;
+
   function update<K extends keyof GuardrailState>(
     key: K,
     partial: Partial<GuardrailState[K]>,
   ) {
-    setState((prev) => ({ ...prev, [key]: { ...prev[key], ...partial } }));
-    // TODO: Supabase — upsert into guardrails set value=partial where rule_type=key and user_id=authUser?.id
+    setState((prev) => {
+      const next = { ...prev, [key]: { ...prev[key], ...partial } };
+      const userId = authUser?.id ?? '';
+      if (userId && !isGuestId(userId)) {
+        const { active, ...value } = next[key] as { active: boolean } & Record<string, unknown>;
+        void supabase
+          .from('guardrails')
+          .upsert(
+            {
+              user_id: userId,
+              rule_type: ruleTypeMap[key],
+              value,
+              active,
+            },
+            { onConflict: 'user_id,rule_type' },
+          )
+          .then(({ error }) => {
+            if (error) console.warn('[Guardrails] upsert failed:', error.message);
+          });
+      }
+      return next;
+    });
   }
 
   function formatHour(h: number) {
