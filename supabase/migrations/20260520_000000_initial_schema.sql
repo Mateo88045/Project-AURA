@@ -17,6 +17,7 @@ create table if not exists public.users (
   display_name        text not null default '',
   grade_level         int  not null default 9 check (grade_level between 9 and 12),
   onboarding_answers  jsonb not null default '{}'::jsonb,
+  onboarding_step     int not null default 0 check (onboarding_step between 0 and 6),
   daily_trigger_time  time not null default '18:00',
   timezone            text not null default 'America/New_York',
   push_token          text,                    -- Expo push token; null until device registers
@@ -116,10 +117,11 @@ create table if not exists public.task_completions (
   estimated_minutes  int not null,
   actual_minutes     int not null,
   completed_at       timestamptz not null default now(),
-  user_feedback      user_feedback not null
+  user_feedback      user_feedback
 );
 
 create index if not exists task_completions_user_idx on public.task_completions (user_id, completed_at desc);
+create index if not exists task_completions_task_idx on public.task_completions (task_id);
 
 -- ── guardrails ──────────────────────────────────────────────────────────────
 create type guardrail_rule_type as enum ('no_work_after', 'buffer_after_event', 'max_hours_per_day');
