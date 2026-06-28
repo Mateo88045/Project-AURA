@@ -12,9 +12,59 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
  */
 
 const GUEST_KEY = 'chronos_guest_mode';
+const GUEST_PROFILE_KEY = 'chronos_guest_profile';
 
 /** Stable synthetic id used while in guest mode. Never written to Supabase. */
 export const GUEST_USER_ID = 'guest-user';
+
+/**
+ * The subset of the user profile that a guest can edit locally. Persisted in
+ * AsyncStorage so edits made in Settings → Profile actually transfer through
+ * the rest of the app instead of resetting on every reload.
+ */
+export interface GuestProfile {
+  displayName: string;
+  gradeLevel: number;
+  dailyTriggerTime: string; // HH:MM
+}
+
+type GuestProfileListener = (profile: GuestProfile | null) => void;
+const profileListeners = new Set<GuestProfileListener>();
+
+export async function loadGuestProfile(): Promise<GuestProfile | null> {
+  const raw = await AsyncStorage.getItem(GUEST_PROFILE_KEY);
+  if (!raw) return null;
+  try {
+    const parsed = JSON.parse(raw) as Partial<GuestProfile>;
+    if (
+      typeof parsed.displayName === 'string' &&
+      typeof parsed.gradeLevel === 'number' &&
+      typeof parsed.dailyTriggerTime === 'string'
+    ) {
+      return parsed as GuestProfile;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+export async function saveGuestProfile(profile: GuestProfile): Promise<void> {
+  await AsyncStorage.setItem(GUEST_PROFILE_KEY, JSON.stringify(profile));
+  profileListeners.forEach((l) => l(profile));
+}
+
+export async function clearGuestProfile(): Promise<void> {
+  await AsyncStorage.removeItem(GUEST_PROFILE_KEY);
+  profileListeners.forEach((l) => l(null));
+}
+
+export function subscribeGuestProfile(listener: GuestProfileListener): () => void {
+  profileListeners.add(listener);
+  return () => {
+    profileListeners.delete(listener);
+  };
+}
 
 /**
  * True when `id` is the guest sentinel, not a real Supabase uuid.
@@ -41,7 +91,8 @@ export async function enableGuestMode(): Promise<void> {
 
 /** Leave guest mode — called on real sign-in or sign-out. */
 export async function exitGuestMode(): Promise<void> {
-  await AsyncStorage.removeItem(GUEST_KEY);
+  await AsyncStorage.multiRemove([GUEST_KEY, GUEST_PROFILE_KEY]);
+  profileListeners.forEach((l) => l(null));
   listeners.forEach((listener) => listener(false));
 }
 

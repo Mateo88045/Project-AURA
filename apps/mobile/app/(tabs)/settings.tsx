@@ -24,6 +24,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { radius, spacing, typography } from '@chronos/shared/theme';
 import type { ThemeColors } from '@chronos/shared/theme';
+import { stageLabelForGradeLevel } from '@chronos/shared/constants/userStage';
 import { AmbientOrbs } from '../../components/ui/AmbientOrbs';
 import { GlassCard } from '../../components/ui/GlassCard';
 import { AuraSymbol } from '../../components/ui/AuraSymbol';
@@ -424,7 +425,7 @@ export default function SettingsScreen() {
 
   const displayName = userLoading ? 'Loading…' : (user?.displayName ?? 'Student');
   const gradeLine = user
-    ? `Grade ${user.gradeLevel} · ${user.timezone.split('/')[1]?.replace('_', ' ') ?? user.timezone}`
+    ? `${stageLabelForGradeLevel(user.gradeLevel)} · ${user.timezone.split('/')[1]?.replace('_', ' ') ?? user.timezone}`
     : '—';
 
   const [restoring, setRestoring] = useState(false);

@@ -17,12 +17,18 @@ import { supabase } from '@chronos/shared/supabase';
 import { radius, spacing, typography } from '@chronos/shared/theme';
 import type { ThemeColors } from '@chronos/shared/theme';
 import type { Difficulty, SubjectStrength } from '@chronos/shared/types';
+import {
+  DEFAULT_STAGE_ID,
+  stageById,
+} from '@chronos/shared/constants/userStage';
 import { useTheme, type ResolvedMode } from '../../lib/theme';
 import { AmbientOrbs } from '../../components/ui/AmbientOrbs';
 import { GlassCard } from '../../components/ui/GlassCard';
 import { AuraButton } from '../../components/ui/AuraButton';
+import { StagePicker } from '../../components/ui/StagePicker';
 import { haptic } from '../../lib/haptics';
 import { useAuth } from '../../hooks/useAuth';
+import { isGuestId, saveGuestProfile } from '../../lib/guest';
 
 const STAGGER_MS = 40;
 const STEPS_TOTAL = 5;
@@ -134,21 +140,17 @@ export default function OnboardingProfileScreen() {
   const userId = user?.id ?? '';
 
   const [name, setName] = useState('');
-  const [gradeLevel, setGradeLevel] = useState('');
+  const [stageId, setStageId] = useState<string>(DEFAULT_STAGE_ID);
   const [subjects, setSubjects] = useState<SubjectStrength[]>([]);
   const [customSubject, setCustomSubject] = useState('');
   const [showCustomInput, setShowCustomInput] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  const numericGrade =
-    gradeLevel.trim().length > 0 ? Number.parseInt(gradeLevel.trim(), 10) : null;
+  const selectedStage = stageById(stageId);
 
   const canSubmit =
     name.trim().length > 0 &&
-    numericGrade !== null &&
-    Number.isFinite(numericGrade) &&
-    numericGrade >= 8 &&
-    numericGrade <= 12 &&
+    selectedStage !== undefined &&
     subjects.length > 0;
 
   function toggleSubject(subjectName: string) {
@@ -195,19 +197,30 @@ export default function OnboardingProfileScreen() {
   ];
 
   async function handleContinue() {
-    if (!canSubmit) return;
+    if (!canSubmit || !selectedStage) return;
     setSubmitting(true);
 
-    if (userId) {
+    const trimmedName = name.trim();
+    const gradeLevel = selectedStage.gradeLevel;
+
+    if (userId && !isGuestId(userId)) {
       await supabase
         .from('users')
         .update({
-          display_name: name.trim(),
-          grade_level: numericGrade,
+          display_name: trimmedName,
+          grade_level: gradeLevel,
           onboarding_answers: { subjects },
           onboarding_step: 2,
         })
         .eq('id', userId);
+    } else if (userId) {
+      // Guest path — keep the answers locally so the rest of the app sees
+      // the chosen name + stage instead of the placeholder "Guest / 11".
+      await saveGuestProfile({
+        displayName: trimmedName,
+        gradeLevel,
+        dailyTriggerTime: '20:00',
+      });
     }
 
     setSubmitting(false);
@@ -274,15 +287,8 @@ export default function OnboardingProfileScreen() {
                     </View>
 
                     <View>
-                      <Text style={styles.inputLabel}>GRADE LEVEL</Text>
-                      <TextInput
-                        value={gradeLevel}
-                        onChangeText={setGradeLevel}
-                        placeholder="11"
-                        keyboardType="number-pad"
-                        placeholderTextColor={colors.text.tertiary}
-                        style={styles.input}
-                      />
+                      <Text style={styles.inputLabel}>WHERE YOU ARE</Text>
+                      <StagePicker value={stageId} onChange={setStageId} />
                     </View>
 
                     {/* Subject chips */}

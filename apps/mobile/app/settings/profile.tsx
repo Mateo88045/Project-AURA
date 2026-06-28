@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   View,
   ScrollView,
@@ -15,14 +15,21 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeIn, FadeInUp } from 'react-native-reanimated';
 import { radius, spacing, typography } from '@chronos/shared/theme';
 import type { ThemeColors } from '@chronos/shared/theme';
+import {
+  DEFAULT_STAGE_ID,
+  stageById,
+  stageByGradeLevel,
+} from '@chronos/shared/constants/userStage';
 import { useTheme } from '../../lib/theme';
 import { AmbientOrbs } from '../../components/ui/AmbientOrbs';
 import { GlassCard } from '../../components/ui/GlassCard';
 import { AuraSymbol } from '../../components/ui/AuraSymbol';
 import { AuraButton } from '../../components/ui/AuraButton';
+import { StagePicker } from '../../components/ui/StagePicker';
 import { useUserProfile } from '../../hooks/useUserProfile';
 import { haptic } from '../../lib/haptics';
 import { useAuth } from '../../hooks/useAuth';
+import { isGuestId, saveGuestProfile } from '../../lib/guest';
 
 export default function ProfileSettingsScreen() {
   const router = useRouter();
@@ -33,44 +40,51 @@ export default function ProfileSettingsScreen() {
   const { user: authUser } = useAuth();
   const { user, loading: profileLoading } = useUserProfile(authUser?.id ?? '');
 
-  const [name, setName] = useState(user?.displayName ?? '');
-  const [gradeLevel, setGradeLevel] = useState(
-    user?.gradeLevel?.toString() ?? '',
-  );
-  const [wakeTime, setWakeTime] = useState(user?.dailyTriggerTime ?? '07:00');
+  const [name, setName] = useState('');
+  const [stageId, setStageId] = useState<string>(DEFAULT_STAGE_ID);
+  const [wakeTime, setWakeTime] = useState('07:00');
   const [bedTime, setBedTime] = useState('22:30');
   const [saving, setSaving] = useState(false);
+  const [hydrated, setHydrated] = useState(false);
 
-  // Sync from profile once it loads
-  useState(() => {
-    if (user) {
-      setName(user.displayName);
-      setGradeLevel(user.gradeLevel.toString());
-    }
-  });
+  // Sync local form state once the persisted profile loads. Without this the
+  // form keeps the initial empty strings even after the user record arrives,
+  // so the Save button stays disabled and saved values never appear on reopen.
+  useEffect(() => {
+    if (!user || hydrated) return;
+    setName(user.displayName);
+    setStageId(stageByGradeLevel(user.gradeLevel).id);
+    setWakeTime(user.dailyTriggerTime || '07:00');
+    setHydrated(true);
+  }, [user, hydrated]);
 
-  const numericGrade =
-    gradeLevel.trim().length > 0
-      ? Number.parseInt(gradeLevel.trim(), 10)
-      : null;
+  const selectedStage = stageById(stageId) ?? stageByGradeLevel(11);
 
-  const canSave =
-    name.trim().length > 0 &&
-    numericGrade !== null &&
-    Number.isFinite(numericGrade) &&
-    numericGrade >= 8 &&
-    numericGrade <= 12;
+  const canSave = name.trim().length > 0 && Boolean(stageById(stageId));
 
   async function handleSave() {
     if (!canSave) return;
     setSaving(true);
     haptic.primaryCTA();
-    // TODO: Supabase — upsert into users set display_name=name, grade_level=numericGrade,
-    // daily_trigger_time=wakeTime where id=authUser?.id
-    setTimeout(() => {
-      setSaving(false);
-      router.back();
-    }, 400);
+
+    const trimmedName = name.trim();
+    const gradeLevel = selectedStage.gradeLevel;
+
+    if (authUser && isGuestId(authUser.id)) {
+      // Guests have no Supabase row — persist locally so the edits actually
+      // transfer through the rest of the app on the next render.
+      await saveGuestProfile({
+        displayName: trimmedName,
+        gradeLevel,
+        dailyTriggerTime: wakeTime,
+      });
+    }
+
+    // TODO: Supabase — upsert into users set display_name=trimmedName,
+    // grade_level=gradeLevel, daily_trigger_time=wakeTime where id=authUser.id
+
+    setSaving(false);
+    router.back();
   }
 
   if (profileLoading) return null;
@@ -143,15 +157,8 @@ export default function ProfileSettingsScreen() {
                 </View>
 
                 <View>
-                  <Text style={styles.inputLabel}>GRADE LEVEL</Text>
-                  <TextInput
-                    value={gradeLevel}
-                    onChangeText={setGradeLevel}
-                    placeholder="11"
-                    keyboardType="number-pad"
-                    placeholderTextColor={colors.text.tertiary}
-                    style={styles.input}
-                  />
+                  <Text style={styles.inputLabel}>WHERE YOU ARE</Text>
+                  <StagePicker value={stageId} onChange={setStageId} />
                 </View>
 
                 <View style={styles.timeRow}>

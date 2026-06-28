@@ -12,6 +12,7 @@
     "./constants/typography": "./constants/typography.ts",
     "./constants/layout": "./constants/layout.ts",
     "./constants/motion": "./constants/motion.ts",
+    "./constants/userStage": "./constants/userStage.ts",
     "./prompts/grader": "./prompts/grader.ts",
     "./prompts/copilot": "./prompts/copilot.ts",
     "./prompts/router": "./prompts/router.ts",

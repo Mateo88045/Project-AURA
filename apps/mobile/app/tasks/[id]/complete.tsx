@@ -509,7 +509,10 @@ export default function TaskCompleteScreen() {
     setSaving(false);
 
     setTimeout(() => {
-      router.back();
+      // After completing a task, drop the in-task stack (active timer +
+      // task detail) and return to the Today tab — don't pop back to the
+      // timer that the user just finished.
+      router.replace('/(tabs)');
     }, streakResult.currentStreak >= 2 ? 2000 : 600);
   }
 
