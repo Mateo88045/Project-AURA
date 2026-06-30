@@ -38,10 +38,12 @@ const TASK_TYPES: { value: TaskType; label: string }[] = [
 ];
 
 function formatDate(date: Date): string {
-  return date.toLocaleDateString(undefined, {
+  return date.toLocaleString(undefined, {
     month: 'short',
     day: 'numeric',
     year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
   });
 }
 
@@ -59,6 +61,7 @@ export default function NewTaskScreen() {
   const [dueDate, setDueDate] = useState<Date>(() => {
     const d = new Date();
     d.setDate(d.getDate() + 1);
+    d.setHours(23, 59, 0, 0);
     return d;
   });
   const [taskType, setTaskType] = useState<TaskType>('other');
@@ -158,7 +161,7 @@ export default function NewTaskScreen() {
 
               {/* Due date */}
               <View style={styles.field}>
-                <Text style={styles.fieldLabel}>DUE DATE</Text>
+                <Text style={styles.fieldLabel}>DUE</Text>
                 <Pressable
                   onPress={() => { haptic.selection(); setShowDatePicker(true); }}
                   style={styles.datePill}
@@ -287,9 +290,10 @@ export default function NewTaskScreen() {
         {showDatePicker && (
           <DateTimePicker
             value={dueDate}
-            mode="date"
+            mode="datetime"
             display="spinner"
             minimumDate={new Date()}
+            minuteInterval={5}
             onChange={(event, selectedDate) => {
               setShowDatePicker(false);
               if (event.type === 'set' && selectedDate) {
