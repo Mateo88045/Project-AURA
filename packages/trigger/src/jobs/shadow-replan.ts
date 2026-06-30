@@ -20,6 +20,14 @@ export const shadowReplanTask = task({
     const { userId, day } = payload;
     console.log('[shadow-replan]', { userId, day });
 
+    // Entitlement gate — docs/entitlement-design.md (Option A "frozen").
+    // Skip the entire re-plan for lapsed users; their last-known schedule
+    // is preserved. This is the same guard daily-trigger applies.
+    // TODO: Supabase — SELECT entitlement_status FROM users WHERE id = userId.
+    //   If status === 'lapsed', return early:
+    //     return { ok: true as const, userId, day, skipped: 'lapsed',
+    //              scheduledChunkCount: 0, overloadedTaskCount: 0 };
+
     // TODO: Supabase — load these from DB:
     //   tasks         FROM tasks WHERE user_id = userId AND status IN ('pending', 'scheduled')
     //   fixedEvents   FROM fixed_events WHERE user_id = userId

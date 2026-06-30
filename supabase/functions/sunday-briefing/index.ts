@@ -27,10 +27,13 @@ serve(async (req: Request) => {
     const weekEnd = new Date();
     weekEnd.setDate(weekEnd.getDate() + 7);
 
+    // Lapsed users don't get the Sunday briefing — it's a paid-tier
+    // notification (docs/entitlement-design.md — Option A "frozen").
     const { data: users, error: userErr } = await supabase
       .from('users')
       .select('id, push_token, timezone')
-      .not('push_token', 'is', null);
+      .not('push_token', 'is', null)
+      .neq('entitlement_status', 'lapsed');
     if (userErr) throw new Error(`users query: ${userErr.message}`);
     if (!users?.length) {
       return jsonResponse({ status: 'no_recipients', sent: 0 });

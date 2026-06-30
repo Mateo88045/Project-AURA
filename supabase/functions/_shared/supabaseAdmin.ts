@@ -22,6 +22,9 @@ export interface Database {
           daily_trigger_time: string;
           timezone: string;
           push_token: string | null;
+          entitlement_status: 'free_preview' | 'trialing' | 'pro' | 'lapsed';
+          entitlement_updated_at: string | null;
+          last_entitlement_event_id: string | null;
           created_at: string;
           updated_at: string;
         };

@@ -281,13 +281,15 @@ export default function TaskDetailScreen() {
             tint={colors.accent.blue}
             chipStyles={chipStyles}
           />
-          <MetaChip
-            icon="book.closed.fill"
-            label="SOURCE"
-            value={SOURCE_LABEL[task.source]}
-            tint={colors.accent.emerald}
-            chipStyles={chipStyles}
-          />
+          {task.source !== 'manual' && (
+            <MetaChip
+              icon="book.closed.fill"
+              label="SOURCE"
+              value={SOURCE_LABEL[task.source]}
+              tint={colors.accent.emerald}
+              chipStyles={chipStyles}
+            />
+          )}
           <MetaChip
             icon="waveform"
             label="STATUS"

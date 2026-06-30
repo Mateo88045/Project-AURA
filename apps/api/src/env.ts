@@ -6,6 +6,16 @@ export const env = {
   devUserId: process.env.DEV_USER_ID ?? 'user-1',
   triggerSecretKey: process.env.TRIGGER_SECRET_KEY ?? '',
 
+  // Supabase service-role (server-only). Used by the RevenueCat webhook to
+  // write entitlement_status. Never expose to the client.
+  supabaseUrl: process.env.SUPABASE_URL ?? '',
+  supabaseServiceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY ?? '',
+
+  // Shared secret RevenueCat sends as `Authorization: Bearer <secret>` on
+  // every webhook delivery. Configured in the RC dashboard. Required for the
+  // webhook to accept events; without it the route refuses all requests.
+  revenueCatWebhookSecret: process.env.REVENUECAT_WEBHOOK_SECRET ?? '',
+
   // OpenRouter (used for both Gemini Flash intent routing + Claude Sonnet copilot)
   openRouterApiKey: process.env.OPENROUTER_API_KEY ?? '',
   openRouterBaseUrl:

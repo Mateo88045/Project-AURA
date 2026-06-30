@@ -96,10 +96,19 @@ async function runPipelineForUser(
   // ── 1. Load user + connections ────────────────────────────────────────────
   const { data: user, error: userErr } = await supabase
     .from('users')
-    .select('id, timezone, push_token')
+    .select('id, timezone, push_token, entitlement_status')
     .eq('id', userId)
     .single();
   if (userErr || !user) throw new Error(`user ${userId} not found: ${userErr?.message}`);
+
+  // ── Entitlement gate (docs/entitlement-design.md — Option A "frozen") ────
+  // The dispatcher RPC already filters lapsed users out; this is defense in
+  // depth in case the pipeline is invoked directly (manual replay, tests).
+  // No fetch, no Gemini grading, no scheduling for lapsed users.
+  if (user.entitlement_status === 'lapsed') {
+    console.log(`[daily-trigger] skipping lapsed user ${userId}`);
+    return { userId, newTasks: 0, scheduledBlocks: 0 };
+  }
 
   const { data: connections, error: connErr } = await supabase
     .from('connections')

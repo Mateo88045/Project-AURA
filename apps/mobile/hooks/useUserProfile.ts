@@ -93,6 +93,8 @@ export function useUserProfile(userId: string): UserProfileResult {
           },
           dailyTriggerTime: data.daily_trigger_time ?? '20:00',
           timezone: data.timezone,
+          entitlementStatus: data.entitlement_status ?? 'free_preview',
+          entitlementUpdatedAt: data.entitlement_updated_at ?? undefined,
           createdAt: data.created_at,
           updatedAt: data.updated_at,
         };

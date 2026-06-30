@@ -15,8 +15,40 @@ export interface User {
   onboardingAnswers: OnboardingAnswers;
   dailyTriggerTime: string; // HH:MM (time)
   timezone: string;
+  firstScheduleRenderedAt?: string; // ISO 8601; anchor for the soft paywall trigger
+  // Server-side entitlement source of truth (written by RevenueCat webhook).
+  // Trigger.dev jobs read this before doing paid-tier work. See
+  // docs/entitlement-design.md.
+  entitlementStatus: EntitlementStatus;
+  entitlementUpdatedAt?: string; // ISO 8601
   createdAt: string; // ISO 8601
   updatedAt: string; // ISO 8601
+}
+
+// ---------------------------------------------------------------------------
+// Entitlement (RevenueCat-shaped)
+// ---------------------------------------------------------------------------
+// free_preview: pre-paywall. Everything works; trigger sits dormant until the
+//               user takes the first interactive action against a rendered
+//               schedule.
+// trialing:     14-day RevenueCat intro offer active.
+// pro:          Paid sub.
+// lapsed:       Trial expired without conversion. App is read-only — existing
+//               schedule visible, no new ingest/manual create/scheduling/copilot.
+export type EntitlementStatus = 'free_preview' | 'trialing' | 'pro' | 'lapsed';
+
+// Derived from EntitlementStatus + first_schedule_rendered_at. The single
+// thing screens should branch on. See lib/entitlement.ts.
+export type AccessLevel = 'preview' | 'full' | 'gate' | 'readonly';
+
+export interface Entitlement {
+  status: EntitlementStatus;
+  /** Derived access level — what screens should actually check. */
+  access: AccessLevel;
+  /** ISO 8601; populated when status === 'trialing'. */
+  trialEndsAt?: string;
+  /** True iff status === 'trialing' || status === 'pro'. */
+  isPro: boolean;
 }
 
 export interface OnboardingAnswers {
@@ -99,7 +131,7 @@ export interface Task {
 // ---------------------------------------------------------------------------
 // Scheduled Blocks (AI-generated calendar entries)
 // ---------------------------------------------------------------------------
-export type BlockStatus = 'shadow' | 'approved' | 'completed';
+export type BlockStatus = 'shadow' | 'approved' | 'rejected' | 'completed';
 
 export interface ScheduledBlock {
   id: string;
