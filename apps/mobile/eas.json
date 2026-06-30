@@ -1,0 +1,31 @@
+{
+  "cli": {
+    "version": ">= 12.0.0",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_SENTRY_DSN": "https://4d297b9657d99b437d79a58d52f8e80c@o4511645962272768.ingest.us.sentry.io/4511645987635200"
+      }
+    },
+    "preview": {
+      "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_SENTRY_DSN": "https://4d297b9657d99b437d79a58d52f8e80c@o4511645962272768.ingest.us.sentry.io/4511645987635200"
+      }
+    },
+    "production": {
+      "distribution": "store",
+      "autoIncrement": true,
+      "env": {
+        "EXPO_PUBLIC_SENTRY_DSN": "https://4d297b9657d99b437d79a58d52f8e80c@o4511645962272768.ingest.us.sentry.io/4511645987635200"
+      }
+    }
+  },
+  "submit": {
+    "production": {}
+  }
+}

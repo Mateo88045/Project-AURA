@@ -1,0 +1,81 @@
+import 'dotenv/config';
+
+export default {
+  expo: {
+    name: 'Chronos',
+    slug: 'chronos',
+    version: '0.1.0',
+    orientation: 'portrait',
+    icon: './assets/icon.png',
+    scheme: 'chronos',
+    userInterfaceStyle: 'automatic',
+    newArchEnabled: true,
+    splash: {
+      image: './assets/splash-icon.png',
+      resizeMode: 'contain',
+      backgroundColor: '#0A1118',
+    },
+    ios: {
+      supportsTablet: false,
+      bundleIdentifier: 'com.aurastudios.chronos',
+      usesAppleSignIn: true,
+      infoPlist: {
+        NSUserNotificationsUsageDescription:
+          'Chronos sends reminders for your scheduled study blocks and daily assignment updates.',
+        NSCameraUsageDescription:
+          'Chronos uses the camera so you can photograph an assignment and have it scheduled automatically.',
+        NSPhotoLibraryUsageDescription:
+          'Chronos lets you pick a photo of an assignment from your library to schedule it automatically.',
+        UIBackgroundModes: ['remote-notification'],
+        ITSAppUsesNonExemptEncryption: false,
+      },
+    },
+    android: {
+      adaptiveIcon: {
+        foregroundImage: './assets/adaptive-icon.png',
+        backgroundColor: '#0A1118',
+      },
+      package: 'com.chronos.app',
+      permissions: [
+        'android.permission.POST_NOTIFICATIONS',
+        'android.permission.VIBRATE',
+      ],
+    },
+    plugins: [
+      'expo-router',
+      'expo-apple-authentication',
+      'expo-dev-client',
+      [
+        'expo-notifications',
+        {
+          color: '#A8DADC',
+        },
+      ],
+      [
+        'expo-image-picker',
+        {
+          photosPermission:
+            'Chronos lets you pick a photo of an assignment from your library to schedule it automatically.',
+          cameraPermission:
+            'Chronos uses the camera so you can photograph an assignment and have it scheduled automatically.',
+        },
+      ],
+      '@sentry/react-native/expo',
+    ],
+    experiments: {
+      typedRoutes: true,
+    },
+    extra: {
+      eas: {
+        projectId: process.env.EAS_PROJECT_ID ?? '',
+      },
+      supabaseUrl: process.env.EXPO_PUBLIC_SUPABASE_URL,
+      supabasePublishableKey: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY,
+      auraApiUrl: process.env.EXPO_PUBLIC_AURA_API_URL ?? '',
+      auraApiKey: process.env.EXPO_PUBLIC_AURA_API_KEY ?? '',
+      supportUrl: 'https://chronos-app.com/support',
+      privacyPolicyUrl: 'https://chronos-app.com/privacy',
+      termsUrl: 'https://chronos-app.com/terms',
+    },
+  },
+};
