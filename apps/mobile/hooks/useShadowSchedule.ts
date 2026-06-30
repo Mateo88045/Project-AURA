@@ -4,6 +4,7 @@ import type { ScheduledBlock } from '@chronos/shared/types';
 import { mapRowToTask } from './useTasksForDay';
 import { isGuestId } from '../lib/guest';
 import { getDemoScheduledBlocksForDay } from '../lib/demoData';
+import { useEntitlement } from '../lib/entitlement';
 
 interface ShadowScheduleResult {
   shadowBlocks: ScheduledBlock[];
@@ -21,6 +22,7 @@ export function useShadowSchedule(
   const [error, setError] = useState<string | null>(null);
   const [trigger, setTrigger] = useState(0);
   const refetch = useCallback(() => setTrigger((t) => t + 1), []);
+  const { markScheduleRendered } = useEntitlement();
 
   useEffect(() => {
     let isMounted = true;
@@ -68,6 +70,11 @@ export function useShadowSchedule(
 
         setShadowBlocks(mapped);
         setLoading(false);
+
+        // Soft paywall anchor — review-sheet renders count as "seeing a schedule."
+        if (mapped.length > 0) {
+          void markScheduleRendered();
+        }
       } catch (err) {
         if (!isMounted) return;
         setError(err instanceof Error ? err.message : 'Unknown error');
@@ -80,7 +87,7 @@ export function useShadowSchedule(
     return () => {
       isMounted = false;
     };
-  }, [userId, day, trigger]);
+  }, [userId, day, trigger, markScheduleRendered]);
 
   return { shadowBlocks, loading, error, refetch };
 }

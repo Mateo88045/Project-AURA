@@ -34,6 +34,7 @@ import { DifficultyBars } from '../../components/ui/DifficultyBars';
 import { RiverLine } from '../../components/ui/RiverLine';
 import { haptic } from '../../lib/haptics';
 import { useAuth } from '../../hooks/useAuth';
+import { useRequirePro } from '../../lib/requirePro';
 import type { Task, ScheduledBlock, FixedEvent } from '@chronos/shared/types';
 const STAGGER_MS = 40;
 // Scroll distance over which the greeting collapses
@@ -126,6 +127,7 @@ function buildRows(blocks: ScheduledBlock[], events: FixedEvent[]): TimelineRow[
 
 export default function TodayScreen() {
   const router = useRouter();
+  const requirePro = useRequirePro();
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
@@ -360,7 +362,7 @@ export default function TodayScreen() {
         }}
         onPress={() => {
           haptic.primaryCTA();
-          router.push('/tasks/new' as Href);
+          requirePro('add_task', () => router.push('/tasks/new' as Href));
         }}
         style={[styles.fab, { bottom: insets.bottom + 100 }, fabAnimatedStyle]}
         accessibilityRole="button"

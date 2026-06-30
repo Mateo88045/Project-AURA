@@ -4,6 +4,7 @@ import type { FixedEvent, ScheduledBlock } from '@chronos/shared/types';
 import { mapRowToTask } from './useTasksForDay';
 import { isGuestId } from '../lib/guest';
 import { getDemoFixedEventsForDay, getDemoScheduledBlocksForDay } from '../lib/demoData';
+import { useEntitlement } from '../lib/entitlement';
 
 interface TodayScheduleResult {
   scheduledBlocks: ScheduledBlock[];
@@ -20,6 +21,7 @@ export function useTodaySchedule(userId: string, day: string): TodayScheduleResu
   const [error, setError] = useState<string | null>(null);
   const [trigger, setTrigger] = useState(0);
   const refetch = useCallback(() => setTrigger((t) => t + 1), []);
+  const { markScheduleRendered } = useEntitlement();
 
   useEffect(() => {
     let isMounted = true;
@@ -94,6 +96,12 @@ export function useTodaySchedule(userId: string, day: string): TodayScheduleResu
         setScheduledBlocks(mappedBlocks);
         setFixedEvents(mappedEvents);
         setLoading(false);
+
+        // Anchor the soft paywall trigger — fires only the first time a
+        // non-empty schedule is observed; subsequent renders are no-ops.
+        if (mappedBlocks.length > 0) {
+          void markScheduleRendered();
+        }
       } catch (err) {
         if (!isMounted) return;
         setError(err instanceof Error ? err.message : 'Unknown error');
@@ -106,7 +114,7 @@ export function useTodaySchedule(userId: string, day: string): TodayScheduleResu
     return () => {
       isMounted = false;
     };
-  }, [userId, day, trigger]);
+  }, [userId, day, trigger, markScheduleRendered]);
 
   return { scheduledBlocks, fixedEvents, loading, error, refetch };
 }

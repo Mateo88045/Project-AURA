@@ -6,11 +6,23 @@ import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import * as Notifications from 'expo-notifications';
+import * as Sentry from '@sentry/react-native';
 import { ThemeProvider, useTheme } from '../lib/theme';
 import { AuraToastProvider } from '../components/ui/AuraToast';
+import { EntitlementProvider } from '../lib/entitlement';
 import { useAuth } from '../hooks/useAuth';
 import { useOnboardingGate } from '../hooks/useOnboardingGate';
 import { ErrorBoundary } from '../components/ui/ErrorBoundary';
+
+const sentryDsn = process.env.EXPO_PUBLIC_SENTRY_DSN;
+
+if (sentryDsn) {
+  Sentry.init({
+    dsn: sentryDsn,
+    debug: __DEV__,
+    tracesSampleRate: __DEV__ ? 1.0 : 0.2,
+  });
+}
 
 // Handle foreground notifications — show as banners
 Notifications.setNotificationHandler({
@@ -23,19 +35,23 @@ Notifications.setNotificationHandler({
   }),
 });
 
-export default function RootLayout() {
+function RootLayout() {
   return (
     <GestureHandlerRootView style={styles.flex}>
       <SafeAreaProvider>
         <ThemeProvider>
-          <ErrorBoundary>
-            <ThemedApp />
-          </ErrorBoundary>
+          <Sentry.ErrorBoundary fallback={<View style={styles.flex} />}>
+            <ErrorBoundary>
+              <ThemedApp />
+            </ErrorBoundary>
+          </Sentry.ErrorBoundary>
         </ThemeProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );
 }
+
+export default sentryDsn ? Sentry.wrap(RootLayout) : RootLayout;
 
 function ThemedApp() {
   const { colors, resolvedMode } = useTheme();
@@ -75,6 +91,7 @@ function ThemedApp() {
   return (
     <View style={[styles.flex, { backgroundColor: colors.background.primary }]}>
       <AuraToastProvider>
+        <EntitlementProvider>
         <StatusBar style={resolvedMode === 'light' ? 'dark' : 'light'} />
         <Stack
           screenOptions={{
@@ -121,7 +138,12 @@ function ThemedApp() {
             name="tasks/[id]/active"
             options={{ animation: 'ios_from_right' }}
           />
+          <Stack.Screen
+            name="paywall"
+            options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
+          />
         </Stack>
+        </EntitlementProvider>
       </AuraToastProvider>
     </View>
   );
