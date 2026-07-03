@@ -1,30 +1,48 @@
-// LAUNCH BLOCKER: RevenueCat is not wired. See LAUNCH_CHECKLIST.md §2 for step-by-step instructions. The paywall will error in production until this is done.
 /**
  * Subscription / in-app-purchase abstraction for Chronos.
  *
  * This module is intentionally provider-agnostic. The app talks to this
- * interface; the concrete implementation is swapped at build time.
+ * interface; RevenueCat is the concrete implementation, loaded lazily.
  *
- * ── Current state ───────────────────────────────────────────────────────────
- * Runs in PREVIEW mode (no native module required), so the app builds and the
- * paywall is fully interactive in Expo Go / dev client without any store setup.
- * In preview mode `purchase()` resolves to { status: 'preview' } and the
- * onboarding flow is allowed to continue — this is safe for development and for
- * internal TestFlight smoke tests, but it does NOT charge money.
+ * ── Two runtime modes, selected automatically by the SDK key ────────────────
+ * • PREVIEW mode (EXPO_PUBLIC_REVENUECAT_IOS_KEY unset): the native module is
+ *   never imported, so the app builds and the paywall stays interactive in
+ *   Expo Go / a dev client with no store setup. `purchase()` resolves to
+ *   { status: 'preview' } and onboarding proceeds — safe for development, but
+ *   it does NOT charge money.
+ * • LIVE mode (key set): `react-native-purchases` is dynamically imported and
+ *   the real RevenueCat flow runs. Requires a dev-client / EAS build — Expo Go
+ *   cannot load the native module.
  *
- * ── Going live with RevenueCat (required before App Store submission) ────────
- * 1. `pnpm --filter @chronos/mobile add react-native-purchases`
- * 2. Create products in App Store Connect (see PRICING below) and an Offering
- *    in the RevenueCat dashboard, then set EXPO_PUBLIC_REVENUECAT_IOS_KEY.
- * 3. Replace the PREVIEW block in `configure`/`getOfferings`/`purchase`/
- *    `restore`/`getActiveEntitlement` with the RevenueCat calls documented
- *    inline below (search "REVENUECAT").
- * 4. Rebuild the dev client / EAS build (native module — Expo Go can't run it).
+ * Going live checklist (see LAUNCH_CHECKLIST.md §2):
+ *   1. `pnpm --filter @chronos/mobile add react-native-purchases`  (done)
+ *   2. Create the products in App Store Connect (see PLANS below) + a
+ *      RevenueCat Offering with entitlement `pro`.
+ *   3. Set EXPO_PUBLIC_REVENUECAT_IOS_KEY (EAS env) and rebuild.
  *
  * The entitlement identifier the app checks for is `pro`.
  */
 
 import { Linking } from 'react-native';
+
+/** The RevenueCat entitlement id that unlocks Chronos Pro. */
+const PRO_ENTITLEMENT = 'pro';
+
+/**
+ * Lazily load the native RevenueCat module. Kept out of the module's top-level
+ * imports so PREVIEW builds (and Expo Go) never touch native code.
+ */
+async function loadPurchases() {
+  const mod = await import('react-native-purchases');
+  return mod.default;
+}
+
+/** Narrows an unknown thrown value into a PurchaseResult. */
+function toPurchaseError(error: unknown, fallback: string): PurchaseResult {
+  const e = error as { userCancelled?: boolean; message?: string };
+  if (e?.userCancelled) return { status: 'cancelled' };
+  return { status: 'error', message: e?.message ?? fallback };
+}
 
 export type BillingInterval = 'monthly' | 'annual';
 
@@ -109,10 +127,8 @@ export async function configurePurchases(userId: string): Promise<void> {
     return;
   }
 
-  // REVENUECAT:
-  // import Purchases from 'react-native-purchases';
-  // Purchases.configure({ apiKey: REVENUECAT_KEY!, appUserID: userId });
-  void userId;
+  const Purchases = await loadPurchases();
+  Purchases.configure({ apiKey: REVENUECAT_KEY!, appUserID: userId });
 }
 
 export async function getOfferings(): Promise<SubscriptionPlan[]> {
@@ -128,21 +144,19 @@ export async function purchasePlan(plan: SubscriptionPlan): Promise<PurchaseResu
     return { status: 'preview', productId: plan.productId };
   }
 
-  // REVENUECAT:
-  // try {
-  //   const offerings = await Purchases.getOfferings();
-  //   const pkg = offerings.current?.availablePackages.find(
-  //     (p) => p.product.identifier === plan.productId,
-  //   );
-  //   if (!pkg) return { status: 'error', message: 'Plan unavailable' };
-  //   const { customerInfo } = await Purchases.purchasePackage(pkg);
-  //   const active = Boolean(customerInfo.entitlements.active['pro']);
-  //   return { status: active ? 'purchased' : 'error', productId: plan.productId };
-  // } catch (e: any) {
-  //   if (e?.userCancelled) return { status: 'cancelled' };
-  //   return { status: 'error', message: e?.message ?? 'Purchase failed' };
-  // }
-  return { status: 'error', message: 'Billing not implemented' };
+  try {
+    const Purchases = await loadPurchases();
+    const offerings = await Purchases.getOfferings();
+    const pkg = offerings.current?.availablePackages.find(
+      (p) => p.product.identifier === plan.productId,
+    );
+    if (!pkg) return { status: 'error', message: 'Plan unavailable' };
+    const { customerInfo } = await Purchases.purchasePackage(pkg);
+    const active = Boolean(customerInfo.entitlements.active[PRO_ENTITLEMENT]);
+    return { status: active ? 'purchased' : 'error', productId: plan.productId };
+  } catch (error) {
+    return toPurchaseError(error, 'Purchase failed');
+  }
 }
 
 export async function restorePurchases(): Promise<PurchaseResult> {
@@ -150,23 +164,25 @@ export async function restorePurchases(): Promise<PurchaseResult> {
     return { status: 'preview' };
   }
 
-  // REVENUECAT:
-  // try {
-  //   const info = await Purchases.restorePurchases();
-  //   const active = Boolean(info.entitlements.active['pro']);
-  //   return { status: active ? 'restored' : 'error' };
-  // } catch (e: any) {
-  //   return { status: 'error', message: e?.message ?? 'Restore failed' };
-  // }
-  return { status: 'error', message: 'Billing not implemented' };
+  try {
+    const Purchases = await loadPurchases();
+    const info = await Purchases.restorePurchases();
+    const active = Boolean(info.entitlements.active[PRO_ENTITLEMENT]);
+    return { status: active ? 'restored' : 'error' };
+  } catch (error) {
+    return toPurchaseError(error, 'Restore failed');
+  }
 }
 
 /** Returns true if the user currently holds the `pro` entitlement. */
 export async function hasActiveSubscription(): Promise<boolean> {
   if (!isBillingConfigured()) return false;
 
-  // REVENUECAT:
-  // const info = await Purchases.getCustomerInfo();
-  // return Boolean(info.entitlements.active['pro']);
-  return false;
+  try {
+    const Purchases = await loadPurchases();
+    const info = await Purchases.getCustomerInfo();
+    return Boolean(info.entitlements.active[PRO_ENTITLEMENT]);
+  } catch {
+    return false;
+  }
 }

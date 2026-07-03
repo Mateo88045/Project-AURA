@@ -30,6 +30,7 @@ function guestProfileFor(
     },
     dailyTriggerTime: overrides?.dailyTriggerTime ?? GUEST_DEFAULTS.dailyTriggerTime,
     timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    entitlementStatus: 'free_preview',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   };
