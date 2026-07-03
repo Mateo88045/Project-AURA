@@ -67,7 +67,7 @@ export default {
     },
     extra: {
       eas: {
-        projectId: process.env.EAS_PROJECT_ID ?? '',
+        projectId: process.env.EAS_PROJECT_ID ?? '6906e00a-7b2d-4575-b484-4643879ae660',
       },
       supabaseUrl: process.env.EXPO_PUBLIC_SUPABASE_URL,
       supabasePublishableKey: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY,
