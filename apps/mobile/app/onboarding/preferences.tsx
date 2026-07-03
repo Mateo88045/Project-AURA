@@ -25,8 +25,6 @@ import { useAuth } from '../../hooks/useAuth';
 import { requestNotificationPermissions } from '../../lib/notifications';
 
 const STAGGER_MS = 40;
-const STEPS_TOTAL = 5;
-const CURRENT_STEP = 4;
 
 type StudyTime = 'morning' | 'afternoon' | 'evening';
 
@@ -134,16 +132,6 @@ export default function OnboardingPreferencesScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         <View style={[styles.container, { paddingTop: insets.top + 24, paddingBottom: insets.bottom + 24 }]}>
-          {/* Progress dots */}
-          <Animated.View entering={FadeIn.duration(280)} style={styles.progressRow}>
-            {Array.from({ length: STEPS_TOTAL }).map((_, i) => (
-              <View
-                key={i}
-                style={[styles.dot, i === CURRENT_STEP && styles.dotActive]}
-              />
-            ))}
-          </Animated.View>
-
           {/* Content */}
           <ScrollView
             style={styles.scrollWrap}
@@ -155,7 +143,7 @@ export default function OnboardingPreferencesScreen() {
               <GlassCard intensity="light" style={styles.card}>
                 <View style={styles.cardInner}>
                   <Animated.View entering={FadeInDown.delay(STAGGER_MS * 2).duration(320)}>
-                    <Text style={styles.label}>STEP 4 · YOUR RHYTHM</Text>
+                    <Text style={styles.label}>YOUR RHYTHM</Text>
                   </Animated.View>
                   <Animated.View entering={FadeInDown.delay(STAGGER_MS * 3).duration(320)}>
                     <Text style={styles.title}>A few last things.</Text>
@@ -299,21 +287,6 @@ function makeStyles(c: ThemeColors) {
       paddingHorizontal: spacing.screenPadding,
       alignItems: 'center',
       justifyContent: 'space-between',
-    },
-    progressRow: {
-      flexDirection: 'row',
-      gap: spacing.xs,
-      paddingTop: spacing.sm,
-    },
-    dot: {
-      width: 4,
-      height: 4,
-      borderRadius: 2,
-      backgroundColor: c.border.subtle,
-    },
-    dotActive: {
-      width: 8,
-      backgroundColor: c.accent.blue,
     },
     scrollWrap: {
       flex: 1,

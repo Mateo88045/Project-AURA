@@ -26,8 +26,6 @@ import { initiateGoogleOAuth, saveCanvasToken } from '../../services/oauthServic
 import { requestNotificationPermissions } from '../../lib/notifications';
 
 const STAGGER_MS = 40;
-const STEPS_TOTAL = 5;
-const CURRENT_STEP = 1;
 
 type PlatformChoice = 'google_classroom' | 'canvas' | 'skip' | null;
 type ConnectStep = 'choose' | 'google_oauth_loading' | 'canvas_token' | 'success';
@@ -219,7 +217,7 @@ export default function OnboardingConnectScreen() {
     return (
       <>
         <Animated.View entering={FadeInDown.delay(STAGGER_MS * 2).duration(320)}>
-          <Text style={styles.label}>STEP 1 OF 4 · CONNECT</Text>
+          <Text style={styles.label}>CONNECT</Text>
         </Animated.View>
         <Animated.View entering={FadeInDown.delay(STAGGER_MS * 3).duration(320)}>
           <Text style={styles.title}>Where does your homework live?</Text>
@@ -319,15 +317,6 @@ export default function OnboardingConnectScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         <View style={[styles.container, { paddingTop: insets.top + 24, paddingBottom: insets.bottom + 24 }]}>
-          <Animated.View entering={FadeIn.duration(280)} style={styles.progressRow}>
-            {Array.from({ length: STEPS_TOTAL }).map((_, i) => (
-              <View
-                key={i}
-                style={[styles.dot, i === CURRENT_STEP && styles.dotActive]}
-              />
-            ))}
-          </Animated.View>
-
           <View style={styles.heroWrap}>
             <Animated.View entering={FadeIn.delay(STAGGER_MS).duration(320)}>
               <GlassCard intensity="light" style={styles.card}>
@@ -367,21 +356,6 @@ function makeStyles(c: ThemeColors) {
       paddingHorizontal: spacing.screenPadding,
       alignItems: 'center',
       justifyContent: 'space-between',
-    },
-    progressRow: {
-      flexDirection: 'row',
-      gap: spacing.xs,
-      paddingTop: spacing.sm,
-    },
-    dot: {
-      width: 4,
-      height: 4,
-      borderRadius: 2,
-      backgroundColor: c.border.subtle,
-    },
-    dotActive: {
-      width: 8,
-      backgroundColor: c.accent.blue,
     },
     heroWrap: {
       width: '100%',

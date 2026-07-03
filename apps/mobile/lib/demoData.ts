@@ -132,15 +132,35 @@ export function getDemoFixedEventsForDay(day: string): FixedEvent[] {
   return events.filter((e) => e.daysOfWeek.includes(dayOfWeek));
 }
 
+// Deterministic per-weekday load so the Week tab shows a believable spread of
+// busy vs. clear days instead of an identical column everywhere. Indices point
+// into DEMO_TASKS, so the returned tasks keep their stable ids and detail/active
+// look-ups by id keep working.
+const WEEKDAY_TASK_INDICES: Record<number, number[]> = {
+  0: [], // Sun — rest
+  1: [0, 1, 2], // Mon — full load
+  2: [2], // Tue — light
+  3: [0, 2], // Wed
+  4: [0, 1, 2], // Thu — full load
+  5: [1], // Fri — light
+  6: [], // Sat — rest
+};
+
+function demoTasksForWeekday(dayIso: string): Task[] {
+  // Parse at local noon so the weekday never slips across a timezone boundary.
+  const weekday = new Date(`${dayIso}T12:00:00`).getDay();
+  return (WEEKDAY_TASK_INDICES[weekday] ?? []).map((i) => DEMO_TASKS[i]);
+}
+
 export function getDemoTaskCounts(days: string[]): Record<string, number> {
-  const today = todayIso();
-  if (!days.includes(today)) return {};
-  return { [today]: DEMO_TASKS.length };
+  const counts: Record<string, number> = {};
+  for (const day of days) {
+    const count = demoTasksForWeekday(day).length;
+    if (count > 0) counts[day] = count;
+  }
+  return counts;
 }
 
 export function getDemoTasksForDay(day: string): Task[] {
-  // Demo tasks are anchored to "now", not a specific calendar day — show the
-  // same fixed set on any day the user inspects so the Week tab has content.
-  void day;
-  return DEMO_TASKS;
+  return demoTasksForWeekday(day);
 }

@@ -21,6 +21,19 @@ const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 // Right-swipe distance that triggers completion
 const COMPLETE_THRESHOLD = 88;
 
+// Card geometry — kept as named constants so the Today timeline can align the
+// RiverLine through the dot without duplicating magic numbers.
+const CARD_BORDER_LEFT = 2;
+const CARD_PADDING_H = 14;
+const DOT_SIZE = 6;
+/**
+ * X-offset (px) of the dot's center from the TaskBlock's own left edge.
+ * The Today timeline adds its column offsets to this so the river threads
+ * exactly through every dot. If the card padding/border/dot size change,
+ * this updates with them.
+ */
+export const TASK_BLOCK_DOT_CENTER = CARD_BORDER_LEFT + CARD_PADDING_H + DOT_SIZE / 2;
+
 interface TaskBlockProps {
   title: string;
   subject: string;
@@ -202,16 +215,16 @@ const styles = StyleSheet.create({
   base: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 14,
+    paddingHorizontal: CARD_PADDING_H,
     paddingVertical: 10,
-    borderLeftWidth: 2,
+    borderLeftWidth: CARD_BORDER_LEFT,
     borderRadius: radius.md,
     gap: 10,
     backgroundColor: 'transparent',
   },
   fixedBg: { backgroundColor: 'transparent' },
-  dot: { width: 6, height: 6, justifyContent: 'center', alignItems: 'center' },
-  dotInner: { width: 6, height: 6, borderRadius: 3 },
+  dot: { width: DOT_SIZE, height: DOT_SIZE, justifyContent: 'center', alignItems: 'center' },
+  dotInner: { width: DOT_SIZE, height: DOT_SIZE, borderRadius: DOT_SIZE / 2 },
   content: { flex: 1 },
   titleScheduled: { ...typography.headline },
   titleFixed: { ...typography.body },

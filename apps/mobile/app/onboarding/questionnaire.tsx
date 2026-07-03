@@ -140,7 +140,7 @@ export default function OnboardingQuestionnaireScreen() {
             <GlassCard intensity="light" style={styles.card}>
               <View style={styles.cardInner}>
                 <Animated.View entering={FadeInDown.delay(STAGGER_MS * 2).duration(320)}>
-                  <Text style={styles.label}>STEP 5 · A FEW QUICK QUESTIONS</Text>
+                  <Text style={styles.label}>A FEW QUICK QUESTIONS</Text>
                 </Animated.View>
                 <Animated.View entering={FadeInDown.delay(STAGGER_MS * 3).duration(320)}>
                   <Text style={styles.title}>Let&apos;s make this yours.</Text>

@@ -17,7 +17,7 @@ export default {
     },
     ios: {
       supportsTablet: false,
-      bundleIdentifier: 'com.aurastudios.chronos',
+      bundleIdentifier: 'com.chronos.app',
       usesAppleSignIn: true,
       infoPlist: {
         NSUserNotificationsUsageDescription:

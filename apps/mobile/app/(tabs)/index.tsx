@@ -29,14 +29,20 @@ import { useNotifications } from '../../hooks/useNotifications';
 import { AuraSkeleton } from '../../components/ui/AuraSkeleton';
 import { AuraSymbol } from '../../components/ui/AuraSymbol';
 import { GlassCard } from '../../components/ui/GlassCard';
-import { TaskBlock } from '../../components/ui/TaskBlock';
+import { TaskBlock, TASK_BLOCK_DOT_CENTER } from '../../components/ui/TaskBlock';
 import { DifficultyBars } from '../../components/ui/DifficultyBars';
 import { RiverLine } from '../../components/ui/RiverLine';
+import { CalmEmptyState } from '../../components/ui/CalmEmptyState';
 import { haptic } from '../../lib/haptics';
 import { useAuth } from '../../hooks/useAuth';
 import { useRequirePro } from '../../lib/requirePro';
 import type { Task, ScheduledBlock, FixedEvent } from '@chronos/shared/types';
 const STAGGER_MS = 40;
+// Timeline geometry — the time column and the gap before each block. The river's
+// x is these plus the TaskBlock's own dot inset, so the line threads every dot.
+const TIME_COL_WIDTH = 48;
+const BLOCK_GAP = 16;
+const RIVER_LINE_X = TIME_COL_WIDTH + BLOCK_GAP + TASK_BLOCK_DOT_CENTER;
 // Scroll distance over which the greeting collapses
 const GREETING_COLLAPSE_RANGE = 80;
 // Hero parallax: translate at 0.3x scroll speed, capped at -30
@@ -276,6 +282,9 @@ export default function TodayScreen() {
           </Animated.View>
         )}
 
+        {/* Hero skeleton while loading */}
+        {loading && <AuraSkeleton height={190} style={styles.heroSkeleton} />}
+
         {/* Timeline */}
         <View style={styles.timelineHeader}>
           <Animated.View entering={FadeIn.delay(STAGGER_MS * 4).duration(280)}>
@@ -283,12 +292,20 @@ export default function TodayScreen() {
           </Animated.View>
         </View>
 
-        {/* Loading */}
+        {/* Loading — the river forming, so the wait reads as "settling" */}
         {loading && (
-          <View style={styles.loading}>
-            <AuraSkeleton height={18} />
-            <AuraSkeleton height={80} />
-            <AuraSkeleton height={80} />
+          <View style={styles.timeline}>
+            <RiverLine x={RIVER_LINE_X} />
+            {[0, 1, 2].map((i) => (
+              <View key={i} style={styles.timelineRow}>
+                <View style={styles.timelineTimeWrap}>
+                  <AuraSkeleton width={32} height={14} />
+                </View>
+                <View style={styles.timelineBlock}>
+                  <AuraSkeleton height={60} style={styles.skeletonBlock} />
+                </View>
+              </View>
+            ))}
           </View>
         )}
 
@@ -302,21 +319,20 @@ export default function TodayScreen() {
           </View>
         )}
 
-        {/* Empty */}
+        {/* Empty — a calm moment, not a blank */}
         {!loading && !error && rows.length === 0 && (
           <View style={styles.empty}>
-            <AuraText variant="title2">Your river is quiet</AuraText>
-            <AuraText variant="body" color="secondary" style={styles.emptyBody}>
-              Connect your classes and Chronos will fill your river with a calm,
-              glowing plan.
-            </AuraText>
+            <CalmEmptyState
+              title="Your river is quiet"
+              body="Nothing to carry right now. Connect your classes and Chronos will fill your river with a calm, glowing plan."
+            />
           </View>
         )}
 
         {/* River Timeline */}
         {!loading && !error && rows.length > 0 && (
           <View style={styles.timeline}>
-            <RiverLine />
+            <RiverLine x={RIVER_LINE_X} />
             {rows.map((row, i) => (
               <Animated.View
                 key={row.key}
@@ -472,8 +488,12 @@ function makeStyles(c: ThemeColors) {
       ...typography.title1,
       color: c.text.primary,
     },
-    loading: {
-      gap: spacing.md,
+    heroSkeleton: {
+      marginTop: spacing.lg,
+      borderRadius: radius.xl,
+    },
+    skeletonBlock: {
+      borderRadius: radius.md,
     },
     center: {
       marginTop: spacing.xl,
@@ -483,10 +503,7 @@ function makeStyles(c: ThemeColors) {
       marginBottom: spacing.md,
     },
     empty: {
-      marginTop: spacing.xl,
-    },
-    emptyBody: {
-      marginTop: spacing.sm,
+      marginTop: spacing.sectionGap,
     },
     timeline: {
       position: 'relative',
@@ -497,7 +514,7 @@ function makeStyles(c: ThemeColors) {
       marginBottom: spacing.itemGap,
     },
     timelineTimeWrap: {
-      width: 48,
+      width: TIME_COL_WIDTH,
       alignItems: 'flex-end',
       paddingTop: 2,
     },
@@ -518,7 +535,7 @@ function makeStyles(c: ThemeColors) {
     },
     timelineBlock: {
       flex: 1,
-      marginLeft: 16,
+      marginLeft: BLOCK_GAP,
     },
     fab: {
       position: 'absolute',
