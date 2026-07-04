@@ -91,6 +91,107 @@ features return a graceful error instead of working — which Apple may flag.
 
 ---
 
+## Security & Stub Audit — 2026-07-03
+
+Scoped `/cso` pass on `apps/api`'s auth middleware, requested after the June audit
+flagged it as trusting a client-supplied header. **Still true in current code.**
+No code changes made — this is a report only.
+
+### 🔴 1. Auth middleware still trusts an unverified client header — CRITICAL, confidence 9/10
+
+`apps/api/src/middleware/auth.ts:19,28`:
+```ts
+c.set('userId', c.req.header('x-dev-user-id') ?? env.devUserId);
+```
+There is no session, cookie, or JWT check anywhere in this file — `userId` is
+whatever string the caller puts in `X-Dev-User-Id`. The only gate in front of it
+is a single static shared secret (`env.auraApiKey`, line 24), and that secret is
+**not actually secret**: `apps/mobile/services/auraClient.ts:22` reads it from
+`EXPO_PUBLIC_AURA_API_KEY` / `app.json extra.auraApiKey`, i.e. it ships baked into
+every install of the app binary, identical for every user, never rotated per
+account. Anyone who pulls it once (bundle inspection, or just proxying their own
+device's traffic) has a permanent skeleton key.
+
+**Blast radius today** — every route under `/v1` depends on this middleware
+(`apps/api/src/index.ts:17`, `v1.use('/*', devAuth)`), which covers `/v1/chat`,
+`/v1/ocr`, and all three job routes in `apps/api/src/routes/jobs.ts`
+(`/daily-sync`, `/shadow-replan`, `/sunday-briefing`). `apps/api` does **not**
+talk to Supabase yet (no `supabase` import anywhere in `apps/api/src`), so the
+concrete exploit right now is: swap `X-Dev-User-Id` to another student's UUID
+and (a) burn their daily Claude copilot quota and read/send chat "as" them —
+`rateLimit.ts` buckets key only on this spoofable `userId` — (b) call `/v1/ocr`
+as them, (c) fire `daily-sync` / `shadow-replan` / `sunday-briefing` with their
+forged identity as the job payload (the job *handlers* in
+`packages/trigger/src/jobs/*.ts` are still plain stub functions, not registered
+Trigger.dev tasks, so nothing executes server-side yet — but the API accepts
+and would forward the forged identity the moment Trigger.dev is wired).
+
+**Why this is the top-priority item, not a someday-fix:** this exact header is
+what item #4 below ("Supabase — verify RLS policies") is designed to protect
+against. RLS policies scope `tasks`, `scheduled_blocks`, `guardrails`,
+`conversations` by `auth.uid()` from a *verified* Supabase JWT. This backend has
+no verified JWT anywhere. The natural, fastest way to fill in the `// TODO:
+Supabase` comments already in the codebase is `supabase.from('tasks').select()
+.eq('user_id', c.get('userId'))` — and the moment that lands, this becomes a
+full cross-student IDOR: read or write any other student's assignments,
+schedule, guardrails, and copilot history by changing one header. **Fix this
+before, not after, wiring real Supabase queries into `apps/api`.**
+
+**Minimal fix (proposed, not implemented):**
+1. Add `@supabase/supabase-js` to `apps/api` (already a dep of `packages/shared`).
+2. In `auth.ts`, read `Authorization: Bearer <token>`, verify it via
+   `supabase.auth.getUser(token)` (or local JWT-secret verification to skip the
+   round trip), and set `userId` from the verified token's `sub` — never from a
+   header.
+3. Transition safety for the Expo Go client currently under test: keep the old
+   static-key + `X-Dev-User-Id` path alive as a fallback *only* when no valid
+   Supabase JWT is present and `NODE_ENV !== 'production'`. Nothing on the
+   mobile side breaks mid-migration.
+4. Mobile already holds a real Supabase session —
+   `apps/mobile/hooks/useAuth.ts` calls `supabase.auth.getSession()` — so
+   `session.access_token` exists today with no new client-side auth work.
+   Update `getAuraApiHeaders()` in `apps/mobile/services/auraClient.ts` to send
+   `Authorization: Bearer ${session.access_token}`, threading it through
+   `chatApi.ts` / `jobs.ts` call sites (which currently take a plain `userId`
+   string param).
+5. Decide guest mode explicitly: `GUEST_USER_ID` (`apps/mobile/lib/guest.ts`)
+   has no Supabase session, so decide whether guests get a scoped anonymous
+   Supabase session or are blocked server-side from `/v1/jobs`, `/v1/chat`,
+   `/v1/ocr` once verification lands.
+6. Ship the `apps/api` change first (additive/backward-compatible in dev),
+   verify against the Expo Go client, *then* remove the fallback before the
+   App Store build.
+
+### 🟡 2. "Sync Now" button — still no backend job, confirmed
+
+`apps/mobile/app/settings/connections.tsx:444-452` (`handleSync`) only shows a
+toast and a fake `setTimeout` spinner — there's a `// TODO: Trigger.dev` comment
+and no `fetch` call. The wired job client
+(`apps/mobile/services/jobs.ts` — `triggerDailySyncJob`, `requestShadowSchedule`,
+`requestSundayBriefing`) exists and is called from `settings.tsx:465`, but only
+for `requestSundayBriefing`. No UI element calls `triggerDailySyncJob`. "Sync
+Now" specifically still does nothing real.
+
+### 🟡 3. CopilotAction — parsed server-side, dropped client-side, confirmed
+
+`apps/api/src/lib/claudeCopilot.ts` (`tryParseCopilotJson`) extracts a structured
+`action` out of Claude's JSON reply and returns it on `CopilotResponse.action`.
+On the client, `apps/mobile/app/(tabs)/ai/chat.tsx:345-348` only reads
+`res.message` to render the chat bubble — `res.action` is never read anywhere
+else in `apps/mobile` (the `CopilotAction` type is imported into
+`services/chatApi.ts` but never consumed downstream). Pipeline C (Blueprint
+§6.2) stops at "confirm + display" and never reaches "write to DB".
+
+### Prioritized fix order
+1. 🔴 Auth middleware — verify Supabase JWT instead of trusting `X-Dev-User-Id` (must land *before* Supabase queries are wired into `apps/api`, not after — see reasoning above)
+2. 🔴 Decide the guest-mode auth story (blocks #1's fallback design)
+3. 🟡 Wire `CopilotAction` execution client-side (do this *after* #1 — executing actions under a spoofable identity compounds the impact)
+4. 🟡 Wire "Sync Now" to `triggerDailySyncJob`
+
+No code has been changed as part of this audit — awaiting go-ahead before implementing any of the above.
+
+---
+
 ## What was changed in the app (for reference)
 - Fixed the dependency tree (missing `expo-linear-gradient`/`expo-blur`/`expo-glass-effect`, stale `@aura/shared` link) — this was the cause of the Week screen "error loading".
 - Wired every dead button to a working destination; replaced "AURA" branding with "Chronos".
