@@ -6,13 +6,15 @@
   "scripts": {
     "dev": "tsx watch --env-file=.env.local src/index.ts",
     "start": "tsx --env-file=.env.local src/index.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "node --import tsx --test src/**/*.test.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",
     "@chronos/shared": "workspace:*",
     "@google/generative-ai": "^0.21.0",
     "@hono/node-server": "^1.13.7",
+    "@supabase/supabase-js": "^2.106.2",
     "@trigger.dev/sdk": "^3.3.17",
     "hono": "^4.6.12"
   },

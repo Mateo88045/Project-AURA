@@ -2,7 +2,7 @@ import { serve } from '@hono/node-server';
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { env } from './env.js';
-import { devAuth, type ApiVariables } from './middleware/auth.js';
+import { requireAuth, type ApiVariables } from './middleware/auth.js';
 import { jobsRouter } from './routes/jobs.js';
 import { chatRouter } from './routes/chat.js';
 import { ocrRouter } from './routes/ocr.js';
@@ -14,7 +14,7 @@ app.use('/*', cors({ origin: '*' }));
 app.get('/health', (c) => c.json({ ok: true }));
 
 const v1 = new Hono<{ Variables: ApiVariables }>();
-v1.use('/*', devAuth);
+v1.use('/*', requireAuth);
 v1.route('/jobs', jobsRouter);
 v1.route('/chat', chatRouter);
 v1.route('/ocr', ocrRouter);

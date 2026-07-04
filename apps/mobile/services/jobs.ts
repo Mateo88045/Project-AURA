@@ -15,7 +15,7 @@ async function postJob(
   const base = getAuraApiBaseUrl().replace(/\/$/, '');
   const res = await fetch(`${base}${path}`, {
     method: 'POST',
-    headers: getAuraApiHeaders(userId),
+    headers: await getAuraApiHeaders(userId),
     body: body ? JSON.stringify(body) : undefined,
   });
 

@@ -1,10 +1,19 @@
 export const env = {
   port: Number.parseInt(process.env.PORT ?? '8787', 10),
-  /** Dev auth: shared secret; mobile sends Authorization: Bearer <key> */
+  /**
+   * Shared dev/guest key. Scoped narrowly: it can only authenticate as
+   * GUEST_USER_ID or devUserId (see middleware/auth.ts) — never as an
+   * arbitrary client-supplied user id. Real users are verified via Supabase
+   * JWT below.
+   */
   auraApiKey: process.env.AURA_API_KEY ?? '',
-  /** Optional dev user id when not using JWT */
+  /** Identity the shared dev key maps to when not in guest mode. */
   devUserId: process.env.DEV_USER_ID ?? 'user-1',
   triggerSecretKey: process.env.TRIGGER_SECRET_KEY ?? '',
+
+  /** Public Supabase project values — used server-side to verify user JWTs. */
+  supabaseUrl: process.env.SUPABASE_URL ?? '',
+  supabaseAnonKey: process.env.SUPABASE_ANON_KEY ?? '',
 
   // OpenRouter (used for both Gemini Flash intent routing + Claude Sonnet copilot)
   openRouterApiKey: process.env.OPENROUTER_API_KEY ?? '',
