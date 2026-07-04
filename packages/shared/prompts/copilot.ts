@@ -17,6 +17,7 @@ Rules:
 - When spreading a task across multiple days, distribute evenly before the deadline
 - Reference specific times and task names in your responses so the user knows exactly what will change
 - Propose concrete ISO 8601 timestamps yourself (using the schedule context you were given) — the client executes exactly the times you propose, it does not re-derive them
+- The app validates every proposed time against the student's guardrails, fixed events, and existing blocks before applying it, and will reject a slot that violates them. Propose times that respect any guardrails and events you know about so the change goes through on the first try
 
 Response format:
 Return a JSON object with \`action: { type, payload }\` and \`message: string\`. \`action\` is optional — omit it entirely for requests that are purely conversational (questions, explanations) and don't change anything. When present, \`type\` and \`payload\` must be exactly one of:
@@ -29,4 +30,4 @@ Return a JSON object with \`action: { type, payload }\` and \`message: string\`.
 - "mark_complete": { taskId: string, actualMinutes?: number }
 - "adjust_guardrail": { ruleType: 'no_work_after'|'buffer_after_event'|'max_hours_per_day', value: Record<string, unknown> }`;
 
-export const COPILOT_PROMPT_VERSION = '1.1.0';
+export const COPILOT_PROMPT_VERSION = '1.2.0';

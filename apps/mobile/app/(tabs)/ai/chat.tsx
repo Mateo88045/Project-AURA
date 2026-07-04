@@ -40,9 +40,13 @@ import {
   CopilotError,
   type ChatMessagePayload,
 } from '../../../services/chatApi';
-import { executeCopilotAction } from '../../../services/copilotActions';
+import {
+  executeCopilotAction,
+  GuardrailViolationError,
+} from '../../../services/copilotActions';
 import { useAuth } from '../../../hooks/useAuth';
 import type { CopilotAction } from '@chronos/shared/types';
+import type { ProposedBlock } from '@chronos/shared/scheduler';
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 type ActionState = 'pending' | 'confirmed' | 'cancelled' | 'error';
@@ -52,7 +56,36 @@ type Row = ChatMessagePayload & {
   action?: CopilotAction;
   actionState?: ActionState;
   actionError?: string;
+  /** A valid alternative from the scheduler when the proposed time was rejected. */
+  actionSuggestion?: ProposedBlock[];
 };
+
+/**
+ * Rebuilds a time-changing action to use the scheduler's suggested valid
+ * slot(s) instead of the copilot's rejected times.
+ */
+function actionWithSuggestedTimes(
+  action: CopilotAction,
+  suggestion: ProposedBlock[],
+): CopilotAction {
+  const taskId = action.payload.taskId;
+  if (suggestion.length === 1 && action.type === 'reschedule') {
+    return {
+      ...action,
+      payload: {
+        taskId,
+        newStartTime: suggestion[0].startTime,
+        newEndTime: suggestion[0].endTime,
+      },
+    };
+  }
+  // Multiple blocks (or a spread action): apply as a spread_task.
+  return {
+    type: 'spread_task',
+    confirmationMessage: action.confirmationMessage,
+    payload: { taskId, blocks: suggestion },
+  };
+}
 
 // ---------------------------------------------------------------------------
 // Typing indicator — three 6px violet dots, pulsing opacity with stagger
@@ -161,6 +194,7 @@ interface BubbleProps {
   bubbleStyles: ReturnType<typeof makeBubbleStyles>;
   onConfirmAction?: (rowId: string) => void;
   onCancelAction?: (rowId: string) => void;
+  onApplySuggestion?: (rowId: string) => void;
 }
 
 function Bubble({
@@ -170,6 +204,7 @@ function Bubble({
   bubbleStyles,
   onConfirmAction,
   onCancelAction,
+  onApplySuggestion,
 }: BubbleProps) {
   const isUser = row.role === 'user';
 
@@ -237,9 +272,21 @@ function Bubble({
                 <Text style={bubbleStyles.actionStatusMuted}>Cancelled — nothing changed</Text>
               )}
               {row.actionState === 'error' && (
-                <Text style={bubbleStyles.actionStatusError}>
-                  {row.actionError ?? "Couldn't complete that"}
-                </Text>
+                <>
+                  <Text style={bubbleStyles.actionStatusError}>
+                    {row.actionError ?? "Couldn't complete that"}
+                  </Text>
+                  {row.actionSuggestion && row.actionSuggestion.length > 0 && (
+                    <Pressable
+                      style={bubbleStyles.actionButtonPrimary}
+                      onPress={() => onApplySuggestion?.(row.id)}
+                    >
+                      <Text style={bubbleStyles.actionButtonPrimaryText}>
+                        Use the suggested time
+                      </Text>
+                    </Pressable>
+                  )}
+                </>
               )}
             </View>
           )}
@@ -471,19 +518,27 @@ export default function AIChatScreen() {
     void sendMessage(input.trim());
   }, [input, sendMessage]);
 
-  const confirmAction = useCallback(
-    async (rowId: string) => {
-      const row = rows.find((r) => r.id === rowId);
-      if (!row?.action) return;
-
+  const runAction = useCallback(
+    async (rowId: string, action: CopilotAction) => {
       haptic.primaryCTA();
       try {
-        await executeCopilotAction(authUser?.id ?? '', row.action);
+        await executeCopilotAction(authUser?.id ?? '', action);
         setRows((prev) =>
-          prev.map((r) => (r.id === rowId ? { ...r, actionState: 'confirmed' } : r)),
+          prev.map((r) =>
+            r.id === rowId
+              ? { ...r, actionState: 'confirmed', actionSuggestion: undefined }
+              : r,
+          ),
         );
         haptic.success();
       } catch (e) {
+        // A guardrail rejection carries a valid alternative — surface it so the
+        // student can accept the scheduler's slot with one tap.
+        const suggestion =
+          e instanceof GuardrailViolationError && e.suggestion
+            ? e.suggestion
+            : undefined;
+        haptic.error();
         setRows((prev) =>
           prev.map((r) =>
             r.id === rowId
@@ -491,13 +546,32 @@ export default function AIChatScreen() {
                   ...r,
                   actionState: 'error',
                   actionError: e instanceof Error ? e.message : 'Something went wrong',
+                  actionSuggestion: suggestion,
                 }
               : r,
           ),
         );
       }
     },
-    [rows, authUser?.id],
+    [authUser?.id],
+  );
+
+  const confirmAction = useCallback(
+    (rowId: string) => {
+      const row = rows.find((r) => r.id === rowId);
+      if (!row?.action) return;
+      void runAction(rowId, row.action);
+    },
+    [rows, runAction],
+  );
+
+  const applySuggestion = useCallback(
+    (rowId: string) => {
+      const row = rows.find((r) => r.id === rowId);
+      if (!row?.action || !row.actionSuggestion) return;
+      void runAction(rowId, actionWithSuggestedTimes(row.action, row.actionSuggestion));
+    },
+    [rows, runAction],
   );
 
   const cancelAction = useCallback((rowId: string) => {
@@ -635,6 +709,7 @@ export default function AIChatScreen() {
                 bubbleStyles={bubbleStyles}
                 onConfirmAction={confirmAction}
                 onCancelAction={cancelAction}
+                onApplySuggestion={applySuggestion}
               />
             );
           }}

@@ -1,7 +1,16 @@
 // Lightweight test harness — run with `tsx packages/shared/scheduler.test.ts`
 // or any Node runner that understands TS (no test framework needed).
 
-import { schedule, computeFreeSlots, hhmmToMinutes, minutesToIso } from './scheduler';
+import {
+  schedule,
+  computeFreeSlots,
+  hhmmToMinutes,
+  minutesToIso,
+  validateProposedPlacement,
+  suggestValidPlacement,
+  isValidGuardrailValue,
+  isoToDayMinutes,
+} from './scheduler';
 import type { Task, FixedEvent, Guardrail } from './types';
 
 let passed = 0;
@@ -144,6 +153,132 @@ test('fully booked day yields zero placement', () => {
   });
   assert(result.scheduledChunks.length === 0, 'should not schedule into a full day');
   assert(result.overloadedTasks.length === 1, 'should overload');
+});
+
+// ---------------------------------------------------------------------------
+// Copilot proposed-placement validation (guardrail gate for Pipeline C)
+// ---------------------------------------------------------------------------
+
+const DAY = '2026-06-01';
+function noWorkAfter(time: string): Guardrail {
+  return { id: 'g', userId: 'u', ruleType: 'no_work_after', value: { time }, active: true, createdAt: '' };
+}
+
+console.log('\nscheduler.ts — copilot placement validation');
+
+test('isoToDayMinutes parses local ISO into day + minute', () => {
+  const r = isoToDayMinutes('2026-06-01T21:30:00');
+  assert(r !== null && r.day === '2026-06-01' && r.minute === 21 * 60 + 30, 'parse failed');
+  assert(isoToDayMinutes('not-a-date') === null, 'should reject garbage');
+});
+
+test('proposed time inside a no_work_after window is REJECTED', () => {
+  // Student has "no work after 9pm"; copilot proposes 9:30–10:30pm.
+  const result = validateProposedPlacement({
+    proposed: [{ startTime: `${DAY}T21:30:00`, endTime: `${DAY}T22:30:00` }],
+    fixedEventsByDay: { [DAY]: [] },
+    guardrails: [noWorkAfter('21:00')],
+  });
+  assert(!result.valid, 'should be invalid');
+  assert(result.violations[0].code === 'no_work_after', `wrong code: ${result.violations[0]?.code}`);
+});
+
+test('a rejected after-9pm proposal is REPLACED with a valid earlier alternative', () => {
+  const input = {
+    proposed: [{ startTime: `${DAY}T21:30:00`, endTime: `${DAY}T22:30:00` }],
+    fixedEventsByDay: { [DAY]: [] },
+    guardrails: [noWorkAfter('21:00')],
+  };
+  const suggestion = suggestValidPlacement(input);
+  assert(suggestion !== null && suggestion.length > 0, 'expected an alternative slot');
+  // Every suggested block must end at or before 9pm and start at/after 6am.
+  for (const b of suggestion!) {
+    const e = isoToDayMinutes(b.endTime)!;
+    const s = isoToDayMinutes(b.startTime)!;
+    assert(e.minute <= 21 * 60, `suggestion runs past 9pm: ${b.endTime}`);
+    assert(s.minute >= 6 * 60, `suggestion starts before 6am: ${b.startTime}`);
+  }
+  // And the suggestion itself must pass validation (round-trip proof).
+  const recheck = validateProposedPlacement({ ...input, proposed: suggestion! });
+  assert(recheck.valid, `suggested slot failed re-validation: ${JSON.stringify(recheck.violations)}`);
+});
+
+test('a valid proposed time PASSES and would execute normally', () => {
+  const result = validateProposedPlacement({
+    proposed: [{ startTime: `${DAY}T16:00:00`, endTime: `${DAY}T17:00:00` }],
+    fixedEventsByDay: { [DAY]: [] },
+    guardrails: [noWorkAfter('21:00')],
+  });
+  assert(result.valid, `should be valid: ${JSON.stringify(result.violations)}`);
+  assert(result.violations.length === 0, 'no violations expected');
+});
+
+test('proposed time overlapping a fixed event is REJECTED', () => {
+  const fe: FixedEvent[] = [
+    { id: 'fe', userId: 'u', title: 'Practice', startTime: '16:00', endTime: '18:00', daysOfWeek: [1], createdAt: '' },
+  ];
+  const result = validateProposedPlacement({
+    proposed: [{ startTime: `${DAY}T16:30:00`, endTime: `${DAY}T17:30:00` }],
+    fixedEventsByDay: { [DAY]: fe },
+    guardrails: [],
+  });
+  assert(!result.valid, 'should be invalid');
+  assert(result.violations[0].code === 'fixed_event_conflict', `wrong code: ${result.violations[0]?.code}`);
+});
+
+test('proposed time overlapping another task block is REJECTED', () => {
+  const result = validateProposedPlacement({
+    proposed: [{ startTime: `${DAY}T16:00:00`, endTime: `${DAY}T17:00:00` }],
+    fixedEventsByDay: { [DAY]: [] },
+    guardrails: [],
+    otherBlocksByDay: { [DAY]: [{ startMinute: 16 * 60, endMinute: 17 * 60 }] },
+  });
+  assert(!result.valid, 'should collide with the existing block');
+  assert(result.violations[0].code === 'fixed_event_conflict', `wrong code: ${result.violations[0]?.code}`);
+});
+
+test('proposed placement exceeding max_hours_per_day (with other load) is REJECTED', () => {
+  const result = validateProposedPlacement({
+    proposed: [{ startTime: `${DAY}T09:00:00`, endTime: `${DAY}T10:00:00` }],
+    fixedEventsByDay: { [DAY]: [] },
+    guardrails: [
+      { id: 'g', userId: 'u', ruleType: 'max_hours_per_day', value: { hours: 1.5 }, active: true, createdAt: '' },
+    ],
+    // 60 already scheduled + 60 proposed = 120 min > 90 min cap.
+    otherBlocksByDay: { [DAY]: [{ startMinute: 12 * 60, endMinute: 13 * 60 }] },
+  });
+  assert(!result.valid, 'should exceed the daily cap');
+  assert(result.violations.some((v) => v.code === 'max_hours_per_day'), 'expected max_hours_per_day');
+});
+
+test('a task moving within its own slot does not conflict with itself', () => {
+  // otherBlocksByDay excludes the moved task, so an empty list = no self-conflict.
+  const result = validateProposedPlacement({
+    proposed: [{ startTime: `${DAY}T15:00:00`, endTime: `${DAY}T16:00:00` }],
+    fixedEventsByDay: { [DAY]: [] },
+    guardrails: [],
+    otherBlocksByDay: { [DAY]: [] },
+  });
+  assert(result.valid, 'moving a task within a free day should be fine');
+});
+
+test('malformed ISO in a proposal yields invalid_range, not a silent pass', () => {
+  const result = validateProposedPlacement({
+    proposed: [{ startTime: 'yesterday', endTime: 'later' }],
+    fixedEventsByDay: {},
+    guardrails: [],
+  });
+  assert(!result.valid && result.violations[0].code === 'invalid_range', 'should reject garbage times');
+});
+
+test('isValidGuardrailValue enforces per-rule-type shapes', () => {
+  assert(isValidGuardrailValue('no_work_after', { time: '21:00' }), 'valid time rejected');
+  assert(!isValidGuardrailValue('no_work_after', { time: 'banana' }), 'garbage time accepted');
+  assert(!isValidGuardrailValue('no_work_after', {}), 'missing time accepted');
+  assert(isValidGuardrailValue('max_hours_per_day', { hours: 3 }), 'valid hours rejected');
+  assert(!isValidGuardrailValue('max_hours_per_day', { hours: 0 }), 'zero hours accepted');
+  assert(isValidGuardrailValue('buffer_after_event', { minutes: 15 }), 'valid buffer rejected');
+  assert(!isValidGuardrailValue('buffer_after_event', { minutes: -5 }), 'negative buffer accepted');
 });
 
 console.log(`\n${passed} passed, ${failed} failed\n`);
