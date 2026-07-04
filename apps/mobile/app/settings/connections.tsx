@@ -32,6 +32,8 @@ import { useConnections } from '../../hooks/useConnections';
 import { haptic } from '../../lib/haptics';
 import { useAuth } from '../../hooks/useAuth';
 import { initiateGoogleOAuth, saveCanvasToken } from '../../services/oauthService';
+import { triggerDailySyncJob } from '../../services/jobs';
+import { SubscriptionFrozenError } from '../../services/subscriptionStatus';
 import { useAuraToast } from '../../components/ui/AuraToast';
 import type { Connection, ConnectionStatus, Platform } from '@chronos/shared/types';
 
@@ -446,9 +448,26 @@ export default function ConnectionsHubScreen() {
     setSyncingPlatform(platform);
     haptic.primaryCTA();
     toast.show('Syncing your assignments…', 'info');
-    // TODO: Trigger.dev — fire job 'manual-platform-sync' with payload { userId, platform }
-    // Job steps: fetch platform → normalize tasks → enter Pipeline A at step 3
-    setTimeout(() => setSyncingPlatform(null), 600);
+
+    // Reuses the same real job as the nightly run (fetch → grade → schedule →
+    // notify — Pipeline A). Ideally this would be a platform-scoped
+    // 'manual-platform-sync' job so re-syncing Canvas doesn't also re-pull
+    // Google Classroom, but that job doesn't exist yet on the backend —
+    // triggering the real full sync beats the previous no-op.
+    try {
+      await triggerDailySyncJob(authUser?.id ?? '');
+      toast.show('Sync started — new assignments will appear shortly', 'success');
+    } catch (e) {
+      const message =
+        e instanceof SubscriptionFrozenError
+          ? e.message
+          : e instanceof Error
+            ? e.message
+            : 'Sync failed — try again';
+      toast.show(message, 'error');
+    } finally {
+      setSyncingPlatform(null);
+    }
   }
 
   function handleDisconnect(_platform: Platform) {
