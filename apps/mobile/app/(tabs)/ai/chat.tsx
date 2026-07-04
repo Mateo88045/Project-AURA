@@ -40,10 +40,19 @@ import {
   CopilotError,
   type ChatMessagePayload,
 } from '../../../services/chatApi';
+import { executeCopilotAction } from '../../../services/copilotActions';
 import { useAuth } from '../../../hooks/useAuth';
+import type { CopilotAction } from '@chronos/shared/types';
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
-type Row = ChatMessagePayload & { id: string };
+type ActionState = 'pending' | 'confirmed' | 'cancelled' | 'error';
+
+type Row = ChatMessagePayload & {
+  id: string;
+  action?: CopilotAction;
+  actionState?: ActionState;
+  actionError?: string;
+};
 
 // ---------------------------------------------------------------------------
 // Typing indicator — three 6px violet dots, pulsing opacity with stagger
@@ -150,9 +159,18 @@ interface BubbleProps {
   showAvatar: boolean;
   index: number;
   bubbleStyles: ReturnType<typeof makeBubbleStyles>;
+  onConfirmAction?: (rowId: string) => void;
+  onCancelAction?: (rowId: string) => void;
 }
 
-function Bubble({ row, showAvatar, index, bubbleStyles }: BubbleProps) {
+function Bubble({
+  row,
+  showAvatar,
+  index,
+  bubbleStyles,
+  onConfirmAction,
+  onCancelAction,
+}: BubbleProps) {
   const isUser = row.role === 'user';
 
   // User messages slide up from below; assistant messages slide down with spring
@@ -193,6 +211,38 @@ function Bubble({ row, showAvatar, index, bubbleStyles }: BubbleProps) {
       ) : (
         <GlassCard intensity="light" style={bubbleStyles.auraBubble}>
           <Text style={bubbleStyles.auraText}>{row.content}</Text>
+          {row.action && (
+            <View style={bubbleStyles.actionCard}>
+              <Text style={bubbleStyles.actionText}>{row.action.confirmationMessage}</Text>
+              {(row.actionState ?? 'pending') === 'pending' && (
+                <View style={bubbleStyles.actionButtons}>
+                  <Pressable
+                    style={bubbleStyles.actionButtonGhost}
+                    onPress={() => onCancelAction?.(row.id)}
+                  >
+                    <Text style={bubbleStyles.actionButtonGhostText}>Cancel</Text>
+                  </Pressable>
+                  <Pressable
+                    style={bubbleStyles.actionButtonPrimary}
+                    onPress={() => onConfirmAction?.(row.id)}
+                  >
+                    <Text style={bubbleStyles.actionButtonPrimaryText}>Confirm</Text>
+                  </Pressable>
+                </View>
+              )}
+              {row.actionState === 'confirmed' && (
+                <Text style={bubbleStyles.actionStatusSuccess}>✓ Done</Text>
+              )}
+              {row.actionState === 'cancelled' && (
+                <Text style={bubbleStyles.actionStatusMuted}>Cancelled — nothing changed</Text>
+              )}
+              {row.actionState === 'error' && (
+                <Text style={bubbleStyles.actionStatusError}>
+                  {row.actionError ?? "Couldn't complete that"}
+                </Text>
+              )}
+            </View>
+          )}
         </GlassCard>
       )}
     </Animated.View>
@@ -251,6 +301,57 @@ function makeBubbleStyles(c: ThemeColors) {
     auraText: {
       ...typography.body,
       color: c.text.primary,
+    },
+    actionCard: {
+      marginTop: 10,
+      paddingTop: 10,
+      borderTopWidth: 1,
+      borderTopColor: c.border.subtle,
+      gap: 8,
+    },
+    actionText: {
+      ...typography.callout,
+      color: c.text.secondary,
+    },
+    actionButtons: {
+      flexDirection: 'row',
+      gap: 8,
+    },
+    actionButtonGhost: {
+      paddingHorizontal: 14,
+      paddingVertical: 8,
+      borderRadius: radius.md,
+      borderWidth: 1,
+      borderColor: c.border.subtle,
+    },
+    actionButtonGhostText: {
+      ...typography.callout,
+      color: c.text.secondary,
+      fontWeight: '600',
+    },
+    actionButtonPrimary: {
+      paddingHorizontal: 14,
+      paddingVertical: 8,
+      borderRadius: radius.md,
+      backgroundColor: c.accent.blue,
+    },
+    actionButtonPrimaryText: {
+      ...typography.callout,
+      color: c.text.inverse,
+      fontWeight: '600',
+    },
+    actionStatusSuccess: {
+      ...typography.callout,
+      color: c.accent.emerald,
+      fontWeight: '600',
+    },
+    actionStatusMuted: {
+      ...typography.callout,
+      color: c.text.tertiary,
+    },
+    actionStatusError: {
+      ...typography.callout,
+      color: c.accent.coral,
     },
   });
 }
@@ -345,7 +446,13 @@ export default function AIChatScreen() {
         const res = await sendCopilotMessage(authUser?.id ?? '', msgs);
         setRows((prev) => [
           ...prev,
-          { id: `a-${Date.now()}`, role: 'assistant', content: res.message },
+          {
+            id: `a-${Date.now()}`,
+            role: 'assistant',
+            content: res.message,
+            action: res.action,
+            actionState: res.action ? 'pending' : undefined,
+          },
         ]);
         haptic.success();
       } catch (e) {
@@ -363,6 +470,42 @@ export default function AIChatScreen() {
   const send = useCallback(() => {
     void sendMessage(input.trim());
   }, [input, sendMessage]);
+
+  const confirmAction = useCallback(
+    async (rowId: string) => {
+      const row = rows.find((r) => r.id === rowId);
+      if (!row?.action) return;
+
+      haptic.primaryCTA();
+      try {
+        await executeCopilotAction(authUser?.id ?? '', row.action);
+        setRows((prev) =>
+          prev.map((r) => (r.id === rowId ? { ...r, actionState: 'confirmed' } : r)),
+        );
+        haptic.success();
+      } catch (e) {
+        setRows((prev) =>
+          prev.map((r) =>
+            r.id === rowId
+              ? {
+                  ...r,
+                  actionState: 'error',
+                  actionError: e instanceof Error ? e.message : 'Something went wrong',
+                }
+              : r,
+          ),
+        );
+      }
+    },
+    [rows, authUser?.id],
+  );
+
+  const cancelAction = useCallback((rowId: string) => {
+    haptic.secondary();
+    setRows((prev) =>
+      prev.map((r) => (r.id === rowId ? { ...r, actionState: 'cancelled' } : r)),
+    );
+  }, []);
 
   // Auto-send a quick-prompt from the AI Hub
   useEffect(() => {
@@ -490,6 +633,8 @@ export default function AIChatScreen() {
                 showAvatar={isFirstOfGroup}
                 index={index}
                 bubbleStyles={bubbleStyles}
+                onConfirmAction={confirmAction}
+                onCancelAction={cancelAction}
               />
             );
           }}

@@ -186,7 +186,14 @@ export interface OcrExtraction {
 
 /** Action output from the Copilot (Pipeline C) */
 export interface CopilotAction {
-  type: 'reschedule' | 'add_task' | 'remove_task' | 'clear_evening' | 'spread_task';
+  type:
+    | 'reschedule'
+    | 'add_task'
+    | 'remove_task'
+    | 'clear_evening'
+    | 'spread_task'
+    | 'mark_complete'
+    | 'adjust_guardrail';
   payload: Record<string, unknown>;
   confirmationMessage: string;
 }
