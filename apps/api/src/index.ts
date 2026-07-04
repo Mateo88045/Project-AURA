@@ -6,12 +6,18 @@ import { requireAuth, type ApiVariables } from './middleware/auth.js';
 import { jobsRouter } from './routes/jobs.js';
 import { chatRouter } from './routes/chat.js';
 import { ocrRouter } from './routes/ocr.js';
+import { revenueCatRouter } from './routes/revenuecat.js';
 
 const app = new Hono();
 
 app.use('/*', cors({ origin: '*' }));
 
 app.get('/health', (c) => c.json({ ok: true }));
+
+// RevenueCat calls this directly from their servers — no Supabase session or
+// shared app key to present, so it's mounted outside requireAuth and checks
+// its own webhook secret (REVENUECAT_WEBHOOK_SECRET) instead.
+app.route('/webhooks/revenuecat', revenueCatRouter);
 
 const v1 = new Hono<{ Variables: ApiVariables }>();
 v1.use('/*', requireAuth);

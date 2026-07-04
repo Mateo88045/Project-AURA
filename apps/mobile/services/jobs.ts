@@ -1,4 +1,5 @@
 import { getAuraApiBaseUrl, getAuraApiHeaders } from './auraClient';
+import { assertSchedulingAllowed } from './subscriptionStatus';
 
 export type JobTriggerResponse = {
   ok: true;
@@ -39,20 +40,33 @@ async function postJob(
   return json as JobTriggerResponse;
 }
 
-/** POST /v1/jobs/daily-sync — Trigger.dev task `daily-assignment-trigger` */
+/**
+ * POST /v1/jobs/daily-sync — Trigger.dev task `daily-assignment-trigger`.
+ * Creates new scheduled work, so it's blocked while the subscription is
+ * frozen (throws SubscriptionFrozenError) — existing data stays untouched.
+ */
 export async function triggerDailySyncJob(userId: string): Promise<JobTriggerResponse> {
+  await assertSchedulingAllowed(userId);
   return postJob(userId, '/v1/jobs/daily-sync');
 }
 
-/** POST /v1/jobs/shadow-replan — Trigger.dev task `shadow-replan` */
+/**
+ * POST /v1/jobs/shadow-replan — Trigger.dev task `shadow-replan`. Regenerates
+ * the schedule, so it's blocked while frozen for the same reason as above.
+ */
 export async function requestShadowSchedule(
   userId: string,
   day: string,
 ): Promise<JobTriggerResponse> {
+  await assertSchedulingAllowed(userId);
   return postJob(userId, '/v1/jobs/shadow-replan', { day });
 }
 
-/** POST /v1/jobs/sunday-briefing */
+/**
+ * POST /v1/jobs/sunday-briefing — a read-only digest of the existing
+ * schedule, not new scheduled work, so it's intentionally NOT gated: a
+ * frozen user should still get their weekly summary of what's already there.
+ */
 export async function requestSundayBriefing(
   userId: string,
 ): Promise<JobTriggerResponse> {

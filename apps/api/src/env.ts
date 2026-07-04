@@ -14,6 +14,15 @@ export const env = {
   /** Public Supabase project values — used server-side to verify user JWTs. */
   supabaseUrl: process.env.SUPABASE_URL ?? '',
   supabaseAnonKey: process.env.SUPABASE_ANON_KEY ?? '',
+  /**
+   * Service-role key — bypasses RLS. Server-only, never ship to the mobile
+   * bundle. Used exclusively by the RevenueCat webhook handler to flip
+   * users.subscription_status (a column regular users cannot write to
+   * themselves — see the subscription_status migration).
+   */
+  supabaseServiceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY ?? '',
+  /** Shared secret RevenueCat echoes back in the webhook's Authorization header. */
+  revenueCatWebhookSecret: process.env.REVENUECAT_WEBHOOK_SECRET ?? '',
 
   // OpenRouter (used for both Gemini Flash intent routing + Claude Sonnet copilot)
   openRouterApiKey: process.env.OPENROUTER_API_KEY ?? '',
@@ -48,5 +57,14 @@ export const env = {
 export function assertTriggerConfigured(): void {
   if (!env.triggerSecretKey) {
     throw new Error('TRIGGER_SECRET_KEY is not set');
+  }
+}
+
+export function assertRevenueCatConfigured(): void {
+  if (!env.revenueCatWebhookSecret) {
+    throw new Error('REVENUECAT_WEBHOOK_SECRET is not set');
+  }
+  if (!env.supabaseUrl || !env.supabaseServiceRoleKey) {
+    throw new Error('SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY is not set');
   }
 }

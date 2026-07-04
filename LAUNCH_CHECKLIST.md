@@ -42,6 +42,34 @@ see `apps/mobile/services/purchases.ts`.
 - [ ] Rebuild the dev client / EAS build (native module — Expo Go can't run it).
 - [ ] Test a sandbox purchase + **Restore** before submitting.
 
+**Lapse enforcement ("frozen" mode) — code is in, three things still need a human:**
+- What ships in this pass: `supabase/migrations/20260703_000000_subscription_status.sql`
+  (adds `users.subscription_status`, locked to service-role writes only),
+  `apps/api/src/routes/revenuecat.ts` (webhook → maps RevenueCat event types to
+  `active`/`frozen`, tested in `revenuecat.test.ts`), and mobile enforcement
+  (`services/subscriptionStatus.ts`, `hooks/useSubscriptionStatus.ts`) that blocks
+  `triggerDailySyncJob` / `requestShadowSchedule` with a clear error when frozen —
+  existing tasks/schedule stay fully visible, nothing is deleted.
+- [ ] Apply the new migration (`supabase db push` or the SQL editor) — the app
+      code already assumes the column exists.
+- [ ] In the RevenueCat dashboard → **Integrations → Webhooks**, point a webhook at
+      `https://<your-api>/webhooks/revenuecat` with a shared **Authorization header
+      value** — set that same value as `REVENUECAT_WEBHOOK_SECRET` on `apps/api`.
+- [ ] Set `SUPABASE_SERVICE_ROLE_KEY` on `apps/api` (Supabase → Project Settings →
+      API → `service_role` secret — **not** the anon/publishable key, never ship it
+      to the mobile app).
+- [ ] After applying the migration, regenerate
+      `packages/shared/supabase/database.types.ts` via
+      `supabase gen types typescript --project-id bvwumzzuvubiacueftbz` (it was
+      hand-edited ahead of the real schema so the code typechecks now).
+- Still stubbed / not enforced: the native RevenueCat SDK itself (blocked on the
+  EAS dev-client build, see §5 below) — so today there's no real purchase flow to
+  ever *trigger* an EXPIRATION/BILLING_ISSUE event. The webhook and enforcement
+  are ready and unit-tested, but can't be exercised end-to-end until the SDK is
+  live. You can hand-test the enforcement path today by flipping a test user's
+  `subscription_status` to `'frozen'` directly in Supabase and confirming Sync
+  Now / shadow-replan refuse with the lapsed message.
+
 ## 3. Deploy the AI backend (`apps/api`) 🔴 (for AI features)
 
 The copilot chat, photo OCR, and job triggers call this server. Without it those

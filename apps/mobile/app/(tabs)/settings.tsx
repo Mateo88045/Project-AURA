@@ -37,6 +37,7 @@ import { openManageSubscriptions, restorePurchases } from '../../services/purcha
 import { haptic } from '../../lib/haptics';
 import { useTheme, type ThemeMode } from '../../lib/theme';
 import { useAuth } from '../../hooks/useAuth';
+import { useSubscriptionStatus } from '../../hooks/useSubscriptionStatus';
 import { scheduleDailyBriefing, cancelDailyBriefing } from '../../lib/notifications';
 import type { ConnectionStatus } from '@chronos/shared/types';
 
@@ -350,6 +351,7 @@ export default function SettingsScreen() {
   const [triggerOverride, setTriggerOverride] = useState<string | null>(null);
   const { user: authUser, signOut, isGuest } = useAuth();
   const [deleting, setDeleting] = useState(false);
+  const { isFrozen: subscriptionFrozen } = useSubscriptionStatus(authUser?.id ?? null);
 
   function confirmDeleteAccount() {
     Alert.alert(
@@ -673,9 +675,13 @@ export default function SettingsScreen() {
           <GlassCard intensity="light" style={styles.groupCard}>
             <Row
               icon="crown.fill"
-              tint="moderate"
+              tint={subscriptionFrozen ? 'hard' : 'moderate'}
               label="Manage subscription"
-              subtitle="Change plan or cancel"
+              subtitle={
+                subscriptionFrozen
+                  ? 'Lapsed — auto-scheduling paused, your schedule is safe'
+                  : 'Change plan or cancel'
+              }
               onPress={() => { void handleManageSubscription(); }}
               colors={colors}
               styles={styles}

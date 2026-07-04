@@ -349,6 +349,11 @@ export type Database = {
           notifications_enabled: boolean | null;
           onboarding_answers: Json | null;
           onboarding_step: number;
+          // Hand-added ahead of `supabase gen types` regen — see
+          // supabase/migrations/20260703_000000_subscription_status.sql.
+          // Re-running the generator after that migration lands will
+          // reproduce this field; safe to overwrite then.
+          subscription_status: string;
           timezone: string;
           updated_at: string;
         };
@@ -363,6 +368,7 @@ export type Database = {
           notifications_enabled?: boolean | null;
           onboarding_answers?: Json | null;
           onboarding_step?: number;
+          subscription_status?: string;
           timezone?: string;
           updated_at?: string;
         };
@@ -377,6 +383,7 @@ export type Database = {
           notifications_enabled?: boolean | null;
           onboarding_answers?: Json | null;
           onboarding_step?: number;
+          subscription_status?: string;
           timezone?: string;
           updated_at?: string;
         };
