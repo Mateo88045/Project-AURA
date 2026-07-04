@@ -95,10 +95,34 @@ features return a graceful error instead of working — which Apple may flag.
 
 ## 5. Build & submit 🔴
 
-- [ ] Set a real **EAS `projectId`** in `app.json` (`extra.eas.projectId`) → `eas init`.
+- [ ] Set a real **EAS `projectId`** in `app.json` (`extra.eas.projectId`) → `eas init`. *(Already set: `6906e00a-7b2d-4575-b484-4643879ae660`.)*
 - [ ] App icon + splash are real (not placeholders) at 1024×1024.
 - [ ] `eas build -p ios --profile production` then `eas submit -p ios`.
 - [ ] Provide a **demo account** (or note guest mode) in App Review notes, and explain the AI/subscription so the reviewer can exercise them.
+
+**Why Expo Go can't run this app (confirmed, not fixed):**
+`react-native-reanimated@4.1.7` (Reanimated v4) ships a native module that must be
+compiled into the app binary at build time — its own runtime check
+(`checkCppVersion.js`) throws `Mismatch between JavaScript part and native part of
+Reanimated (<js> vs <cpp>)` the instant any component calls `useSharedValue` /
+`useAnimatedStyle` if the compiled native version doesn't match. Expo Go is a
+fixed, Expo-published binary with its own precompiled module versions — it does
+not, and structurally cannot, contain this project's exact Reanimated 4.1.7 +
+`react-native-worklets` 0.8.3 native code. `AuraSkeleton.tsx` isn't uniquely
+broken — it's just one of 9 components using Reanimated (`chat.tsx`,
+`settings.tsx`, `connections.tsx` also do), and likely the first one a user hits
+since skeleton loaders mount early on most screens. **The fix isn't code — it's
+building a custom dev client**, which `expo-dev-client` (already a dependency)
+and `newArchEnabled: true` (already set in `app.json`, required by Reanimated v4)
+are already set up for.
+- [ ] Run the dev-client build yourself (not run as part of this pass):
+  - No Apple Developer account yet? `eas build -p ios --profile development-simulator`
+    — installs on the iOS Simulator, no code signing needed, fastest way to
+    confirm Reanimated works outside Expo Go today.
+  - Once enrolled (§1): `eas build -p ios --profile development` — installs on a
+    registered physical device via `expo-dev-client`.
+  - Either way: `expo start --dev-client` afterward, not plain `expo start`
+    (that still launches Expo Go and will hit the same crash).
 
 ## 6. Business banking 🟡 (see chat for the full answer)
 
