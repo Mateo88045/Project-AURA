@@ -21,7 +21,9 @@
         "NSUserNotificationsUsageDescription": "Chronos sends reminders for your scheduled study blocks and daily assignment updates.",
         "NSCameraUsageDescription": "Chronos uses the camera so you can photograph an assignment and have it scheduled automatically.",
         "NSPhotoLibraryUsageDescription": "Chronos lets you pick a photo of an assignment from your library to schedule it automatically.",
-        "UIBackgroundModes": ["remote-notification"],
+        "UIBackgroundModes": [
+          "remote-notification"
+        ],
         "ITSAppUsesNonExemptEncryption": false
       }
     },
@@ -33,7 +35,8 @@
       "package": "com.chronos.app",
       "permissions": [
         "android.permission.POST_NOTIFICATIONS",
-        "android.permission.VIBRATE"
+        "android.permission.VIBRATE",
+        "android.permission.RECORD_AUDIO"
       ]
     },
     "plugins": [
@@ -58,7 +61,7 @@
     },
     "extra": {
       "eas": {
-        "projectId": ""
+        "projectId": "6906e00a-7b2d-4575-b484-4643879ae660"
       },
       "supabaseUrl": "https://bvwumzzuvubiacueftbz.supabase.co",
       "supabasePublishableKey": "sb_publishable_if5RMKHlwHLzUu97PaAcbQ_Vgm-rb7u",
@@ -66,7 +69,8 @@
       "auraApiKey": "",
       "supportUrl": "https://chronos-app.com/support",
       "privacyPolicyUrl": "https://chronos-app.com/privacy",
-      "termsUrl": "https://chronos-app.com/terms"
+      "termsUrl": "https://chronos-app.com/terms",
+      "router": {}
     }
   }
 }
