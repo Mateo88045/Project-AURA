@@ -33,6 +33,9 @@ import { TaskBlock, TASK_BLOCK_DOT_CENTER } from '../../components/ui/TaskBlock'
 import { DifficultyBars } from '../../components/ui/DifficultyBars';
 import { RiverLine } from '../../components/ui/RiverLine';
 import { CalmEmptyState } from '../../components/ui/CalmEmptyState';
+import { StreakChip } from '../../components/ui/StreakChip';
+import { DayPulse } from '../../components/schedule/DayPulse';
+import { useStreak } from '../../hooks/useStreak';
 import { haptic } from '../../lib/haptics';
 import { useAuth } from '../../hooks/useAuth';
 import { useRequirePro } from '../../lib/requirePro';
@@ -150,6 +153,7 @@ export default function TodayScreen() {
   } = useNotifications(authUser?.id ?? '');
 
   const { user } = useUserProfile(authUser?.id ?? '');
+  const { streak } = useStreak(authUser?.id ?? '');
   const { scheduledBlocks, fixedEvents, loading, error, refetch } = useTodaySchedule(
     authUser?.id ?? '',
     dayIso,
@@ -217,8 +221,12 @@ export default function TodayScreen() {
           <Animated.View entering={FadeIn.delay(STAGGER_MS).duration(280)}>
             <Text style={styles.name}>{firstName}</Text>
           </Animated.View>
-          <Animated.View entering={FadeIn.delay(STAGGER_MS * 2).duration(280)} style={dateAnimStyle}>
+          <Animated.View
+            entering={FadeIn.delay(STAGGER_MS * 2).duration(280)}
+            style={[styles.dateRow, dateAnimStyle]}
+          >
             <Text style={styles.date}>{friendlyDate}</Text>
+            <StreakChip streak={streak.currentStreak} />
           </Animated.View>
         </View>
         <Animated.View entering={FadeIn.delay(STAGGER_MS * 2).duration(280)} style={styles.headerRight}>
@@ -290,6 +298,11 @@ export default function TodayScreen() {
           <Animated.View entering={FadeIn.delay(STAGGER_MS * 4).duration(280)}>
             <Text style={styles.timelineTitle}>Today</Text>
           </Animated.View>
+          {!loading && !error && (
+            <Animated.View entering={FadeIn.delay(STAGGER_MS * 5).duration(280)}>
+              <DayPulse blocks={scheduledBlocks} fixedEvents={fixedEvents} />
+            </Animated.View>
+          )}
         </View>
 
         {/* Loading — the river forming, so the wait reads as "settling" */}
@@ -412,8 +425,13 @@ function makeStyles(c: ThemeColors) {
       color: c.text.primary,
       marginTop: 4,
     },
-    date: {
+    dateRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.sm,
       marginTop: 6,
+    },
+    date: {
       fontSize: 15,
       fontWeight: '400' as const,
       color: c.text.tertiary,
