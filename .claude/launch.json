@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "legal-site",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["-m", "http.server", "4173", "--directory", "legal-site"],
+      "port": 4173
+    },
+    {
+      "name": "waitlist-site",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", ".claude/worktrees/competent-noyce-bb1fb1/apps/web", "run", "dev"],
+      "port": 3000
+    }
+  ]
+}
