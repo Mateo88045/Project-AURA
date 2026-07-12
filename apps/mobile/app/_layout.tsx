@@ -21,6 +21,25 @@ if (sentryDsn) {
     dsn: sentryDsn,
     debug: __DEV__,
     tracesSampleRate: __DEV__ ? 1.0 : 0.2,
+    // Our users are minors — keep their data out of crash reports.
+    // The Privacy Policy (§3, §8) promises diagnostics exclude the content of
+    // assignments, chats, and personal profile. These settings enforce that.
+    sendDefaultPii: false, // never attach IP/user identifiers by default
+    beforeSend(event) {
+      // Strip anything that could carry task/chat text or user identity.
+      delete event.user;
+      delete event.request;
+      if (event.contexts) delete event.contexts.response;
+      return event;
+    },
+    beforeBreadcrumb(breadcrumb) {
+      // Console logs and network payloads can echo assignment/chat content —
+      // drop them so they never reach Sentry.
+      if (breadcrumb.category === 'console' || breadcrumb.category === 'xhr' || breadcrumb.category === 'fetch') {
+        return null;
+      }
+      return breadcrumb;
+    },
   });
 }
 

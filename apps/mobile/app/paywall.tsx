@@ -10,10 +10,11 @@
 // is final.
 
 import { useMemo } from 'react';
-import { View, Pressable, StyleSheet, Text, ScrollView } from 'react-native';
+import { View, Pressable, StyleSheet, Text, ScrollView, Linking } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
+import Constants from 'expo-constants';
 import { radius, spacing, typography } from '@chronos/shared/theme';
 import type { ThemeColors } from '@chronos/shared/theme';
 import { useTheme } from '../lib/theme';
@@ -24,12 +25,23 @@ import { AuraSymbol } from '../components/ui/AuraSymbol';
 import { useAuraToast } from '../components/ui/AuraToast';
 import { useEntitlement } from '../lib/entitlement';
 import { haptic } from '../lib/haptics';
+import { FREE_TRIAL_DAYS, PLANS } from '../services/purchases';
 
 const BULLETS = [
   'Auto-schedules Canvas & Classroom assignments around your fixed events',
   'Re-plans every night so you always start the day with a working schedule',
   'AI copilot for "what should I do next" — without you opening the calendar',
 ];
+
+// Same lookup pattern as onboarding/paywall.tsx — keep both paywalls reading
+// from the same EAS `extra` config so Terms/Privacy links never drift.
+const extra = (Constants.expoConfig?.extra ?? {}) as {
+  termsUrl?: string;
+  privacyPolicyUrl?: string;
+};
+const TERMS_URL = extra.termsUrl ?? 'https://chronos-app.com/terms';
+const PRIVACY_URL = extra.privacyPolicyUrl ?? 'https://chronos-app.com/privacy';
+const APPLE_EULA = 'https://www.apple.com/legal/internet-services/itunes/dev/stdeula/';
 
 export default function PaywallScreen() {
   const router = useRouter();
@@ -100,7 +112,7 @@ export default function PaywallScreen() {
           <Text style={styles.sub}>
             {isReadOnly
               ? 'Your schedule is still here. Reactivate to keep new tasks flowing in and the scheduler running.'
-              : 'Start a 14-day free trial. No charge until day 15. Cancel anytime in Settings.'}
+              : `Start a ${FREE_TRIAL_DAYS}-day free trial. No charge until day ${FREE_TRIAL_DAYS + 1}. Cancel anytime in Settings.`}
           </Text>
         </Animated.View>
 
@@ -118,14 +130,13 @@ export default function PaywallScreen() {
 
         <Animated.View entering={FadeInDown.delay(120).duration(320)} style={styles.priceWrap}>
           <Text style={styles.priceLine}>
-            {isReadOnly ? 'Reactivate' : '14 days free, then'}
+            {isReadOnly ? 'Reactivate' : `${FREE_TRIAL_DAYS} days free, then`}
             <Text style={styles.priceAmount}>
-              {isReadOnly ? '' : ' $—/mo'}
+              {isReadOnly ? '' : ` ${PLANS.monthly.priceLabel} ${PLANS.monthly.periodLabel}`}
             </Text>
           </Text>
           <Text style={styles.priceNote}>
-            {/* Price lands from RevenueCat offering once configured. */}
-            Pricing finalizes at App Store / Play Store config time
+            Auto-renews until cancelled — one tap to cancel anytime in Settings → Manage subscription.
           </Text>
         </Animated.View>
       </ScrollView>
@@ -135,7 +146,7 @@ export default function PaywallScreen() {
         style={styles.ctaWrap}
       >
         <AuraButton
-          label={isReadOnly ? 'Reactivate' : 'Start free trial'}
+          label={isReadOnly ? 'Reactivate' : `Start ${FREE_TRIAL_DAYS}-day free trial`}
           size="lg"
           fullWidth
           onPress={handleStartTrial}
@@ -148,6 +159,25 @@ export default function PaywallScreen() {
         >
           <Text style={styles.restoreText}>Restore purchase</Text>
         </Pressable>
+
+        {!isReadOnly && (
+          <View style={styles.legal}>
+            <Text style={styles.legalBody}>
+              Payment is charged to your Apple ID at confirmation. Subscriptions auto-renew
+              unless turned off at least 24 hours before the period ends. Manage or cancel in
+              your App Store account settings.
+            </Text>
+            <View style={styles.legalLinks}>
+              <Pressable onPress={() => void Linking.openURL(TERMS_URL || APPLE_EULA)} hitSlop={8}>
+                <Text style={styles.legalLink}>Terms of Use</Text>
+              </Pressable>
+              <Text style={styles.legalDot}>·</Text>
+              <Pressable onPress={() => void Linking.openURL(PRIVACY_URL)} hitSlop={8}>
+                <Text style={styles.legalLink}>Privacy Policy</Text>
+              </Pressable>
+            </View>
+          </View>
+        )}
       </Animated.View>
     </View>
   );
@@ -246,6 +276,33 @@ function makeStyles(c: ThemeColors) {
     restoreText: {
       ...typography.callout,
       color: c.text.secondary,
+    },
+    legal: {
+      marginTop: spacing.md,
+      alignItems: 'center',
+    },
+    legalBody: {
+      ...typography.micro,
+      color: c.text.tertiary,
+      textAlign: 'center',
+      lineHeight: 16,
+    },
+    legalLinks: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      flexWrap: 'wrap',
+      justifyContent: 'center',
+      gap: 6,
+      marginTop: spacing.sm,
+    },
+    legalLink: {
+      ...typography.micro,
+      color: c.text.secondary,
+      textDecorationLine: 'underline',
+    },
+    legalDot: {
+      ...typography.micro,
+      color: c.text.tertiary,
     },
   });
 }
