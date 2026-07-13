@@ -190,9 +190,11 @@ export function TaskBlock({
           >
             {title}
           </Text>
-          <Text style={[styles.meta, { color: colors.text.secondary }]}>
-            {subject} · {estimatedMinutes}m
-          </Text>
+          {isScheduled && (
+            <Text style={[styles.meta, { color: colors.text.secondary }]}>
+              {subject} · {estimatedMinutes}m
+            </Text>
+          )}
         </View>
         {isScheduled && <DifficultyBars level={difficulty} animated={false} />}
       </AnimatedPressable>

@@ -5,7 +5,8 @@
 //
 //   8–12  → 8th–12th grade (middle / high school)
 //   13–16 → college freshman / sophomore / junior / senior
-//   17    → working professional / other
+//   17    → working professional
+//   18    → other / none of the above
 //
 // The string id is what UI components reference; gradeLevelToStage and
 // stageToGradeLevel translate between persisted number and id.
@@ -29,6 +30,7 @@ export const USER_STAGES: readonly UserStage[] = [
   { id: 'junior',      label: 'College junior',      group: 'college', gradeLevel: 15 },
   { id: 'senior',      label: 'College senior',      group: 'college', gradeLevel: 16 },
   { id: 'professional', label: 'Working professional', group: 'work',  gradeLevel: 17 },
+  { id: 'other',        label: 'Other',               group: 'work',  gradeLevel: 18 },
 ] as const;
 
 export const DEFAULT_STAGE_ID = 'grade_11';

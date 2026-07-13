@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react';
-import { View, Pressable, StyleSheet, Text } from 'react-native';
+import { useCallback, useMemo, useState } from 'react';
+import { View, Pressable, StyleSheet, Text, type LayoutChangeEvent } from 'react-native';
 import { useRouter, type Href } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, {
@@ -28,13 +28,12 @@ import { NotificationCenter } from '../../components/ui/NotificationCenter';
 import { useNotifications } from '../../hooks/useNotifications';
 import { AuraSkeleton } from '../../components/ui/AuraSkeleton';
 import { AuraSymbol } from '../../components/ui/AuraSymbol';
-import { GlassCard } from '../../components/ui/GlassCard';
 import { TaskBlock, TASK_BLOCK_DOT_CENTER } from '../../components/ui/TaskBlock';
-import { DifficultyBars } from '../../components/ui/DifficultyBars';
 import { RiverLine } from '../../components/ui/RiverLine';
 import { CalmEmptyState } from '../../components/ui/CalmEmptyState';
 import { StreakChip } from '../../components/ui/StreakChip';
 import { DayPulse } from '../../components/schedule/DayPulse';
+import { NowHeroCard } from '../../components/schedule/NowHeroCard';
 import { useStreak } from '../../hooks/useStreak';
 import { haptic } from '../../lib/haptics';
 import { useAuth } from '../../hooks/useAuth';
@@ -210,6 +209,19 @@ export default function TodayScreen() {
     [scheduledBlocks, fixedEvents],
   );
 
+  // River geometry — the thread should begin at the first dot and end at the
+  // last, not overhang the ends. Each dot sits at its row's vertical center, so
+  // we inset the line by half the first/last row's measured height.
+  const [rowHeights, setRowHeights] = useState<Record<number, number>>({});
+  const handleRowLayout = useCallback((index: number, e: LayoutChangeEvent) => {
+    const { height } = e.nativeEvent.layout;
+    setRowHeights((prev) => (prev[index] === height ? prev : { ...prev, [index]: height }));
+  }, []);
+  const riverTopInset = (rowHeights[0] ?? 0) / 2;
+  // + itemGap: each row's trailing marginBottom leaves the container that much
+  // taller than the last dot, so fold it into the bottom inset.
+  const riverBottomInset = (rowHeights[rows.length - 1] ?? 0) / 2 + spacing.itemGap;
+
   return (
     <Screen>
       {/* Header — sticky, greeting collapses on scroll */}
@@ -265,28 +277,16 @@ export default function TodayScreen() {
             entering={FadeInDown.delay(STAGGER_MS * 3).duration(320)}
             style={[styles.heroWrap, heroParallaxStyle]}
           >
-            <GlassCard intensity="thick" borderAccent style={styles.hero}>
-              <View style={styles.heroContent}>
-                <Text style={[typography.micro, { color: colors.accent.blue }]}>NOW</Text>
-                <Text style={styles.heroTitle}>{currentTask.title}</Text>
-                <Text style={styles.heroMeta}>
-                  {currentTask.subject} · {currentTask.estimatedMinutes} min
-                </Text>
-                <View style={styles.heroFooter}>
-                  <DifficultyBars level={currentTask.difficulty} />
-                </View>
-                <View style={styles.heroButton}>
-                  <AuraButton
-                    label="Start"
-                    onPress={() => {
-                      haptic.primaryCTA();
-                      router.push(`/tasks/${currentTask.id}/active` as Href);
-                    }}
-                    fullWidth
-                  />
-                </View>
-              </View>
-            </GlassCard>
+            <NowHeroCard
+              title={currentTask.title}
+              subject={currentTask.subject}
+              estimatedMinutes={currentTask.estimatedMinutes}
+              difficulty={currentTask.difficulty}
+              onStart={() => {
+                haptic.primaryCTA();
+                router.push(`/tasks/${currentTask.id}/active` as Href);
+              }}
+            />
           </Animated.View>
         )}
 
@@ -345,12 +345,13 @@ export default function TodayScreen() {
         {/* River Timeline */}
         {!loading && !error && rows.length > 0 && (
           <View style={styles.timeline}>
-            <RiverLine x={RIVER_LINE_X} />
+            <RiverLine x={RIVER_LINE_X} top={riverTopInset} bottom={riverBottomInset} />
             {rows.map((row, i) => (
               <Animated.View
                 key={row.key}
                 entering={FadeIn.delay(STAGGER_MS * (5 + i)).duration(200)}
                 style={styles.timelineRow}
+                onLayout={(e) => handleRowLayout(i, e)}
               >
                 <View style={styles.timelineTimeWrap}>
                   <Text style={styles.timelineTimeValue}>{row.clock.hh}</Text>
@@ -475,28 +476,6 @@ function makeStyles(c: ThemeColors) {
       shadowOffset: { width: -4, height: 0 },
       shadowOpacity: 0.4,
       shadowRadius: 12,
-    },
-    hero: {
-      borderRadius: radius.xl,
-    },
-    heroContent: {
-      padding: spacing.lg,
-    },
-    heroTitle: {
-      ...typography.title2,
-      color: c.text.primary,
-      marginTop: spacing.xs,
-    },
-    heroMeta: {
-      ...typography.callout,
-      color: c.text.secondary,
-      marginTop: spacing.xs,
-    },
-    heroFooter: {
-      marginTop: spacing.md,
-    },
-    heroButton: {
-      marginTop: spacing.lg,
     },
     timelineHeader: {
       marginTop: spacing.sectionGap,
