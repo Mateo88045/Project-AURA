@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { isGuestId } from '../lib/guest';
+import { localDayIsoWithOffset, toLocalDayIso } from '../lib/localDate';
 
 // TODO: Supabase — derive from task_completions WHERE completed_at grouped by date
 // Rolling logic: if last completion was today or yesterday → streak continues, else resets.
@@ -20,14 +21,14 @@ interface StoredStreak {
   lastDate: string | null;
 }
 
+// Streak days are *local* calendar days — a task finished at 9 PM must count
+// toward the local date, not the (already-tomorrow) UTC date.
 function todayISO(): string {
-  return new Date().toISOString().slice(0, 10);
+  return toLocalDayIso();
 }
 
 function yesterdayISO(): string {
-  const d = new Date();
-  d.setDate(d.getDate() - 1);
-  return d.toISOString().slice(0, 10);
+  return localDayIsoWithOffset(-1);
 }
 
 function storageKey(userId: string) {

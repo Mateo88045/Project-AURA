@@ -21,8 +21,12 @@ export function useActiveTask(taskId: string, userId: string): ActiveTaskResult 
   const [error, setError] = useState<string | null>(null);
   const [elapsedSeconds, setElapsedSeconds] = useState<number>(0);
   const [isPaused, setIsPaused] = useState<boolean>(false);
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const startedRef = useRef<boolean>(false);
+  // Wall-clock timekeeping: JS timers freeze while the app is backgrounded,
+  // so elapsed time is derived from timestamps, never from tick counts. The
+  // interval only refreshes the display.
+  const runStartedAtRef = useRef<number | null>(null);
+  const accumulatedRef = useRef<number>(0); // seconds banked across pauses
 
   // Load task — does NOT mutate status. Caller invokes start() explicitly.
   useEffect(() => {
@@ -72,17 +76,23 @@ export function useActiveTask(taskId: string, userId: string): ActiveTaskResult 
     };
   }, [taskId, userId]);
 
-  // Elapsed timer
+  // Elapsed timer — timestamp-derived so time spent backgrounded still counts.
   useEffect(() => {
     if (isPaused || loading) return;
 
-    intervalRef.current = setInterval(() => {
-      setElapsedSeconds((prev) => prev + 1);
-    }, 1000);
+    if (runStartedAtRef.current === null) {
+      runStartedAtRef.current = Date.now();
+    }
 
-    return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
+    const refresh = () => {
+      const runStarted = runStartedAtRef.current;
+      const running = runStarted === null ? 0 : (Date.now() - runStarted) / 1000;
+      setElapsedSeconds(Math.floor(accumulatedRef.current + running));
     };
+
+    refresh();
+    const interval = setInterval(refresh, 1000);
+    return () => clearInterval(interval);
   }, [isPaused, loading]);
 
   const start = useCallback(async () => {
@@ -95,12 +105,20 @@ export function useActiveTask(taskId: string, userId: string): ActiveTaskResult 
       .eq('id', taskId)
       .eq('user_id', userId);
     if (updateError) {
+      // Best-effort status sync — a failed write must not kill a running
+      // focus session. Allow a retry on the next start() call.
       startedRef.current = false;
-      setError(updateError.message);
+      console.warn('[ActiveTask] Failed to mark in_progress:', updateError.message);
     }
   }, [taskId, userId]);
 
   function pause() {
+    const runStarted = runStartedAtRef.current;
+    if (runStarted !== null) {
+      accumulatedRef.current += (Date.now() - runStarted) / 1000;
+      runStartedAtRef.current = null;
+    }
+    setElapsedSeconds(Math.floor(accumulatedRef.current));
     setIsPaused(true);
   }
 

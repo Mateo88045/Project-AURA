@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useRef } from 'react';
 import { View, Pressable, Text, StyleSheet, PanResponder, type ViewStyle } from 'react-native';
 import Animated, {
   useSharedValue,
@@ -65,6 +65,8 @@ export function TaskBlock({
   const scale = useSharedValue(1);
   // Swipe translateX — only right (positive) values
   const translateX = useSharedValue(0);
+  // Whether the current drag is past the completion threshold (haptic guard)
+  const crossedRef = useRef(false);
 
   const pressStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }, { translateX: translateX.value }],
@@ -106,12 +108,16 @@ export function TaskBlock({
               ? raw
               : COMPLETE_THRESHOLD + (raw - COMPLETE_THRESHOLD) * 0.2;
 
-          // Haptic at threshold crossing
-          if (raw >= COMPLETE_THRESHOLD) {
+          // Haptic once per threshold crossing — not on every move event
+          // past it, which would buzz continuously while dragging.
+          const past = raw >= COMPLETE_THRESHOLD;
+          if (past && !crossedRef.current) {
             haptic.selection();
           }
+          crossedRef.current = past;
         },
         onPanResponderRelease: (_, gs) => {
+          crossedRef.current = false;
           const didComplete =
             gs.dx >= COMPLETE_THRESHOLD || (gs.vx ?? 0) > 0.4;
           if (didComplete && onComplete) {
@@ -123,6 +129,7 @@ export function TaskBlock({
           }
         },
         onPanResponderTerminate: () => {
+          crossedRef.current = false;
           translateX.value = withSpring(0, GestureSprings.snap);
         },
       }),
@@ -140,7 +147,7 @@ export function TaskBlock({
             revealStyle,
           ]}
         >
-          <AuraSymbol name="check" size={18} color={colors.text.inverse} />
+          <AuraSymbol name="checkmark" size={18} color={colors.text.inverse} />
         </Animated.View>
       )}
 

@@ -4,14 +4,15 @@
 // action against a rendered schedule (free_preview → gate), or any action at
 // all after a lapsed trial (lapsed → readonly).
 //
-// The actual StoreKit / RevenueCat call is stubbed — `handleStartTrial` and
-// `handleRestore` are the two spots Mateo wires into Purchases.purchasePackage
-// and Purchases.restorePurchases. Everything else (copy, layout, dismissal)
-// is final.
+// Runs the same live billing flow as the onboarding paywall (services/
+// purchases): plan selection, purchase, restore. On success we refresh the
+// entitlement context and dismiss — the user re-taps their action with full
+// access.
 
-import { useMemo } from 'react';
-import { View, Pressable, StyleSheet, Text, ScrollView } from 'react-native';
+import { useEffect, useMemo, useState } from 'react';
+import { View, Pressable, StyleSheet, Text, ScrollView, Alert, Linking } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import Constants from 'expo-constants';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { radius, spacing, typography } from '@chronos/shared/theme';
@@ -24,12 +25,31 @@ import { AuraSymbol } from '../components/ui/AuraSymbol';
 import { useAuraToast } from '../components/ui/AuraToast';
 import { useEntitlement } from '../lib/entitlement';
 import { haptic } from '../lib/haptics';
+import { useAuth } from '../hooks/useAuth';
+import {
+  PLANS,
+  FREE_TRIAL_DAYS,
+  configurePurchases,
+  getOfferings,
+  purchasePlan,
+  restorePurchases,
+  type BillingInterval,
+  type SubscriptionPlan,
+} from '../services/purchases';
 
 const BULLETS = [
   'Auto-schedules Canvas & Classroom assignments around your fixed events',
   'Re-plans every night so you always start the day with a working schedule',
   'AI copilot for "what should I do next" — without you opening the calendar',
 ];
+
+const extra = (Constants.expoConfig?.extra ?? {}) as {
+  termsUrl?: string;
+  privacyPolicyUrl?: string;
+};
+const TERMS_URL =
+  extra.termsUrl ?? 'https://www.apple.com/legal/internet-services/itunes/dev/stdeula/';
+const PRIVACY_URL = extra.privacyPolicyUrl ?? 'https://chronos-app.com/privacy';
 
 export default function PaywallScreen() {
   const router = useRouter();
@@ -39,24 +59,26 @@ export default function PaywallScreen() {
   const params = useLocalSearchParams<{ mode?: string }>();
   const { refresh } = useEntitlement();
   const toast = useAuraToast();
+  const { user } = useAuth();
+  const userId = user?.id ?? '';
 
   const isReadOnly = params.mode === 'readonly';
 
-  async function handleStartTrial() {
-    haptic.primaryCTA();
-    // TODO: RevenueCat — await Purchases.purchasePackage(offering.monthly)
-    // On success the customer-info webhook flips status → 'trialing'; we
-    // refresh() to pick it up and dismiss.
-    toast.show('Trial flow not wired yet — RevenueCat keys pending', 'info');
-    refresh();
-  }
+  const [plans, setPlans] = useState<SubscriptionPlan[]>([PLANS.annual, PLANS.monthly]);
+  const [selected, setSelected] = useState<BillingInterval>('annual');
+  const [busy, setBusy] = useState(false);
 
-  async function handleRestore() {
-    haptic.selection();
-    // TODO: RevenueCat — await Purchases.restorePurchases()
-    toast.show('Restore not wired yet — RevenueCat keys pending', 'info');
-    refresh();
-  }
+  useEffect(() => {
+    let mounted = true;
+    void configurePurchases(userId).then(getOfferings).then((offerings) => {
+      if (mounted && offerings.length) setPlans(offerings);
+    });
+    return () => {
+      mounted = false;
+    };
+  }, [userId]);
+
+  const activePlan = plans.find((p) => p.interval === selected) ?? PLANS[selected];
 
   function handleDismiss() {
     haptic.selection();
@@ -64,6 +86,46 @@ export default function PaywallScreen() {
       router.back();
     } else {
       router.replace('/(tabs)');
+    }
+  }
+
+  async function handleSubscribe() {
+    if (busy) return;
+    setBusy(true);
+    haptic.primaryCTA();
+    try {
+      const result = await purchasePlan(activePlan);
+      if (result.status === 'purchased' || result.status === 'restored' || result.status === 'preview') {
+        haptic.success();
+        refresh();
+        toast.show('Chronos Pro is active — welcome aboard', 'success');
+        handleDismiss();
+      } else if (result.status === 'cancelled') {
+        // User backed out of the sheet — stay put.
+      } else {
+        Alert.alert('Purchase failed', result.message ?? 'Please try again.');
+      }
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleRestore() {
+    if (busy) return;
+    setBusy(true);
+    haptic.selection();
+    try {
+      const result = await restorePurchases();
+      if (result.status === 'restored' || result.status === 'preview') {
+        haptic.success();
+        refresh();
+        toast.show('Subscription restored', 'success');
+        handleDismiss();
+      } else {
+        Alert.alert('Nothing to restore', 'We couldn’t find an active subscription on this Apple ID.');
+      }
+    } finally {
+      setBusy(false);
     }
   }
 
@@ -100,7 +162,7 @@ export default function PaywallScreen() {
           <Text style={styles.sub}>
             {isReadOnly
               ? 'Your schedule is still here. Reactivate to keep new tasks flowing in and the scheduler running.'
-              : 'Start a 14-day free trial. No charge until day 15. Cancel anytime in Settings.'}
+              : `Start a ${FREE_TRIAL_DAYS}-day free trial. No charge until it ends. Cancel anytime in Settings.`}
           </Text>
         </Animated.View>
 
@@ -116,17 +178,45 @@ export default function PaywallScreen() {
           </GlassCard>
         </Animated.View>
 
-        <Animated.View entering={FadeInDown.delay(120).duration(320)} style={styles.priceWrap}>
-          <Text style={styles.priceLine}>
-            {isReadOnly ? 'Reactivate' : '14 days free, then'}
-            <Text style={styles.priceAmount}>
-              {isReadOnly ? '' : ' $—/mo'}
-            </Text>
-          </Text>
-          <Text style={styles.priceNote}>
-            {/* Price lands from RevenueCat offering once configured. */}
-            Pricing finalizes at App Store / Play Store config time
-          </Text>
+        {/* Plan selector */}
+        <Animated.View entering={FadeInDown.delay(120).duration(320)} style={styles.planRow}>
+          {(['annual', 'monthly'] as BillingInterval[]).map((interval) => {
+            const plan = plans.find((p) => p.interval === interval) ?? PLANS[interval];
+            const active = selected === interval;
+            return (
+              <Pressable
+                key={interval}
+                onPress={() => {
+                  haptic.selection();
+                  setSelected(interval);
+                }}
+                style={[styles.planCard, active && styles.planCardActive]}
+                accessibilityRole="button"
+                accessibilityState={{ selected: active }}
+                accessibilityLabel={`${plan.interval} plan, ${plan.priceLabel} ${plan.periodLabel}`}
+              >
+                {plan.badge ? (
+                  <View style={styles.planBadge}>
+                    <Text style={styles.planBadgeText} numberOfLines={1}>{plan.badge}</Text>
+                  </View>
+                ) : null}
+                <Text style={styles.planInterval}>
+                  {interval === 'annual' ? 'Annual' : 'Monthly'}
+                </Text>
+                <View style={styles.priceLineRow}>
+                  <Text style={styles.priceNow}>{plan.priceLabel}</Text>
+                  <Text style={styles.priceRegular}>{plan.regularPriceLabel}</Text>
+                </View>
+                <Text style={styles.pricePeriod}>{plan.periodLabel}</Text>
+                {plan.footnote ? <Text style={styles.priceFootnote}>{plan.footnote}</Text> : null}
+                <View style={[styles.radio, active && styles.radioActive]}>
+                  {active ? (
+                    <AuraSymbol name="checkmark" size={12} color={colors.text.inverse} weight="bold" />
+                  ) : null}
+                </View>
+              </Pressable>
+            );
+          })}
         </Animated.View>
       </ScrollView>
 
@@ -135,19 +225,34 @@ export default function PaywallScreen() {
         style={styles.ctaWrap}
       >
         <AuraButton
-          label={isReadOnly ? 'Reactivate' : 'Start free trial'}
+          label={isReadOnly ? 'Reactivate' : `Start ${FREE_TRIAL_DAYS}-day free trial`}
           size="lg"
           fullWidth
-          onPress={handleStartTrial}
+          loading={busy}
+          onPress={() => { void handleSubscribe(); }}
         />
-        <Pressable
-          onPress={handleRestore}
-          style={styles.restoreBtn}
-          accessibilityRole="button"
-          accessibilityLabel="Restore purchases"
-        >
-          <Text style={styles.restoreText}>Restore purchase</Text>
-        </Pressable>
+        <Text style={styles.renewNote}>
+          {isReadOnly ? '' : 'Then '}
+          {activePlan.priceLabel} {activePlan.periodLabel} · auto-renews until cancelled
+        </Text>
+        <View style={styles.legalLinks}>
+          <Pressable onPress={() => void Linking.openURL(TERMS_URL)} hitSlop={8}>
+            <Text style={styles.legalLink}>Terms</Text>
+          </Pressable>
+          <Text style={styles.legalDot}>·</Text>
+          <Pressable onPress={() => void Linking.openURL(PRIVACY_URL)} hitSlop={8}>
+            <Text style={styles.legalLink}>Privacy</Text>
+          </Pressable>
+          <Text style={styles.legalDot}>·</Text>
+          <Pressable
+            onPress={() => { void handleRestore(); }}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel="Restore purchases"
+          >
+            <Text style={styles.legalLink}>Restore Purchases</Text>
+          </Pressable>
+        </View>
       </Animated.View>
     </View>
   );
@@ -221,31 +326,114 @@ function makeStyles(c: ThemeColors) {
       height: StyleSheet.hairlineWidth,
       backgroundColor: c.border.subtle,
     },
-    priceWrap: { marginTop: spacing.xl },
-    priceLine: {
-      ...typography.headline,
+
+    // Plan cards
+    planRow: {
+      flexDirection: 'row',
+      gap: spacing.md,
+      marginTop: spacing.xl,
+    },
+    planCard: {
+      flex: 1,
+      borderRadius: radius.lg,
+      borderWidth: 1.5,
+      borderColor: c.border.subtle,
+      backgroundColor: c.glass.light,
+      padding: spacing.md,
+      paddingTop: spacing.lg,
+      minHeight: 140,
+    },
+    planCardActive: {
+      borderColor: c.accent.blue,
+      backgroundColor: c.glass.accent,
+    },
+    planBadge: {
+      position: 'absolute',
+      top: -10,
+      left: spacing.md,
+      right: spacing.md,
+      backgroundColor: c.accent.blue,
+      borderRadius: radius.sm,
+      paddingVertical: 3,
+      paddingHorizontal: 6,
+      alignItems: 'center',
+    },
+    planBadgeText: {
+      ...typography.micro,
+      color: c.text.inverse,
+      fontWeight: '700',
+    },
+    planInterval: {
+      ...typography.caption,
+      color: c.text.secondary,
+    },
+    priceLineRow: {
+      flexDirection: 'row',
+      alignItems: 'baseline',
+      gap: 6,
+      marginTop: 6,
+    },
+    priceNow: {
+      ...typography.title1,
       color: c.text.primary,
     },
-    priceAmount: {
-      ...typography.headline,
-      color: c.accent.blue,
-    },
-    priceNote: {
+    priceRegular: {
       ...typography.callout,
       color: c.text.tertiary,
-      marginTop: spacing.xs,
+      textDecorationLine: 'line-through',
     },
+    pricePeriod: {
+      ...typography.callout,
+      color: c.text.secondary,
+    },
+    priceFootnote: {
+      ...typography.micro,
+      color: c.text.tertiary,
+      marginTop: 6,
+    },
+    radio: {
+      position: 'absolute',
+      top: spacing.md,
+      right: spacing.md,
+      width: 20,
+      height: 20,
+      borderRadius: 10,
+      borderWidth: 1.5,
+      borderColor: c.border.subtle,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    radioActive: {
+      backgroundColor: c.accent.blue,
+      borderColor: c.accent.blue,
+    },
+
+    // CTA + legal
     ctaWrap: {
       gap: spacing.sm,
       paddingTop: spacing.md,
-    },
-    restoreBtn: {
       alignItems: 'center',
-      paddingVertical: spacing.sm,
     },
-    restoreText: {
+    renewNote: {
       ...typography.callout,
+      color: c.text.tertiary,
+      textAlign: 'center',
+    },
+    legalLinks: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 6,
+      marginTop: 2,
+    },
+    legalLink: {
+      ...typography.micro,
       color: c.text.secondary,
+      textDecorationLine: 'underline',
+    },
+    legalDot: {
+      ...typography.micro,
+      color: c.text.tertiary,
     },
   });
 }

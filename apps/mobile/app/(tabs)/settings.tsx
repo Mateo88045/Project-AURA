@@ -590,8 +590,15 @@ export default function SettingsScreen() {
               icon="c.circle.fill"
               tint="moderate"
               label="Canvas"
-              subtitle={canvasStatus ? 'Connected' : 'Add personal access token'}
-              trailing="chevron"
+              subtitle={
+                canvasStatus === 'active'
+                  ? 'Connected'
+                  : canvasStatus === 'expired' || canvasStatus === 'error'
+                    ? 'Reconnection needed'
+                    : 'Add personal access token'
+              }
+              trailing="status"
+              status={canvasStatus ?? 'none'}
               isLast
               onPress={() => router.push('/settings/connections' as Href)}
               colors={colors}
@@ -611,10 +618,7 @@ export default function SettingsScreen() {
               tint="steel"
               label="Daily trigger time"
               subtitle={formatTriggerTime(triggerTime)}
-              onPress={() => {
-                haptic.selection();
-                setTimePickerOpen(true);
-              }}
+              onPress={() => setTimePickerOpen(true)}
               colors={colors}
               styles={styles}
               tintMap={tintMap}

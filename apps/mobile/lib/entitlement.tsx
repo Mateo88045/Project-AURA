@@ -11,6 +11,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '@chronos/shared/supabase';
 import type { AccessLevel, Entitlement, EntitlementStatus } from '@chronos/shared/types';
 import { useAuth } from '../hooks/useAuth';
+import { configurePurchases, getStoreEntitlement } from '../services/purchases';
 import { isGuestId } from './guest';
 
 // Dev menu can write any EntitlementStatus to this key to simulate states
@@ -53,13 +54,11 @@ async function readDevOverride(): Promise<EntitlementStatus | null> {
   }
 }
 
-// Stubbed RevenueCat resolver. Real impl:
-//   const info = await Purchases.getCustomerInfo();
-//   const ent = info.entitlements.active['pro'];
-//   if (!ent) return { status: 'free_preview' };
-//   if (ent.periodType === 'intro') return { status: 'trialing', trialEndsAt: ent.expirationDate };
-//   return { status: 'pro' };
-async function resolveStoreStatus(): Promise<{
+// Resolve the live store status via the purchases service. The dev override
+// (AsyncStorage, dev builds only) wins so the team can simulate states
+// without StoreKit; otherwise RevenueCat's customer info is the truth. In
+// PREVIEW mode (no RevenueCat key) the service reports free_preview.
+async function resolveStoreStatus(userId: string | null): Promise<{
   status: EntitlementStatus;
   trialEndsAt?: string;
 }> {
@@ -73,7 +72,11 @@ async function resolveStoreStatus(): Promise<{
     }
     return { status: override };
   }
-  return { status: 'free_preview' };
+
+  if (userId && !isGuestId(userId)) {
+    await configurePurchases(userId);
+  }
+  return getStoreEntitlement();
 }
 
 interface EntitlementProviderProps {
@@ -97,7 +100,7 @@ export function EntitlementProvider({ children }: EntitlementProviderProps) {
     async function load() {
       setLoading(true);
 
-      const store = await resolveStoreStatus();
+      const store = await resolveStoreStatus(userId);
 
       // Guests have no profile row; they're treated as preview forever.
       let firstRendered: string | null = null;

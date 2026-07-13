@@ -17,6 +17,7 @@ import { TaskBlock } from '../../components/ui/TaskBlock';
 import { WeekTaskBar } from '../../components/ui/WeekTaskBar';
 import { CalmEmptyState } from '../../components/ui/CalmEmptyState';
 import { haptic } from '../../lib/haptics';
+import { toLocalDayIso } from '../../lib/localDate';
 import { useAuth } from '../../hooks/useAuth';
 
 const STAGGER_MS = 40;
@@ -29,7 +30,7 @@ function formatDayLabel(date: Date) {
 }
 
 function toDayIso(date: Date) {
-  return date.toISOString().slice(0, 10);
+  return toLocalDayIso(date);
 }
 
 function formatWeekRange(days: Date[]): string {

@@ -36,6 +36,7 @@ import { DayPulse } from '../../components/schedule/DayPulse';
 import { NowHeroCard } from '../../components/schedule/NowHeroCard';
 import { useStreak } from '../../hooks/useStreak';
 import { haptic } from '../../lib/haptics';
+import { toLocalDayIso } from '../../lib/localDate';
 import { useAuth } from '../../hooks/useAuth';
 import { useRequirePro } from '../../lib/requirePro';
 import type { Task, ScheduledBlock, FixedEvent } from '@chronos/shared/types';
@@ -152,7 +153,7 @@ export default function TodayScreen() {
   const { colors } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const today = useMemo(() => new Date(), []);
-  const dayIso = today.toISOString().slice(0, 10);
+  const dayIso = toLocalDayIso(today);
   const { user: authUser } = useAuth();
   const [notifVisible, setNotifVisible] = useState(false);
   const {

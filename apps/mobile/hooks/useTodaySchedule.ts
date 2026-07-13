@@ -3,6 +3,7 @@ import { supabase } from '@chronos/shared/supabase';
 import type { FixedEvent, ScheduledBlock } from '@chronos/shared/types';
 import { mapRowToTask } from './useTasksForDay';
 import { isGuestId } from '../lib/guest';
+import { localWeekday } from '../lib/localDate';
 import { getDemoFixedEventsForDay, getDemoScheduledBlocksForDay } from '../lib/demoData';
 import { useEntitlement } from '../lib/entitlement';
 
@@ -77,8 +78,10 @@ export function useTodaySchedule(userId: string, day: string): TodayScheduleResu
           createdAt: row.created_at,
         }));
 
-        // Filter fixed events to those active on this day of week
-        const dayOfWeek = new Date(day).getDay();
+        // Filter fixed events to those active on this day of week. The day
+        // key is a local calendar date — parse it as one (bare YYYY-MM-DD
+        // parses as UTC midnight, which shifts the weekday west of UTC).
+        const dayOfWeek = localWeekday(day);
         const mappedEvents: FixedEvent[] = (eventsResult.data ?? [])
           .filter((row) => (row.days_of_week ?? []).includes(dayOfWeek))
           .map((row) => ({

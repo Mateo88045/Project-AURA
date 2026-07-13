@@ -41,6 +41,8 @@ import {
   CopilotError,
   type ChatMessagePayload,
 } from '../../../services/chatApi';
+import { supabase } from '@chronos/shared/supabase';
+import { isGuestId } from '../../../lib/guest';
 import { useAuth } from '../../../hooks/useAuth';
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -235,8 +237,6 @@ export default function AIChatScreen() {
   }>();
   const insets = useSafeAreaInsets();
   const sessionContext = context ?? 'Homework help';
-  // conversationId used for future history loading
-  void conversationId;
   const listRef = useRef<FlatList<Row>>(null);
   const hasAutoSent = useRef(false);
   const { colors } = useTheme();
@@ -292,6 +292,42 @@ export default function AIChatScreen() {
     listRef.current?.scrollToEnd({ animated: true });
   }, []);
 
+  // Persist the transcript so the AI Hub's "Recent" list has something to
+  // show. The chat API is stateless, so the app owns conversation rows:
+  // first successful exchange inserts one, later exchanges update it.
+  const conversationRowId = useRef<string | null>(conversationId ?? null);
+  const persistConversation = useCallback(
+    async (transcript: Row[]) => {
+      const userId = authUser?.id ?? '';
+      if (!userId || isGuestId(userId)) return;
+
+      const messages: ChatMessagePayload[] = transcript
+        .filter((r) => r.id !== 'welcome')
+        .map(({ role, content }) => ({ role, content }));
+      if (messages.length === 0) return;
+
+      // History is a convenience — log failures, never break the live chat.
+      const nowIso = new Date().toISOString();
+      if (conversationRowId.current) {
+        const { error: updateError } = await supabase
+          .from('conversations')
+          .update({ messages, updated_at: nowIso })
+          .eq('id', conversationRowId.current)
+          .eq('user_id', userId);
+        if (updateError) console.warn('[Chat] Failed to persist conversation:', updateError.message);
+      } else {
+        const { data, error: insertError } = await supabase
+          .from('conversations')
+          .insert({ user_id: userId, messages, updated_at: nowIso })
+          .select('id')
+          .single();
+        if (insertError) console.warn('[Chat] Failed to persist conversation:', insertError.message);
+        if (data?.id) conversationRowId.current = data.id;
+      }
+    },
+    [authUser],
+  );
+
   const sendMessage = useCallback(
     async (text: string) => {
       if (!text || loading) return;
@@ -310,11 +346,10 @@ export default function AIChatScreen() {
 
       try {
         const res = await sendCopilotMessage(authUser?.id ?? '', msgs);
-        setRows((prev) => [
-          ...prev,
-          { id: `a-${Date.now()}`, role: 'assistant', content: res.message },
-        ]);
+        const assistantRow: Row = { id: `a-${Date.now()}`, role: 'assistant', content: res.message };
+        setRows((prev) => [...prev, assistantRow]);
         haptic.success();
+        void persistConversation([...rows, userRow, assistantRow]);
       } catch (e) {
         // Daily-cap errors aren't retryable, so don't arm the Retry button.
         const isLimit = e instanceof CopilotError && e.code === 'daily_limit';
@@ -324,7 +359,7 @@ export default function AIChatScreen() {
         setLoading(false);
       }
     },
-    [loading, rows, authUser],
+    [loading, rows, authUser, persistConversation],
   );
 
   const send = useCallback(() => {
@@ -338,6 +373,39 @@ export default function AIChatScreen() {
       void sendMessage(prompt);
     }
   }, [prompt, sendMessage]);
+
+  // Opening a recent conversation from the AI Hub — hydrate its message
+  // history so the thread picks up where it left off.
+  const loadedConversation = useRef<string | null>(null);
+  useEffect(() => {
+    const userId = authUser?.id ?? '';
+    if (!conversationId || isGuestId(userId) || loadedConversation.current === conversationId) {
+      return;
+    }
+    loadedConversation.current = conversationId;
+
+    let cancelled = false;
+    void (async () => {
+      const { data } = await supabase
+        .from('conversations')
+        .select('messages')
+        .eq('id', conversationId)
+        .eq('user_id', userId)
+        .maybeSingle();
+      if (cancelled) return;
+      const history = (data?.messages ?? []) as Array<{ role?: string; content?: unknown }>;
+      const hydrated: Row[] = history
+        .filter(
+          (m): m is { role: 'user' | 'assistant'; content: string } =>
+            (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string',
+        )
+        .map((m, i) => ({ id: `h-${i}`, role: m.role, content: m.content }));
+      if (hydrated.length > 0) setRows(hydrated);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [conversationId, authUser]);
 
   const retry = useCallback(() => {
     if (!lastFailedInput.current) return;
@@ -353,6 +421,9 @@ export default function AIChatScreen() {
     setError(null);
     lastFailedInput.current = null;
     hasAutoSent.current = true;
+    // Next exchange starts a fresh conversation row instead of overwriting
+    // the one we arrived from.
+    conversationRowId.current = null;
     setRows([
       {
         id: 'welcome',
@@ -425,27 +496,6 @@ export default function AIChatScreen() {
               </GlassCard>
             </Animated.View>
           }
-          ListEmptyComponent={
-            rows.length === 0 ? (
-              <Animated.View entering={FadeInDown.delay(120).duration(300)} style={styles.emptyPrompts}>
-                <Text style={styles.emptyPromptsLabel}>Try asking…</Text>
-                {[
-                  "What's on my schedule today?",
-                  "Move my essay to Thursday",
-                  "Give me a free evening",
-                  "What's due this week?",
-                ].map((suggestion) => (
-                  <Pressable
-                    key={suggestion}
-                    onPress={() => { haptic.selection(); void sendMessage(suggestion); }}
-                    style={styles.suggestionChip}
-                  >
-                    <Text style={styles.suggestionChipText}>{suggestion}</Text>
-                  </Pressable>
-                ))}
-              </Animated.View>
-            ) : null
-          }
           renderItem={({ item, index }) => {
             const prev = rows[index - 1];
             const isFirstOfGroup = !prev || prev.role !== item.role;
@@ -460,6 +510,28 @@ export default function AIChatScreen() {
           }}
           ListFooterComponent={
             <>
+              {/* Fresh conversation — offer starting points under the welcome bubble */}
+              {rows.length === 1 && !loading && !prompt && !conversationId ? (
+                <Animated.View entering={FadeInDown.delay(120).duration(300)} style={styles.emptyPrompts}>
+                  <Text style={styles.emptyPromptsLabel}>Try asking…</Text>
+                  {[
+                    "What's on my schedule today?",
+                    'Move my essay to Thursday',
+                    'Give me a free evening',
+                    "What's due this week?",
+                  ].map((suggestion) => (
+                    <Pressable
+                      key={suggestion}
+                      onPress={() => { haptic.selection(); void sendMessage(suggestion); }}
+                      style={styles.suggestionChip}
+                      accessibilityRole="button"
+                      accessibilityLabel={suggestion}
+                    >
+                      <Text style={styles.suggestionChipText}>{suggestion}</Text>
+                    </Pressable>
+                  ))}
+                </Animated.View>
+              ) : null}
               {loading ? <TypingIndicator typingStyles={typingStyles} /> : null}
               {error ? (
                 <Animated.View

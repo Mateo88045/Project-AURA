@@ -20,7 +20,7 @@ import Animated, {
   withSpring,
   withTiming,
 } from 'react-native-reanimated';
-import { spacing, typography } from '@chronos/shared/theme';
+import { radius, spacing, typography } from '@chronos/shared/theme';
 import type { ThemeColors } from '@chronos/shared/theme';
 import { useTheme } from '../lib/theme';
 import { AmbientOrbs } from '../components/ui/AmbientOrbs';
@@ -266,9 +266,9 @@ export default function BriefingScreen() {
 
         {/* Hero */}
         <Animated.View entering={FadeInDown.delay(60).duration(500)}>
-          <Text style={styles.eyebrow}>
-            {new Date().toLocaleDateString(undefined, { weekday: 'long' }).toUpperCase()} BRIEFING
-          </Text>
+          {/* Fixed label — "MONDAY BRIEFING" over "last week in review" read
+              like a mismatch whenever it was opened after Sunday. */}
+          <Text style={styles.eyebrow}>WEEKLY BRIEFING</Text>
           <Text style={styles.title}>Last week, in review</Text>
           <Text style={styles.subtitle}>
             You stayed on plan 6 out of 7 days. Here&apos;s what the week looked like.
@@ -433,7 +433,7 @@ function makeStyles(c: ThemeColors) {
       gap: 8,
       paddingVertical: 10,
       paddingHorizontal: 12,
-      borderRadius: 10,
+      borderRadius: radius.sm,
       backgroundColor: c.accent.amber + '14',
       borderWidth: 1,
       borderColor: c.accent.amber + '33',

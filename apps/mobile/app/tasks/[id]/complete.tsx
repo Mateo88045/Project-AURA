@@ -433,10 +433,16 @@ export default function TaskCompleteScreen() {
   const { user: authUser } = useAuth();
   const { incrementStreak } = useStreak(authUser?.id ?? '');
 
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, elapsed } = useLocalSearchParams<{ id: string; elapsed?: string }>();
   const { task, loading } = useTaskDetail(id ?? '');
 
-  const [actualMinutes, setActualMinutes] = useState<number>(0);
+  // Timed minutes from the active screen, when the user came from the timer.
+  const elapsedMinutes = (() => {
+    const n = Number(Array.isArray(elapsed) ? elapsed[0] : elapsed);
+    return Number.isFinite(n) && n > 0 ? Math.round(n) : null;
+  })();
+
+  const [actualMinutes, setActualMinutes] = useState<number>(elapsedMinutes ?? 0);
   const [feedback, setFeedback] = useState<UserFeedback | null>(null);
   const [saving, setSaving] = useState(false);
   const [confettiPlaying, setConfettiPlaying] = useState(false);

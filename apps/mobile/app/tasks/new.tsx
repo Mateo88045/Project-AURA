@@ -280,9 +280,11 @@ export default function NewTaskScreen() {
             style={styles.saveWrap}
           >
             <AuraButton
-              label={loading ? 'Saving…' : 'Save task'}
+              label="Save task"
               size="lg"
               fullWidth
+              disabled={!canSave}
+              loading={loading}
               onPress={handleSave}
             />
           </Animated.View>
@@ -449,16 +451,17 @@ function makeStyles(c: ThemeColors) {
     difficultyBarsWrap: {
       // Absolute positioned to allow Pressables over it
     },
+    // Each target's pitch must match DifficultyBars' regular geometry
+    // (16px bar + 4px gap = 20px) or taps land on the wrong level.
     difficultyHitTargets: {
       position: 'absolute',
       left: 0,
-      top: -8,
+      top: -14,
       flexDirection: 'row',
-      gap: 4,
     },
     difficultyHitTarget: {
-      width: 28,
-      height: 32,
+      width: 20,
+      height: 44,
     },
     difficultyLabel: {
       ...typography.callout,

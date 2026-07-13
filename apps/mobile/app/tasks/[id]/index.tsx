@@ -226,15 +226,8 @@ export default function TaskDetailScreen() {
           >
             <AuraSymbol name="chevron.left" size={22} color={colors.text.primary} />
           </AnimatedPressable>
-          <Pressable
-            hitSlop={12}
-            onPress={() => haptic.selection()}
-            style={styles.headerBtn}
-            accessibilityRole="button"
-            accessibilityLabel="More"
-          >
-            <AuraSymbol name="ellipsis" size={20} color={colors.text.secondary} />
-          </Pressable>
+          {/* Right side reserved — a dead "more" button is worse than none. */}
+          <View style={styles.headerSpacer} />
         </Animated.View>
 
         {/* Subject label */}
@@ -448,6 +441,10 @@ function makeStyles(c: ThemeColors) {
       borderWidth: 1,
       borderColor: c.border.subtle,
     } as ViewStyle,
+    headerSpacer: {
+      width: 40,
+      height: 40,
+    },
 
     // Title
     subject: {

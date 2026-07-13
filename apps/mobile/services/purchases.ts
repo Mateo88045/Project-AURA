@@ -186,3 +186,32 @@ export async function hasActiveSubscription(): Promise<boolean> {
     return false;
   }
 }
+
+export interface StoreEntitlement {
+  status: 'pro' | 'trialing' | 'free_preview';
+  /** ISO expiration of the intro period when status === 'trialing'. */
+  trialEndsAt?: string;
+}
+
+/**
+ * Resolve the user's live entitlement from the store. In PREVIEW mode (no
+ * RevenueCat key) everyone is a free previewer; failures also degrade to
+ * free_preview rather than throwing, so app startup never blocks on billing.
+ */
+export async function getStoreEntitlement(): Promise<StoreEntitlement> {
+  if (!isBillingConfigured()) return { status: 'free_preview' };
+
+  try {
+    const Purchases = await loadPurchases();
+    const info = await Purchases.getCustomerInfo();
+    const ent = info.entitlements.active[PRO_ENTITLEMENT];
+    if (!ent) return { status: 'free_preview' };
+    const period = String(ent.periodType).toUpperCase();
+    if (period === 'INTRO' || period === 'TRIAL') {
+      return { status: 'trialing', trialEndsAt: ent.expirationDate ?? undefined };
+    }
+    return { status: 'pro' };
+  } catch {
+    return { status: 'free_preview' };
+  }
+}

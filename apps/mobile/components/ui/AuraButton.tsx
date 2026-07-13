@@ -60,8 +60,13 @@ interface AuraButtonProps {
 // ---------------------------------------------------------------------------
 // Three-dot pulse — replaces ActivityIndicator. Each dot pulses opacity in
 // sequence with an 180ms stagger. Anti-slop rule: never use the platform
-// spinner; loading state is part of the design.
+// spinner; loading state is part of the design. Exported as AuraPulse for
+// screens that need an inline loading affordance outside a button.
 // ---------------------------------------------------------------------------
+
+export function AuraPulse({ color }: { color: string }) {
+  return <ButtonPulse color={color} />;
+}
 
 function ButtonPulse({ color }: { color: string }) {
   return (

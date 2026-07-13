@@ -762,6 +762,304 @@ const ICONS: Record<string, Renderer> = {
     </G>
   ),
 
+  // --- Minus (stepper decrement) -----------------------------------------
+  minus: ({ stroke, color }) => (
+    <Path
+      d="M4.5 12 H19.5"
+      stroke={color}
+      strokeWidth={Math.max(stroke, 2)}
+      strokeLinecap="round"
+      fill="none"
+    />
+  ),
+
+  // --- Checkmark in a circle (scan success, connect success) -------------
+  'checkmark.circle.fill': ({ stroke, color }) => (
+    <G>
+      <Circle cx="12" cy="12" r="8.75" stroke={color} strokeWidth={stroke} fill="none" />
+      <Path
+        d="M8 12.5 L10.9 15.4 L16.3 9.2"
+        stroke={color}
+        strokeWidth={Math.max(stroke, 1.9)}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        fill="none"
+      />
+    </G>
+  ),
+
+  // --- Exclamation marks (soft notices + error banners) -------------------
+  'exclamationmark.circle': ({ stroke, color }) => (
+    <G>
+      <Circle cx="12" cy="12" r="8.75" stroke={color} strokeWidth={stroke} fill="none" />
+      <Path
+        d="M12 7.5 V13"
+        stroke={color}
+        strokeWidth={Math.max(stroke, 1.9)}
+        strokeLinecap="round"
+      />
+      <Circle cx="12" cy="16.2" r="1.1" fill={color} />
+    </G>
+  ),
+  'exclamationmark.triangle': ({ stroke, color }) => (
+    <G>
+      <Path
+        d="M10.3 4.6 C11.05 3.3 12.95 3.3 13.7 4.6 L21 17.3 C21.75 18.6 20.8 20.2 19.3 20.2 H4.7 C3.2 20.2 2.25 18.6 3 17.3 Z"
+        stroke={color}
+        strokeWidth={stroke}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        fill="none"
+      />
+      <Path
+        d="M12 9.5 V13.5"
+        stroke={color}
+        strokeWidth={Math.max(stroke, 1.9)}
+        strokeLinecap="round"
+      />
+      <Circle cx="12" cy="16.4" r="1.05" fill={color} />
+    </G>
+  ),
+
+  // --- Restore / refresh (circular arrow) ---------------------------------
+  'arrow.clockwise': ({ stroke, color }) => (
+    <G>
+      <Path
+        d="M20 12 A8 8 0 1 1 17.9 6.6 L20 8.6"
+        stroke={color}
+        strokeWidth={stroke}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        fill="none"
+      />
+      <Path
+        d="M20.4 4.2 V8.7 H15.9"
+        stroke={color}
+        strokeWidth={stroke}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        fill="none"
+      />
+    </G>
+  ),
+
+  // --- Sync (two arcing arrows chasing each other) ------------------------
+  'arrow.2.circlepath': ({ stroke, color }) => (
+    <G>
+      <Path
+        d="M4.5 10 A8 8 0 0 1 18.3 7.6"
+        stroke={color}
+        strokeWidth={stroke}
+        strokeLinecap="round"
+        fill="none"
+      />
+      <Path
+        d="M18.6 3.6 V7.9 H14.3"
+        stroke={color}
+        strokeWidth={stroke}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        fill="none"
+      />
+      <Path
+        d="M19.5 14 A8 8 0 0 1 5.7 16.4"
+        stroke={color}
+        strokeWidth={stroke}
+        strokeLinecap="round"
+        fill="none"
+      />
+      <Path
+        d="M5.4 20.4 V16.1 H9.7"
+        stroke={color}
+        strokeWidth={stroke}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        fill="none"
+      />
+    </G>
+  ),
+
+  // --- Bell, silenced (notification empty state) ---------------------------
+  'bell.slash': ({ stroke, color }) => (
+    <G>
+      <Path
+        d="M6 16 V11 C6 7.7 8.7 5 12 5 C15.3 5 18 7.7 18 11 V16 L19.5 18 H4.5 L6 16 Z"
+        stroke={color}
+        strokeWidth={stroke}
+        strokeLinejoin="round"
+        strokeLinecap="round"
+        fill="none"
+        opacity={0.75}
+      />
+      <Path
+        d="M10 20.5 C10.5 21.3 13.5 21.3 14 20.5"
+        stroke={color}
+        strokeWidth={stroke}
+        strokeLinecap="round"
+        fill="none"
+        opacity={0.75}
+      />
+      <Path
+        d="M4 3.5 L20 19.5"
+        stroke={color}
+        strokeWidth={Math.max(stroke, 1.9)}
+        strokeLinecap="round"
+      />
+    </G>
+  ),
+
+  // --- Camera in a viewfinder (scan hero) ----------------------------------
+  'camera.viewfinder': ({ stroke, color }) => (
+    <G>
+      <Path
+        d="M3.5 8 V6 C3.5 4.6 4.6 3.5 6 3.5 H8 M16 3.5 H18 C19.4 3.5 20.5 4.6 20.5 6 V8 M20.5 16 V18 C20.5 19.4 19.4 20.5 18 20.5 H16 M8 20.5 H6 C4.6 20.5 3.5 19.4 3.5 18 V16"
+        stroke={color}
+        strokeWidth={stroke}
+        strokeLinecap="round"
+        fill="none"
+      />
+      <Path
+        d="M9.6 8.5 L10.3 7.2 H13.7 L14.4 8.5 H15.5 C16.05 8.5 16.5 8.95 16.5 9.5 V15 C16.5 15.55 16.05 16 15.5 16 H8.5 C7.95 16 7.5 15.55 7.5 15 V9.5 C7.5 8.95 7.95 8.5 8.5 8.5 Z"
+        stroke={color}
+        strokeWidth={stroke * 0.9}
+        strokeLinejoin="round"
+        fill="none"
+      />
+      <Circle cx="12" cy="12.1" r="2" stroke={color} strokeWidth={stroke * 0.9} fill="none" />
+    </G>
+  ),
+
+  // --- Photo library -------------------------------------------------------
+  'photo.on.rectangle': ({ stroke, color }) => (
+    <G>
+      <Rect
+        x="4"
+        y="5"
+        width="16"
+        height="14"
+        rx="2.25"
+        stroke={color}
+        strokeWidth={stroke}
+        fill="none"
+      />
+      <Circle cx="9" cy="9.5" r="1.2" fill={color} />
+      <Path
+        d="M6.5 16.5 L10.5 12 L13.5 15 L15.5 13 L17.5 15.5"
+        stroke={color}
+        strokeWidth={stroke * 0.9}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        fill="none"
+      />
+    </G>
+  ),
+
+  // --- Compose (new conversation) ------------------------------------------
+  'square.and.pencil': ({ stroke, color }) => (
+    <G>
+      <Path
+        d="M12 5 H6.5 C5.4 5 4.5 5.9 4.5 7 V17.5 C4.5 18.6 5.4 19.5 6.5 19.5 H17 C18.1 19.5 19 18.6 19 17.5 V12"
+        stroke={color}
+        strokeWidth={stroke}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        fill="none"
+      />
+      <Path
+        d="M10.6 13.4 L19.2 4.8"
+        stroke={color}
+        strokeWidth={stroke}
+        strokeLinecap="round"
+      />
+      <Path
+        d="M10.6 13.4 L10.1 14.6 L11.3 14.1 Z"
+        stroke={color}
+        strokeWidth={stroke * 0.8}
+        strokeLinejoin="round"
+        fill={color}
+      />
+    </G>
+  ),
+
+  // --- Trash ---------------------------------------------------------------
+  'trash.fill': ({ stroke, color }) => (
+    <G>
+      <Path
+        d="M4.5 6.5 H19.5"
+        stroke={color}
+        strokeWidth={stroke}
+        strokeLinecap="round"
+      />
+      <Path
+        d="M9.5 6.5 V5 C9.5 4.4 9.9 4 10.5 4 H13.5 C14.1 4 14.5 4.4 14.5 5 V6.5"
+        stroke={color}
+        strokeWidth={stroke}
+        strokeLinecap="round"
+        fill="none"
+      />
+      <Path
+        d="M6.5 6.5 L7.3 19 C7.37 20.1 8.3 21 9.4 21 H14.6 C15.7 21 16.63 20.1 16.7 19 L17.5 6.5"
+        stroke={color}
+        strokeWidth={stroke}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        fill="none"
+      />
+      <Path
+        d="M10 10.5 V17 M14 10.5 V17"
+        stroke={color}
+        strokeWidth={stroke * 0.85}
+        strokeLinecap="round"
+      />
+    </G>
+  ),
+
+  // --- Crown (subscription) --------------------------------------------------
+  'crown.fill': ({ stroke, color }) => (
+    <G>
+      <Path
+        d="M4.5 8.5 L8 11.5 L12 6 L16 11.5 L19.5 8.5 L18.2 16.3 C18.1 16.9 17.6 17.3 17 17.3 H7 C6.4 17.3 5.9 16.9 5.8 16.3 Z"
+        stroke={color}
+        strokeWidth={stroke}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        fill="none"
+      />
+      <Path
+        d="M7.5 20 H16.5"
+        stroke={color}
+        strokeWidth={stroke}
+        strokeLinecap="round"
+      />
+    </G>
+  ),
+
+  // --- Magic wand with sparkle (sample-data banner) -------------------------
+  'wand.and.stars': ({ stroke, color }) => (
+    <G>
+      <Path
+        d="M4.5 19.5 L13.2 10.8"
+        stroke={color}
+        strokeWidth={stroke}
+        strokeLinecap="round"
+      />
+      <Path
+        d="M13.9 10.1 L16 8"
+        stroke={color}
+        strokeWidth={Math.max(stroke, 2.1)}
+        strokeLinecap="round"
+      />
+      <Path
+        d="M18.5 3.5 V8 M16.25 5.75 H20.75"
+        stroke={color}
+        strokeWidth={stroke * 0.9}
+        strokeLinecap="round"
+      />
+      <Circle cx="14.5" cy="4.5" r="0.9" fill={color} />
+      <Circle cx="20" cy="11" r="0.9" fill={color} />
+    </G>
+  ),
+
   // --- Aliases for legacy names still referenced in the fallback map ----
   circle: ({ stroke, color }) => (
     <Circle
@@ -775,6 +1073,11 @@ const ICONS: Record<string, Renderer> = {
   ),
   'circle.fill': ({ color }) => <Circle cx="12" cy="12" r="8.5" fill={color} />,
 };
+
+// SF-name variants that map to an existing renderer. Registered after the
+// object literal so they can reference their canonical entries.
+ICONS['bubble.left.and.bubble.right.fill'] = ICONS['bubble.left.and.bubble.right'];
+ICONS['check'] = ICONS['checkmark'];
 
 // ---------------------------------------------------------------------------
 // Unknown-name fallback: render a small filled dot so layout stays stable

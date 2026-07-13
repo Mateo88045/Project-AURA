@@ -24,6 +24,7 @@ import { AuraSymbol } from '../../components/ui/AuraSymbol';
 import { AuraSkeleton } from '../../components/ui/AuraSkeleton';
 import { AmbientOrbs } from '../../components/ui/AmbientOrbs';
 import { haptic } from '../../lib/haptics';
+import { toLocalDayIso } from '../../lib/localDate';
 import { useAuth } from '../../hooks/useAuth';
 import { useAuraToast } from '../../components/ui/AuraToast';
 import { supabase } from '@chronos/shared/supabase';
@@ -45,7 +46,7 @@ export default function ShadowScheduleReviewScreen() {
   const styles = useMemo(() => makeStyles(colors, resolvedMode), [colors, resolvedMode]);
 
   const today = useMemo(() => new Date(), []);
-  const dayIso = today.toISOString().slice(0, 10);
+  const dayIso = toLocalDayIso(today);
   const { user: authUser } = useAuth();
 
   const { shadowBlocks, loading, error } = useShadowSchedule(authUser?.id ?? '', dayIso);
@@ -523,7 +524,8 @@ function makeStyles(c: ThemeColors, mode: ResolvedMode) {
       gap: spacing.xs,
       paddingHorizontal: spacing.sm,
       height: 32,
-      borderRadius: 16,
+      // Chips use radius.sm — pills stay reserved for the nav layer.
+      borderRadius: radius.sm,
       borderWidth: 1,
       borderColor: c.border.subtle,
       backgroundColor: c.glass.light,

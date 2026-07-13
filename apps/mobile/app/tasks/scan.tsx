@@ -5,7 +5,6 @@ import {
   TextInput,
   Pressable,
   ScrollView,
-  ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
   StyleSheet,
@@ -21,7 +20,7 @@ import type { Difficulty, TaskType } from '@chronos/shared/types';
 import { useTheme } from '../../lib/theme';
 import { AmbientOrbs } from '../../components/ui/AmbientOrbs';
 import { GlassCard } from '../../components/ui/GlassCard';
-import { AuraButton } from '../../components/ui/AuraButton';
+import { AuraButton, AuraPulse } from '../../components/ui/AuraButton';
 import { AuraSymbol } from '../../components/ui/AuraSymbol';
 import { DifficultyBars } from '../../components/ui/DifficultyBars';
 import { useCreateTask } from '../../hooks/useCreateTask';
@@ -232,7 +231,7 @@ export default function ScanTaskScreen() {
                 <Image source={{ uri: imageUri }} style={styles.previewImage} contentFit="cover" />
               ) : null}
               <View style={styles.analyzingRow}>
-                <ActivityIndicator color={colors.accent.sky} />
+                <AuraPulse color={colors.accent.sky} />
                 <Text style={styles.analyzingText}>Reading your assignment…</Text>
               </View>
             </Animated.View>
@@ -343,11 +342,12 @@ export default function ScanTaskScreen() {
 
               <View style={styles.actions}>
                 <AuraButton
-                  label={saving ? 'Adding…' : 'Add to schedule'}
+                  label="Add to schedule"
                   size="lg"
                   fullWidth
                   onPress={handleSave}
                   disabled={!canSave}
+                  loading={saving}
                 />
                 <Pressable
                   onPress={() => { haptic.selection(); setMode('capture'); setImageUri(null); }}
@@ -444,8 +444,9 @@ function makeStyles(c: ThemeColors) {
     difficultyCard: { borderRadius: radius.md, paddingVertical: spacing.md, paddingHorizontal: spacing.lg },
     difficultyRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
     difficultyBarsWrap: {},
-    difficultyHitTargets: { position: 'absolute', left: 0, top: -8, flexDirection: 'row', gap: 4 },
-    difficultyHitTarget: { width: 28, height: 32 },
+    // Pitch matches DifficultyBars regular geometry (16px bar + 4px gap).
+    difficultyHitTargets: { position: 'absolute', left: 0, top: -14, flexDirection: 'row' },
+    difficultyHitTarget: { width: 20, height: 44 },
     difficultyLabel: { ...typography.callout, color: c.text.secondary, marginLeft: spacing.xs },
     actions: { marginTop: spacing.xl, gap: spacing.md, alignItems: 'center' },
     retakeBtn: { paddingVertical: spacing.xs },

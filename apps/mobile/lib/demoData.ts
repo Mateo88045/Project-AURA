@@ -1,5 +1,6 @@
 import type { FixedEvent, ScheduledBlock, Task } from '@chronos/shared/types';
 import { GUEST_USER_ID } from './guest';
+import { localWeekday, toLocalDayIso } from './localDate';
 
 /**
  * Guest-mode demo dataset.
@@ -28,7 +29,8 @@ function isoAtLocalTime(hour: number, minute: number): string {
 }
 
 function todayIso(): string {
-  return now.toISOString().slice(0, 10);
+  // Local calendar date — must match the day keys the screens build.
+  return toLocalDayIso(now);
 }
 
 export const DEMO_TASKS: Task[] = [
@@ -113,7 +115,7 @@ export function getDemoScheduledBlocksForDay(day: string): ScheduledBlock[] {
 }
 
 export function getDemoFixedEventsForDay(day: string): FixedEvent[] {
-  const dayOfWeek = new Date(`${day}T12:00:00Z`).getUTCDay();
+  const dayOfWeek = localWeekday(day);
   const events: FixedEvent[] = [
     {
       id: 'demo-event-1',
@@ -161,9 +163,7 @@ const WEEKDAY_TASK_INDICES: Record<number, number[]> = {
 };
 
 function demoTasksForWeekday(dayIso: string): Task[] {
-  // Parse at local noon so the weekday never slips across a timezone boundary.
-  const weekday = new Date(`${dayIso}T12:00:00`).getDay();
-  return (WEEKDAY_TASK_INDICES[weekday] ?? []).map((i) => DEMO_TASKS[i]);
+  return (WEEKDAY_TASK_INDICES[localWeekday(dayIso)] ?? []).map((i) => DEMO_TASKS[i]);
 }
 
 export function getDemoTaskCounts(days: string[]): Record<string, number> {

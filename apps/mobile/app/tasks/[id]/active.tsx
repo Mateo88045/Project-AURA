@@ -72,7 +72,10 @@ export default function TaskActiveScreen() {
 
   function handleDone() {
     haptic.primaryCTA();
-    router.push(`/tasks/${taskId}/complete` as Href);
+    // Hand the timed minutes to the completion screen so "how long did it
+    // take" starts from reality instead of the estimate.
+    const timedMinutes = Math.max(1, Math.round(elapsedSeconds / 60));
+    router.push(`/tasks/${taskId}/complete?elapsed=${timedMinutes}` as Href);
   }
 
   function handleTogglePause() {
@@ -181,7 +184,7 @@ export default function TaskActiveScreen() {
         style={styles.actions}
       >
         <AuraButton
-          label="Done Early"
+          label={progressRatio >= 1 ? 'Done' : 'Done Early'}
           size="lg"
           fullWidth
           onPress={handleDone}
@@ -290,14 +293,15 @@ function makeStyles(c: ThemeColors) {
     actionGap: {
       height: spacing.sm,
     },
+    // The root already applies the horizontal screen padding — these only
+    // add vertical rhythm, otherwise the inset doubles to 56px.
     loadingWrap: {
       flex: 1,
-      padding: spacing.screenPadding,
+      paddingVertical: spacing.screenPadding,
       gap: spacing.md,
     },
     errorWrap: {
       flex: 1,
-      paddingHorizontal: spacing.screenPadding,
       alignItems: 'center',
       justifyContent: 'center',
       gap: spacing.md,
