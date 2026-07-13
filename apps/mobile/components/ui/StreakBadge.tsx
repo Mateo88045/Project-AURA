@@ -7,7 +7,7 @@ import Animated, {
   withSequence,
   withTiming,
 } from 'react-native-reanimated';
-import { spacing, typography } from '@chronos/shared/theme';
+import { radius, spacing, typography } from '@chronos/shared/theme';
 import type { ThemeColors } from '@chronos/shared/theme';
 import { useTheme } from '../../lib/theme';
 import { GlassCard } from './GlassCard';
@@ -76,7 +76,7 @@ function makeStyles(c: ThemeColors) {
       paddingHorizontal: spacing.lg,
       paddingVertical: spacing.md,
       gap: spacing.sm,
-      borderRadius: 20,
+      borderRadius: radius.md,
       shadowColor: c.accent.amber,
       shadowOpacity: 0.35,
       shadowRadius: 16,

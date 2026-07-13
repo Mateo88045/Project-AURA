@@ -26,6 +26,7 @@ import { useTheme } from '../lib/theme';
 import { AmbientOrbs } from '../components/ui/AmbientOrbs';
 import { GlassCard } from '../components/ui/GlassCard';
 import { AuraSymbol } from '../components/ui/AuraSymbol';
+import { AuraAvatar } from '../components/ui/AuraAvatar';
 import { AuraButton } from '../components/ui/AuraButton';
 import { CountUpText } from '../components/ui/CountUpText';
 import { haptic } from '../lib/haptics';
@@ -304,7 +305,7 @@ export default function BriefingScreen() {
           <StatCard
             numericValue={4}
             label="WEEK STREAK"
-            tint={colors.accent.sky}
+            tint={colors.accent.amber}
             delay={300}
             statStyles={statStyles}
           />
@@ -340,9 +341,7 @@ export default function BriefingScreen() {
               end={{ x: 1, y: 1 }}
               style={StyleSheet.absoluteFill}
             />
-            <View style={styles.noteAvatar}>
-              <Text style={styles.noteAvatarLetter}>A</Text>
-            </View>
+            <AuraAvatar name="Chronos" size={32} />
             <Text style={styles.noteText}>
               History essays ran about 20% longer than planned this week. I&apos;ve padded
               next week&apos;s US History blocks by 15 minutes and moved the hardest work to
@@ -495,19 +494,6 @@ function makeStyles(c: ThemeColors) {
       padding: spacing.cardPadding,
       alignItems: 'flex-start',
       overflow: 'hidden',
-    },
-    noteAvatar: {
-      width: 32,
-      height: 32,
-      borderRadius: 16,
-      backgroundColor: c.accent.blue,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    noteAvatarLetter: {
-      ...typography.headline,
-      color: c.text.inverse,
-      fontWeight: '700',
     },
     noteText: {
       ...typography.body,

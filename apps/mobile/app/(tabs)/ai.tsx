@@ -157,20 +157,20 @@ type Tint = 'steel' | 'mist' | 'amber';
 function makeTints(c: ThemeColors): Record<Tint, { from: string; to: string; fg: string; glow: string }> {
   return {
     steel: {
-      from: 'rgba(69, 123, 157, 0.22)',
-      to:   'rgba(69, 123, 157, 0.04)',
+      from: c.accent.blue + '38',   // ~22% alpha
+      to:   c.accent.blue + '0A',   // ~4% alpha
       fg:   c.accent.blue,
       glow: c.accent.blue,
     },
     mist: {
-      from: 'rgba(168, 218, 220, 0.22)',
-      to:   'rgba(168, 218, 220, 0.04)',
+      from: c.accent.sky + '38',
+      to:   c.accent.sky + '0A',
       fg:   c.accent.sky,
       glow: c.accent.sky,
     },
     amber: {
-      from: 'rgba(244, 162, 97, 0.20)',
-      to:   'rgba(244, 162, 97, 0.04)',
+      from: c.accent.amber + '33',  // ~20% alpha
+      to:   c.accent.amber + '0A',
       fg:   c.accent.amber,
       glow: c.accent.amber,
     },
@@ -530,11 +530,8 @@ export default function AIHubScreen() {
                         <Text style={styles.recentTitle} numberOfLines={1}>
                           {snippet.slice(0, 60) || 'Conversation'}
                         </Text>
-                        <Text style={styles.recentSnippet} numberOfLines={1}>
-                          {relativeTime(c.updatedAt)}
-                        </Text>
                       </View>
-                      <Text style={styles.recentWhen}>{relativeTime(c.createdAt)}</Text>
+                      <Text style={styles.recentWhen}>{relativeTime(c.updatedAt)}</Text>
                     </Pressable>
                     {i < conversations.slice(0, 5).length - 1 ? <View style={styles.recentDivider} /> : null}
                   </View>
@@ -668,11 +665,6 @@ function makeStyles(c: ThemeColors) {
     recentTitle: {
       ...typography.bodyMedium,
       color: c.text.primary,
-    },
-    recentSnippet: {
-      ...typography.callout,
-      color: c.text.tertiary,
-      marginTop: 2,
     },
     recentWhen: {
       ...typography.caption,

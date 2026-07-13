@@ -508,7 +508,7 @@ export default function SettingsScreen() {
       >
         {/* Header */}
         <Animated.View entering={FadeIn.duration(400)} style={styles.header}>
-          <Text style={styles.eyebrow}>ACCOUNT</Text>
+          <Text style={styles.eyebrow}>CHRONOS</Text>
           <Text style={styles.title}>Settings</Text>
         </Animated.View>
 

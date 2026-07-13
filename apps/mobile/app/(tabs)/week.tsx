@@ -305,7 +305,6 @@ export default function WeekScreen() {
               <Animated.View
                 key={task.id}
                 entering={FadeIn.delay(STAGGER_MS * (4 + i)).duration(200)}
-                style={styles.taskItem}
               >
                 <TaskBlock
                   title={task.title}
@@ -457,9 +456,6 @@ function makeStyles(c: ThemeColors) {
     },
     taskList: {
       gap: spacing.itemGap,
-    },
-    taskItem: {
-      marginBottom: spacing.xs,
     },
   });
 }

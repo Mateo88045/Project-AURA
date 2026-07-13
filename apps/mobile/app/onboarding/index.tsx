@@ -117,6 +117,8 @@ function makeStyles(c: ThemeColors) {
       justifyContent: 'space-between',
     },
     heroWrap: {
+      flex: 1,
+      justifyContent: 'center',
       width: '100%',
       maxWidth: 340,
       alignSelf: 'center',
@@ -157,11 +159,11 @@ function makeStyles(c: ThemeColors) {
     ctaWrap: {
       width: '100%',
       alignItems: 'center',
+      gap: spacing.sm,
     },
     hint: {
       ...typography.micro,
       color: c.text.tertiary,
-      marginBottom: spacing.sm,
     },
     ctaButton: {
       width: '100%',
@@ -169,7 +171,7 @@ function makeStyles(c: ThemeColors) {
     },
     disclaimer: {
       ...typography.callout,
-      marginTop: spacing.md,
+      marginTop: spacing.xs,
       color: c.text.tertiary,
       textAlign: 'center',
     },

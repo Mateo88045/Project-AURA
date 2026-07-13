@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { View, ScrollView, Pressable, StyleSheet, Text } from 'react-native';
+import { View, ScrollView, Pressable, StyleSheet, Text, useWindowDimensions } from 'react-native';
 import { useRouter, type Href } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, {
@@ -40,6 +40,7 @@ function scrimColor(mode: ResolvedMode): string {
 export default function ShadowScheduleReviewScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { height: windowHeight } = useWindowDimensions();
   const { colors, resolvedMode } = useTheme();
   const styles = useMemo(() => makeStyles(colors, resolvedMode), [colors, resolvedMode]);
 
@@ -180,12 +181,16 @@ export default function ShadowScheduleReviewScreen() {
         <Pressable style={StyleSheet.absoluteFill} onPress={() => router.back()} />
       </Animated.View>
 
-      {/* Sheet */}
+      {/* Sheet — bottom-anchored, hugs its content up to a max height */}
       <Animated.View
         entering={SlideInDown.springify().damping(22).stiffness(140).mass(1.1)}
-        style={[styles.sheetWrap, { paddingTop: insets.top + 24 }]}
+        style={styles.sheetWrap}
       >
-        <GlassCard intensity="thick" borderAccent style={styles.sheet}>
+        <GlassCard
+          intensity="thick"
+          borderAccent
+          style={{ ...styles.sheet, maxHeight: windowHeight - insets.top - spacing.xxl }}
+        >
           {/* Handle */}
           <View style={styles.handleWrap}>
             <View style={styles.handle} />
@@ -256,12 +261,21 @@ export default function ShadowScheduleReviewScreen() {
                           >
                             {block.task?.title ?? 'Untitled'}
                           </Text>
-                          <Text
-                            style={[styles.rowMeta, isRejected && styles.textStrike]}
-                            numberOfLines={1}
-                          >
-                            {block.task?.subject ?? ''} · {block.task?.estimatedMinutes ?? 0}m
-                          </Text>
+                          <View style={styles.metaRow}>
+                            <Text
+                              style={[styles.rowMeta, isRejected && styles.textStrike]}
+                              numberOfLines={1}
+                            >
+                              {block.task?.subject ?? ''} · {block.task?.estimatedMinutes ?? 0}m
+                            </Text>
+                            {block.task && !isRejected && (
+                              <DifficultyBars
+                                level={block.task.difficulty}
+                                size="compact"
+                                animated={false}
+                              />
+                            )}
+                          </View>
                         </View>
                         <View style={styles.actions}>
                           {isRejected ? (
@@ -327,11 +341,6 @@ export default function ShadowScheduleReviewScreen() {
                             </>
                           )}
                         </View>
-                        {block.task && !isRejected && (
-                          <View style={styles.barsCol}>
-                            <DifficultyBars level={block.task.difficulty} />
-                          </View>
-                        )}
                       </View>
                       {i < displayBlocks.length - 1 && <View style={styles.divider} />}
                     </Animated.View>
@@ -392,13 +401,11 @@ function makeStyles(c: ThemeColors, mode: ResolvedMode) {
     },
     sheetWrap: {
       position: 'absolute',
-      top: 0,
       left: 0,
       right: 0,
       bottom: 0,
     },
     sheet: {
-      flex: 1,
       borderBottomLeftRadius: 0,
       borderBottomRightRadius: 0,
       borderTopLeftRadius: radius.xl,
@@ -429,7 +436,8 @@ function makeStyles(c: ThemeColors, mode: ResolvedMode) {
       color: c.text.secondary,
     },
     scroll: {
-      flex: 1,
+      flexGrow: 0,
+      flexShrink: 1,
       paddingHorizontal: spacing.screenPadding,
     },
     loading: {
@@ -456,11 +464,12 @@ function makeStyles(c: ThemeColors, mode: ResolvedMode) {
       gap: spacing.md,
     },
     timeCol: {
-      width: 60,
+      width: 64,
     },
     rowTime: {
       ...typography.callout,
       color: c.text.tertiary,
+      fontVariant: ['tabular-nums'],
     },
     titleCol: {
       flex: 1,
@@ -470,12 +479,15 @@ function makeStyles(c: ThemeColors, mode: ResolvedMode) {
       ...typography.headline,
       color: c.text.primary,
     },
+    metaRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.sm,
+    },
     rowMeta: {
       ...typography.callout,
       color: c.text.secondary,
-    },
-    barsCol: {
-      alignItems: 'flex-end',
+      flexShrink: 1,
     },
     rowRejected: {
       opacity: 0.45,
@@ -533,19 +545,21 @@ function makeStyles(c: ThemeColors, mode: ResolvedMode) {
     editBtn: {
       height: 52,
       paddingHorizontal: spacing.xl,
-      borderRadius: radius.lg,
+      // Chronos buttons use radius.sm — matches AuraButton, never a pill.
+      borderRadius: radius.sm,
       borderWidth: 1,
       borderColor: c.border.glass,
+      backgroundColor: c.glass.light,
       alignItems: 'center',
       justifyContent: 'center',
     },
     editBtnText: {
       ...typography.headline,
-      color: c.text.secondary,
+      color: c.text.primary,
     },
     approveBtnWrap: {
       flex: 1,
-      borderRadius: radius.lg,
+      borderRadius: radius.sm,
       overflow: 'hidden',
     },
     approveBtnInner: {

@@ -753,11 +753,14 @@ function makeStyles(c: ThemeColors) {
       gap: 6,
       paddingHorizontal: spacing.md,
       paddingVertical: spacing.xs,
-      borderRadius: 20,
+      // Anti-slop: pills are reserved for the nav layer — chips use radius.sm.
+      borderRadius: radius.sm,
     },
     contextPillText: {
       ...typography.caption,
       color: c.text.tertiary,
+      textTransform: 'none',
+      letterSpacing: 0,
     },
 
     // Empty state — suggested prompts
@@ -773,7 +776,7 @@ function makeStyles(c: ThemeColors) {
     suggestionChip: {
       paddingHorizontal: spacing.md,
       paddingVertical: spacing.sm,
-      borderRadius: 20,
+      borderRadius: radius.sm,
       backgroundColor: c.glass.light,
       borderWidth: 1,
       borderColor: c.border.subtle,
