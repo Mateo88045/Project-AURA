@@ -34,6 +34,7 @@ import { useTheme } from '../../../lib/theme';
 import { AmbientOrbs } from '../../../components/ui/AmbientOrbs';
 import { GlassCard } from '../../../components/ui/GlassCard';
 import { AuraSymbol } from '../../../components/ui/AuraSymbol';
+import { AuraAvatar } from '../../../components/ui/AuraAvatar';
 import { haptic } from '../../../lib/haptics';
 import {
   sendCopilotMessage,
@@ -84,9 +85,7 @@ function TypingIndicator({
 }) {
   return (
     <Animated.View entering={FadeIn.duration(200)} style={typingStyles.bubble}>
-      <View style={typingStyles.avatar}>
-        <Text style={typingStyles.avatarLetter}>C</Text>
-      </View>
+      <AuraAvatar name="Chronos" size={28} />
       <GlassCard intensity="light" style={typingStyles.card}>
         <View style={typingStyles.dotsRow}>
           <TypingDot index={0} typingStyles={typingStyles} />
@@ -106,20 +105,6 @@ function makeTypingStyles(c: ThemeColors) {
       gap: 8,
       marginBottom: spacing.md,
       alignSelf: 'flex-start',
-    },
-    avatar: {
-      width: 28,
-      height: 28,
-      borderRadius: 14,
-      // Chronos's avatar is Steel — never violet.
-      backgroundColor: c.accent.blue,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    avatarLetter: {
-      ...typography.callout,
-      color: c.text.inverse,
-      fontWeight: '700',
     },
     card: {
       paddingHorizontal: 14,
@@ -178,11 +163,7 @@ function Bubble({ row, showAvatar, index, bubbleStyles }: BubbleProps) {
     >
       {!isUser && (
         <View style={bubbleStyles.avatarSlot}>
-          {showAvatar ? (
-            <View style={bubbleStyles.avatar}>
-              <Text style={bubbleStyles.avatarLetter}>C</Text>
-            </View>
-          ) : null}
+          {showAvatar ? <AuraAvatar name="Chronos" size={28} /> : null}
         </View>
       )}
 
@@ -217,20 +198,6 @@ function makeBubbleStyles(c: ThemeColors) {
     avatarSlot: {
       width: 28,
       height: 28,
-    },
-    avatar: {
-      width: 28,
-      height: 28,
-      borderRadius: 14,
-      // Chronos's avatar is Steel — never violet.
-      backgroundColor: c.accent.blue,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    avatarLetter: {
-      ...typography.callout,
-      color: c.text.inverse,
-      fontWeight: '700',
     },
     userBubble: {
       backgroundColor: c.accent.blue,
@@ -424,9 +391,7 @@ export default function AIChatScreen() {
             <AuraSymbol name="chevron.left" size={22} color={colors.text.primary} />
           </Pressable>
           <View style={styles.headerCenter}>
-            <View style={styles.headerAvatar}>
-              <Text style={styles.headerAvatarLetter}>C</Text>
-            </View>
+            <AuraAvatar name="Chronos" size={32} />
             <View>
               <Text style={styles.headerTitle}>Chronos</Text>
               <Text style={styles.headerStatus}>{sessionContext}</Text>
@@ -665,20 +630,6 @@ function makeStyles(c: ThemeColors) {
       flexDirection: 'row',
       alignItems: 'center',
       gap: 10,
-    },
-    headerAvatar: {
-      width: 32,
-      height: 32,
-      borderRadius: 16,
-      // Chronos's avatar is Steel — never violet.
-      backgroundColor: c.accent.blue,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    headerAvatarLetter: {
-      ...typography.headline,
-      color: c.text.inverse,
-      fontWeight: '700',
     },
     headerTitle: {
       ...typography.headline,

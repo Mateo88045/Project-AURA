@@ -76,27 +76,24 @@ function HeroOrb({ colors }: { colors: ThemeColors }) {
 
   return (
     <View style={[heroStyles.wrap, { pointerEvents: 'none' }]}>
-      {/* Outer glow */}
-      <Animated.View style={[heroStyles.glow, glowStyle]}>
-        <LinearGradient
-          colors={[colors.accent.blue + '55', 'transparent']}
-          style={StyleSheet.absoluteFill}
-          start={{ x: 0.5, y: 0.5 }}
-          end={{ x: 1, y: 1 }}
-        />
-      </Animated.View>
+      {/* Outer halo — two stacked low-opacity discs fake a radial falloff.
+          (A linear gradient clipped to a circle leaves a hard half-disc edge.) */}
+      <Animated.View style={[heroStyles.haloOuter, { backgroundColor: colors.accent.blue + '0D' }, glowStyle]} />
+      <Animated.View style={[heroStyles.haloInner, { backgroundColor: colors.accent.blue + '14' }, glowStyle]} />
 
       {/* Core orb — Mist → Steel only. No third hue. The spec bans
           multi-saturated gradients; this is two hues from the same family. */}
-      <Animated.View style={[heroStyles.core, orbStyle]}>
-        <LinearGradient
-          colors={[colors.accent.sky, colors.accent.blue]}
-          start={{ x: 0.2, y: 0.1 }}
-          end={{ x: 0.9, y: 1 }}
-          style={StyleSheet.absoluteFill}
-        />
-        {/* Specular highlight */}
-        <View style={heroStyles.highlight} />
+      <Animated.View style={[heroStyles.core, { shadowColor: colors.accent.blue }, orbStyle]}>
+        <View style={heroStyles.coreClip}>
+          <LinearGradient
+            colors={[colors.accent.sky, colors.accent.blue]}
+            start={{ x: 0.2, y: 0.1 }}
+            end={{ x: 0.9, y: 1 }}
+            style={StyleSheet.absoluteFill}
+          />
+          {/* Specular highlight */}
+          <View style={heroStyles.highlight} />
+        </View>
       </Animated.View>
     </View>
   );
@@ -106,20 +103,33 @@ const heroStyles = StyleSheet.create({
   wrap: {
     alignItems: 'center',
     justifyContent: 'center',
-    height: 140,
-    marginTop: spacing.md,
-    marginBottom: spacing.xl,
+    height: 168,
+    marginTop: spacing.sm,
+    marginBottom: spacing.lg,
   },
-  glow: {
+  haloOuter: {
     position: 'absolute',
-    width: 220,
-    height: 220,
-    borderRadius: 110,
-    overflow: 'hidden',
+    width: 176,
+    height: 176,
+    borderRadius: 88,
+  },
+  haloInner: {
+    position: 'absolute',
+    width: 132,
+    height: 132,
+    borderRadius: 66,
   },
   core: {
     width: 96,
     height: 96,
+    borderRadius: 48,
+    // The glow lives on the core itself so it fades out radially.
+    shadowOpacity: 0.55,
+    shadowRadius: 28,
+    shadowOffset: { width: 0, height: 0 },
+  },
+  coreClip: {
+    flex: 1,
     borderRadius: 48,
     overflow: 'hidden',
   },
@@ -427,8 +437,8 @@ export default function AIHubScreen() {
           </Animated.View>
         </Animated.View>
 
-        {/* Quick prompts */}
-        <Animated.View entering={FadeInUp.delay(220).duration(500)} style={chipsRowStyle}>
+        {/* Quick prompts — bleed to the screen edge so the row scrolls under it */}
+        <Animated.View entering={FadeInUp.delay(220).duration(500)} style={[chipsRowStyle, styles.chipsBleed]}>
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
@@ -598,6 +608,9 @@ function makeStyles(c: ThemeColors) {
     },
 
     // Chip row
+    chipsBleed: {
+      marginHorizontal: -spacing.screenPadding,
+    },
     chipsRow: {
       gap: 8,
       paddingVertical: spacing.md,

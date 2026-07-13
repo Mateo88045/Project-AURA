@@ -117,12 +117,15 @@ function TintedIcon({
   );
 }
 
+// 'none' = platform simply not linked yet — a quiet gray, not an alarm.
+type DotStatus = ConnectionStatus | 'none';
+
 function StatusDot({
   status,
   colors,
   styles,
 }: {
-  status: ConnectionStatus;
+  status: DotStatus;
   colors: ThemeColors;
   styles: ReturnType<typeof makeStyles>;
 }) {
@@ -160,7 +163,17 @@ function StatusDot({
       ? colors.accent.emerald
       : status === 'expired'
         ? colors.accent.amber
-        : colors.accent.coral;
+        : status === 'error'
+          ? colors.accent.coral
+          : colors.text.tertiary;
+
+  if (status === 'none') {
+    return (
+      <View style={styles.statusDotContainer}>
+        <View style={[styles.statusDotHollow, { borderColor: color }]} />
+      </View>
+    );
+  }
 
   return (
     <View style={styles.statusDotContainer}>
@@ -175,7 +188,7 @@ interface RowProps {
   label: string;
   subtitle?: string;
   trailing?: 'chevron' | 'status' | 'none';
-  status?: ConnectionStatus;
+  status?: DotStatus;
   destructive?: boolean;
   isLast?: boolean;
   onPress: () => void;
@@ -566,7 +579,7 @@ export default function SettingsScreen() {
                     : 'Not connected'
               }
               trailing="status"
-              status={gcStatus ?? 'error'}
+              status={gcStatus ?? 'none'}
               onPress={() => router.push('/settings/connections' as Href)}
               colors={colors}
               styles={styles}
@@ -988,6 +1001,13 @@ function makeStyles(c: ThemeColors) {
       width: 8,
       height: 8,
       borderRadius: 4,
+    },
+    statusDotHollow: {
+      width: 8,
+      height: 8,
+      borderRadius: 4,
+      borderWidth: 1.5,
+      opacity: 0.6,
     },
 
     // Footer

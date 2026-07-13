@@ -18,6 +18,15 @@ function isoOffsetHours(hours: number): string {
   return new Date(now.getTime() + hours * 60 * 60 * 1000).toISOString();
 }
 
+// Anchors a block to a fixed local clock time today. Demo blocks used to be
+// generated relative to "now", which wrapped past midnight in the evening and
+// produced a 1 AM study block sorted to the top of the Today river.
+function isoAtLocalTime(hour: number, minute: number): string {
+  const d = new Date(now);
+  d.setHours(hour, minute, 0, 0);
+  return d.toISOString();
+}
+
 function todayIso(): string {
   return now.toISOString().slice(0, 10);
 }
@@ -82,20 +91,25 @@ export function getDemoScheduledBlocksForDay(day: string): ScheduledBlock[] {
   if (day !== todayIso()) return [];
 
   const statuses: ScheduledBlock['status'][] = ['approved', 'approved', 'shadow'];
-  const startHours = [2, 5, 8];
+  // Fixed after-school anchors: [hour, minute] local time.
+  const startTimes: Array<[number, number]> = [[15, 30], [19, 0], [20, 30]];
   const durations = [90, 60, 45];
 
-  return DEMO_TASKS.map((task, i) => ({
-    id: `demo-block-${i + 1}`,
-    userId: GUEST_USER_ID,
-    taskId: task.id,
-    task,
-    startTime: isoOffsetHours(startHours[i]),
-    endTime: isoOffsetHours(startHours[i] + durations[i] / 60),
-    status: statuses[i],
-    day,
-    createdAt: now.toISOString(),
-  }));
+  return DEMO_TASKS.map((task, i) => {
+    const [h, m] = startTimes[i];
+    const start = isoAtLocalTime(h, m);
+    return {
+      id: `demo-block-${i + 1}`,
+      userId: GUEST_USER_ID,
+      taskId: task.id,
+      task,
+      startTime: start,
+      endTime: new Date(new Date(start).getTime() + durations[i] * 60_000).toISOString(),
+      status: statuses[i],
+      day,
+      createdAt: now.toISOString(),
+    };
+  });
 }
 
 export function getDemoFixedEventsForDay(day: string): FixedEvent[] {

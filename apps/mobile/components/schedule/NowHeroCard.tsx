@@ -13,6 +13,10 @@ interface NowHeroCardProps {
   estimatedMinutes: number;
   difficulty: 1 | 2 | 3 | 4 | 5;
   onStart: () => void;
+  /** 'now' when the block is live; 'next' when it hasn't started yet. */
+  mode?: 'now' | 'next';
+  /** Human start time ("7:00 PM") shown alongside UP NEXT. */
+  startsAt?: string;
 }
 
 /**
@@ -28,9 +32,12 @@ export function NowHeroCard({
   estimatedMinutes,
   difficulty,
   onStart,
+  mode = 'now',
+  startsAt,
 }: NowHeroCardProps) {
   const { colors } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
+  const isLive = mode === 'now';
 
   return (
     <View style={styles.card}>
@@ -48,8 +55,10 @@ export function NowHeroCard({
 
       <View style={styles.content}>
         <View style={styles.nowRow}>
-          <View style={styles.nowDot} />
-          <Text style={[typography.micro, styles.nowLabel]}>NOW</Text>
+          <View style={[styles.nowDot, !isLive && styles.nextDot]} />
+          <Text style={[typography.micro, styles.nowLabel]}>
+            {isLive ? 'NOW' : startsAt ? `UP NEXT · ${startsAt}` : 'UP NEXT'}
+          </Text>
         </View>
         <Text style={styles.title} numberOfLines={2}>
           {title}
@@ -102,6 +111,13 @@ function makeStyles(c: ThemeColors) {
       shadowOpacity: 0.7,
       shadowRadius: 5,
       shadowOffset: { width: 0, height: 0 },
+    },
+    // Upcoming block — hollow dot, no glow. Only live work glows.
+    nextDot: {
+      backgroundColor: 'transparent',
+      borderWidth: 1.5,
+      borderColor: c.accent.blue,
+      shadowOpacity: 0,
     },
     nowLabel: {
       color: c.accent.blue,

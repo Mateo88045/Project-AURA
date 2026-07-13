@@ -29,7 +29,10 @@ export function WeekTaskBar({ difficulty, estimatedMinutes }: WeekTaskBarProps) 
         styles.bar,
         {
           height: weekBarHeight(estimatedMinutes),
-          backgroundColor: color,
+          // Translucent body + colored edge: the load column stays readable
+          // without shouting over the rest of the screen in solid saturation.
+          backgroundColor: color + '73',
+          borderColor: color + 'A6',
           shadowColor: color,
         },
       ]}
@@ -40,10 +43,11 @@ export function WeekTaskBar({ difficulty, estimatedMinutes }: WeekTaskBarProps) 
 const styles = StyleSheet.create({
   bar: {
     width: '100%',
-    borderRadius: radius.sm,
-    // Same alive-glow language as the scheduled dot on the Today river.
-    shadowOpacity: 0.45,
-    shadowRadius: 4,
+    borderRadius: 5,
+    borderWidth: 1,
+    // A whisper of the alive-glow language from the Today river.
+    shadowOpacity: 0.25,
+    shadowRadius: 3,
     shadowOffset: { width: 0, height: 0 },
   },
 });

@@ -46,6 +46,16 @@ function formatFullDay(date: Date): string {
   });
 }
 
+// "3 tasks · 3h 15m" — the focused day's load at a glance.
+function summarizeDayLoad(minutesList: number[]): string {
+  const total = minutesList.reduce((sum, m) => sum + m, 0);
+  const hours = Math.floor(total / 60);
+  const mins = total % 60;
+  const duration = hours > 0 ? (mins > 0 ? `${hours}h ${mins}m` : `${hours}h`) : `${mins}m`;
+  const count = minutesList.length === 1 ? '1 task' : `${minutesList.length} tasks`;
+  return `${count} · ${duration}`;
+}
+
 interface WeekDayColumnProps {
   userId: string;
   date: Date;
@@ -250,6 +260,9 @@ export default function WeekScreen() {
       {/* Focused day */}
       <View style={styles.detailHeader}>
         <Text style={styles.detailTitle}>{formatFullDay(selectedDate)}</Text>
+        {!selectedLoading && !selectedError && selectedTasks.length > 0 && (
+          <Text style={styles.detailSummary}>{summarizeDayLoad(selectedTasks.map((t) => t.estimatedMinutes))}</Text>
+        )}
       </View>
 
       <ScrollView
@@ -416,6 +429,11 @@ function makeStyles(c: ThemeColors) {
     detailTitle: {
       ...typography.headline,
       color: c.text.primary,
+    },
+    detailSummary: {
+      ...typography.callout,
+      color: c.text.tertiary,
+      marginTop: 2,
     },
     scroll: {
       flex: 1,

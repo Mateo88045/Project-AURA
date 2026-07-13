@@ -90,6 +90,16 @@ interface TimelineRow {
   subject: string;
   estimatedMinutes: number;
   difficulty: 1 | 2 | 3 | 4 | 5;
+  /** Epoch ms when this row's block/event ends — rows behind us fade upstream. */
+  endMs: number;
+}
+
+// HH:MM (today, local) → epoch ms
+function msFromHHMM(hhmm: string): number {
+  const [h, m = '0'] = hhmm.split(':');
+  const d = new Date();
+  d.setHours(parseInt(h, 10), parseInt(m, 10), 0, 0);
+  return d.getTime();
 }
 
 function buildRows(blocks: ScheduledBlock[], events: FixedEvent[]): TimelineRow[] {
@@ -104,6 +114,7 @@ function buildRows(blocks: ScheduledBlock[], events: FixedEvent[]): TimelineRow[
       subject: 'Fixed',
       estimatedMinutes: 0,
       difficulty: 1,
+      endMs: msFromHHMM(event.endTime),
     });
   }
 
@@ -118,6 +129,7 @@ function buildRows(blocks: ScheduledBlock[], events: FixedEvent[]): TimelineRow[
       subject: task.subject,
       estimatedMinutes: task.estimatedMinutes,
       difficulty: task.difficulty,
+      endMs: new Date(block.endTime).getTime(),
     });
   }
 
@@ -203,7 +215,24 @@ export default function TodayScreen() {
   }));
 
   const firstName = user?.displayName?.split(' ')[0] ?? 'there';
-  const currentTask: Task | null = scheduledBlocks[0]?.task ?? null;
+
+  // Hero block: the live block if one is running, otherwise the next upcoming
+  // one. When the day's work is behind us the hero steps aside entirely —
+  // "NOW" must never point at a finished or phantom block.
+  const heroBlock = useMemo(() => {
+    const nowMs = Date.now();
+    const sorted = [...scheduledBlocks].sort(
+      (a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime(),
+    );
+    const live = sorted.find(
+      (b) => new Date(b.startTime).getTime() <= nowMs && nowMs < new Date(b.endTime).getTime(),
+    );
+    if (live?.task) return { block: live, mode: 'now' as const };
+    const upcoming = sorted.find((b) => new Date(b.startTime).getTime() > nowMs);
+    if (upcoming?.task) return { block: upcoming, mode: 'next' as const };
+    return null;
+  }, [scheduledBlocks]);
+  const currentTask: Task | null = heroBlock?.block.task ?? null;
   const rows = useMemo(
     () => buildRows(scheduledBlocks, fixedEvents),
     [scheduledBlocks, fixedEvents],
@@ -282,6 +311,12 @@ export default function TodayScreen() {
               subject={currentTask.subject}
               estimatedMinutes={currentTask.estimatedMinutes}
               difficulty={currentTask.difficulty}
+              mode={heroBlock?.mode}
+              startsAt={
+                heroBlock?.mode === 'next'
+                  ? `${clockFromIso(heroBlock.block.startTime).hh} ${clockFromIso(heroBlock.block.startTime).mer}`
+                  : undefined
+              }
               onStart={() => {
                 haptic.primaryCTA();
                 router.push(`/tasks/${currentTask.id}/active` as Href);
@@ -350,21 +385,26 @@ export default function TodayScreen() {
               <Animated.View
                 key={row.key}
                 entering={FadeIn.delay(STAGGER_MS * (5 + i)).duration(200)}
-                style={styles.timelineRow}
                 onLayout={(e) => handleRowLayout(i, e)}
               >
-                <View style={styles.timelineTimeWrap}>
-                  <Text style={styles.timelineTimeValue}>{row.clock.hh}</Text>
-                  <Text style={styles.timelineTimeMer}>{row.clock.mer}</Text>
-                </View>
-                <View style={styles.timelineBlock}>
-                  <TaskBlock
-                    title={row.title}
-                    subject={row.subject}
-                    estimatedMinutes={row.estimatedMinutes}
-                    difficulty={row.difficulty}
-                    variant={row.variant}
-                  />
+                {/* Dim on an inner wrapper — the entering FadeIn animates the
+                    outer view's opacity to 1 and would cancel it out. */}
+                <View
+                  style={[styles.timelineRow, row.endMs < Date.now() && styles.timelineRowPast]}
+                >
+                  <View style={styles.timelineTimeWrap}>
+                    <Text style={styles.timelineTimeValue}>{row.clock.hh}</Text>
+                    <Text style={styles.timelineTimeMer}>{row.clock.mer}</Text>
+                  </View>
+                  <View style={styles.timelineBlock}>
+                    <TaskBlock
+                      title={row.title}
+                      subject={row.subject}
+                      estimatedMinutes={row.estimatedMinutes}
+                      difficulty={row.difficulty}
+                      variant={row.variant}
+                    />
+                  </View>
                 </View>
               </Animated.View>
             ))}
@@ -509,6 +549,9 @@ function makeStyles(c: ThemeColors) {
       flexDirection: 'row',
       alignItems: 'center',
       marginBottom: spacing.itemGap,
+    },
+    timelineRowPast: {
+      opacity: 0.45,
     },
     timelineTimeWrap: {
       width: TIME_COL_WIDTH,

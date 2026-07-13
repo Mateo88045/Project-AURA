@@ -186,7 +186,7 @@ export function TaskBlock({
               isScheduled ? styles.titleScheduled : styles.titleFixed,
               { color: isScheduled ? colors.text.primary : colors.text.tertiary },
             ]}
-            numberOfLines={1}
+            numberOfLines={2}
           >
             {title}
           </Text>
@@ -196,7 +196,7 @@ export function TaskBlock({
             </Text>
           )}
         </View>
-        {isScheduled && <DifficultyBars level={difficulty} animated={false} />}
+        {isScheduled && <DifficultyBars level={difficulty} animated={false} size="compact" />}
       </AnimatedPressable>
     </View>
   );

@@ -1,6 +1,6 @@
 import '../global.css';
 import { useEffect } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { LogBox, StyleSheet, View } from 'react-native';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -23,6 +23,11 @@ if (sentryDsn) {
     tracesSampleRate: __DEV__ ? 1.0 : 0.2,
   });
 }
+
+// expo-notifications emits a harmless storage-read error on the iOS simulator
+// (no APNs) every launch. Silence just that message so dev builds don't open
+// with a red error toast covering the tab bar.
+LogBox.ignoreLogs([/\[expo-notifications\] Error (reading|encountered)/]);
 
 // Handle foreground notifications — show as banners
 Notifications.setNotificationHandler({
