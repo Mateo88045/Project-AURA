@@ -186,9 +186,15 @@ export default function TaskDetailScreen() {
     return (
       <View style={styles.root}>
         <AmbientOrbs />
-        <View style={[styles.loadingWrap, { paddingTop: insets.top + 40 }]}>
-          <Text style={[styles.loadingText, { marginBottom: 16 }]}>Couldn't load task.</Text>
-          <AuraButton label="Try again" variant="outline" onPress={refetch} />
+        <View style={styles.errorWrap}>
+          <Text style={styles.errorTitle}>Couldn&apos;t load this task.</Text>
+          <Text style={styles.errorBody}>
+            It may have been removed, or the connection dropped.
+          </Text>
+          <View style={styles.errorActions}>
+            <AuraButton label="Try again" variant="outline" onPress={refetch} />
+            <AuraButton label="Go back" variant="ghost" onPress={() => router.back()} />
+          </View>
         </View>
       </View>
     );
@@ -422,6 +428,28 @@ function makeStyles(c: ThemeColors) {
     loadingText: {
       ...typography.body,
       color: c.text.tertiary,
+    },
+    errorWrap: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingHorizontal: spacing.screenPadding,
+    },
+    errorTitle: {
+      ...typography.title2,
+      color: c.text.primary,
+      textAlign: 'center',
+    },
+    errorBody: {
+      ...typography.body,
+      color: c.text.secondary,
+      textAlign: 'center',
+      marginTop: spacing.sm,
+    },
+    errorActions: {
+      marginTop: spacing.xl,
+      gap: spacing.sm,
+      alignSelf: 'stretch',
     },
 
     // Header

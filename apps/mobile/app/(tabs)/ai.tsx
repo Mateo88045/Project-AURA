@@ -500,7 +500,7 @@ export default function AIHubScreen() {
           )}
           {!convoLoading && convoError && (
             <View style={styles.recentsError}>
-              <AuraText variant="callout" color="secondary">Couldn't load conversations.</AuraText>
+              <AuraText variant="callout" color="secondary">Couldn&apos;t load conversations.</AuraText>
               <AuraButton label="Retry" variant="ghost" onPress={refetchConvos} />
             </View>
           )}

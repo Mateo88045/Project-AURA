@@ -74,7 +74,7 @@ export function NotificationCenter({
       {!loading && notifications.length === 0 && (
         <View style={styles.empty}>
           <AuraSymbol name="bell.slash" size={32} color={colors.text.tertiary} />
-          <Text style={styles.emptyText}>Chronos hasn't sent you anything yet</Text>
+          <Text style={styles.emptyText}>Chronos hasn&apos;t sent you anything yet</Text>
         </View>
       )}
 

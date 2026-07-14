@@ -104,7 +104,8 @@ export default function TaskActiveScreen() {
         <View style={styles.errorWrap}>
           <AuraText variant="title2">Couldn&apos;t load this task.</AuraText>
           <AuraText variant="body" color="secondary" style={styles.errorBody}>
-            {error ?? 'The task may have been removed.'}
+            It may have been removed, or the connection dropped. Head back and
+            try again.
           </AuraText>
           <View style={styles.errorButton}>
             <AuraButton

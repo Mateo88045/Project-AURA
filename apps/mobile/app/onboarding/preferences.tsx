@@ -210,7 +210,7 @@ export default function OnboardingPreferencesScreen() {
                     </View>
 
                     <Text style={styles.bedtimeHint}>
-                      Chronos won't schedule work after your bedtime.
+                      Chronos won&apos;t schedule work after your bedtime.
                     </Text>
 
                     {/* Daily hours */}

@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { radius, spacing, typography } from '@chronos/shared/theme';
+import { radius, spacing, typography, difficultyLabels } from '@chronos/shared/theme';
 import type { ThemeColors } from '@chronos/shared/theme';
 import { useTheme } from '../../lib/theme';
 import { AuraButton } from '../ui/AuraButton';
@@ -68,6 +68,7 @@ export function NowHeroCard({
         </Text>
         <View style={styles.bars}>
           <DifficultyBars level={difficulty} animated={false} />
+          <Text style={styles.effortLabel}>{difficultyLabels[difficulty]} effort</Text>
         </View>
         <View style={styles.button}>
           <AuraButton label="Start" onPress={onStart} fullWidth />
@@ -134,6 +135,13 @@ function makeStyles(c: ThemeColors) {
     },
     bars: {
       marginTop: spacing.md,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.sm,
+    },
+    effortLabel: {
+      ...typography.callout,
+      color: c.text.secondary,
     },
     button: {
       marginTop: spacing.lg,

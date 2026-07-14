@@ -107,7 +107,11 @@ export function GlassCard({
     );
   }
 
-  if (isGlassAvailable()) {
+  // 'thick' surfaces (sheets, modals, input bars) must stay opaque-dark. In
+  // modal contexts iOS 26's UIGlassEffect has nothing to sample and resolves
+  // to a flat light-gray slab (the shadow-review sheet rendered near-white in
+  // dark mode), so thick always takes the tinted-blur path below instead.
+  if (isGlassAvailable() && intensity !== 'thick') {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     const { GlassView } = require('expo-glass-effect') as typeof import('expo-glass-effect');
     return (

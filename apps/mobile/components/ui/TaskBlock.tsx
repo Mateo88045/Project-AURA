@@ -9,9 +9,8 @@ import Animated, {
   runOnJS,
   Extrapolation,
 } from 'react-native-reanimated';
-import { radius, typography } from '@chronos/shared/theme';
+import { radius, typography, difficultyLabels } from '@chronos/shared/theme';
 import { useTheme } from '../../lib/theme';
-import { DifficultyBars } from './DifficultyBars';
 import { Springs, GestureSprings } from '@chronos/shared/constants/motion';
 import { haptic } from '../../lib/haptics';
 import { AuraSymbol } from './AuraSymbol';
@@ -21,18 +20,9 @@ const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 // Right-swipe distance that triggers completion
 const COMPLETE_THRESHOLD = 88;
 
-// Card geometry — kept as named constants so the Today timeline can align the
-// RiverLine through the dot without duplicating magic numbers.
 const CARD_BORDER_LEFT = 2;
 const CARD_PADDING_H = 14;
 const DOT_SIZE = 6;
-/**
- * X-offset (px) of the dot's center from the TaskBlock's own left edge.
- * The Today timeline adds its column offsets to this so the river threads
- * exactly through every dot. If the card padding/border/dot size change,
- * this updates with them.
- */
-export const TASK_BLOCK_DOT_CENTER = CARD_BORDER_LEFT + CARD_PADDING_H + DOT_SIZE / 2;
 
 interface TaskBlockProps {
   title: string;
@@ -43,6 +33,8 @@ interface TaskBlockProps {
   onPress?: () => void;
   /** Called when the user swipes right past the threshold. Scheduled tasks only. */
   onComplete?: () => void;
+  /** Hide the in-card status dot when an external rail (Today timeline) owns it. */
+  showDot?: boolean;
   style?: ViewStyle;
 }
 
@@ -54,6 +46,7 @@ export function TaskBlock({
   variant,
   onPress,
   onComplete,
+  showDot = true,
   style,
 }: TaskBlockProps) {
   const { colors } = useTheme();
@@ -172,21 +165,23 @@ export function TaskBlock({
           pressStyle,
         ]}
       >
-        <View style={styles.dot}>
-          <View
-            style={[
-              styles.dotInner,
-              isScheduled
-                ? {
-                    backgroundColor: difficultyColor,
-                    shadowColor: difficultyColor,
-                    shadowOpacity: 0.6,
-                    shadowRadius: 6,
-                  }
-                : { borderWidth: 1.5, borderColor: colors.border.glass },
-            ]}
-          />
-        </View>
+        {showDot && (
+          <View style={styles.dot}>
+            <View
+              style={[
+                styles.dotInner,
+                isScheduled
+                  ? {
+                      backgroundColor: difficultyColor,
+                      shadowColor: difficultyColor,
+                      shadowOpacity: 0.6,
+                      shadowRadius: 6,
+                    }
+                  : { borderWidth: 1.5, borderColor: colors.border.glass },
+              ]}
+            />
+          </View>
+        )}
         <View style={styles.content}>
           <Text
             style={[
@@ -199,11 +194,13 @@ export function TaskBlock({
           </Text>
           {isScheduled && (
             <Text style={[styles.meta, { color: colors.text.secondary }]}>
-              {subject} · {estimatedMinutes}m
+              {subject} · {estimatedMinutes}m ·{' '}
+              <Text style={[styles.difficultyWord, { color: difficultyColor }]}>
+                {difficultyLabels[difficulty]}
+              </Text>
             </Text>
           )}
         </View>
-        {isScheduled && <DifficultyBars level={difficulty} animated={false} size="compact" />}
       </AnimatedPressable>
     </View>
   );
@@ -224,6 +221,7 @@ const styles = StyleSheet.create({
   base: {
     flexDirection: 'row',
     alignItems: 'center',
+    minHeight: 44,
     paddingHorizontal: CARD_PADDING_H,
     paddingVertical: 10,
     borderLeftWidth: CARD_BORDER_LEFT,
@@ -238,4 +236,5 @@ const styles = StyleSheet.create({
   titleScheduled: { ...typography.headline },
   titleFixed: { ...typography.body },
   meta: { ...typography.callout, marginTop: 2 },
+  difficultyWord: { fontWeight: '600' as const },
 });

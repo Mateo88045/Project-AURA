@@ -1,14 +1,5 @@
-import { useEffect } from 'react';
-import { StyleSheet, Text, type StyleProp, type TextStyle } from 'react-native';
-import Animated, {
-  useSharedValue,
-  useDerivedValue,
-  useAnimatedProps,
-  withTiming,
-  Easing,
-} from 'react-native-reanimated';
-
-const AnimatedText = Animated.createAnimatedComponent(Text);
+import { useEffect, useState } from 'react';
+import { Text, type StyleProp, type TextStyle } from 'react-native';
 
 interface CountUpTextProps {
   /** Target value to count up to */
@@ -20,35 +11,36 @@ interface CountUpTextProps {
   style?: StyleProp<TextStyle>;
 }
 
+/**
+ * Animated number that counts up to `value` on mount.
+ *
+ * Runs on the JS thread via requestAnimationFrame + setState on purpose: the
+ * native-driven alternatives both break here — animatedProps.text is a no-op
+ * on Text (children are JS-side), and on TextInput Fabric doesn't relayout on
+ * UI-thread text changes, so grown digits get clipped ("23" froze at "2").
+ * A plain Text re-rendered per frame lays out and baseline-aligns correctly,
+ * and a sub-second count-up is far too light to contend the JS thread.
+ */
 export function CountUpText({ value, suffix = '', duration = 800, style }: CountUpTextProps) {
-  const progress = useSharedValue(0);
+  const [displayed, setDisplayed] = useState(0);
 
   useEffect(() => {
-    progress.value = 0;
-    progress.value = withTiming(1, {
-      duration,
-      easing: Easing.out(Easing.quad),
-    });
-  }, [value, duration, progress]);
-
-  const displayValue = useDerivedValue(() =>
-    String(Math.round(progress.value * value)) + suffix,
-  );
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- animatedProps.text is a Reanimated pattern not in RN types
-  const animatedProps = useAnimatedProps<any>(() => ({
-    text: displayValue.value,
-    children: displayValue.value,
-  }));
+    let raf: number;
+    const startMs = Date.now();
+    const tick = () => {
+      const t = Math.min(1, (Date.now() - startMs) / duration);
+      const eased = 1 - (1 - t) * (1 - t); // ease-out quad
+      setDisplayed(Math.round(eased * value));
+      if (t < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [value, duration]);
 
   return (
-    <AnimatedText
-      animatedProps={animatedProps}
-      style={[styles.base, style]}
-    />
+    <Text style={style} accessibilityLabel={String(value) + suffix}>
+      {displayed}
+      {suffix}
+    </Text>
   );
 }
-
-const styles = StyleSheet.create({
-  base: {},
-});

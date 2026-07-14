@@ -94,7 +94,8 @@ export const PLANS: Record<BillingInterval, SubscriptionPlan> = {
     regularPriceLabel: '$100',
     periodLabel: 'per year',
     footnote: '$6.58/mo · billed annually',
-    badge: 'Best value · Save 45%',
+    // Short enough to never truncate inside the narrow plan-card badge.
+    badge: 'Save 45%',
   },
   monthly: {
     productId: 'chronos_early_monthly',

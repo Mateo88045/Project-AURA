@@ -123,14 +123,16 @@ function makeStyles(c: ThemeColors) {
       marginTop: spacing.sm,
       gap: spacing.xs,
     },
+    // Secondary, not tertiary — this line is real information (load, drafts)
+    // and tertiary fails contrast at caption size on the dark canvas.
     statsLine: {
       ...typography.caption,
-      color: c.text.tertiary,
+      color: c.text.secondary,
       fontVariant: ['tabular-nums'],
     },
     voiceLine: {
       ...typography.bodyMedium,
-      color: c.text.secondary,
+      color: c.text.primary,
     },
   });
 }

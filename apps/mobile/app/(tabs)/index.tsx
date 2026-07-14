@@ -1,5 +1,6 @@
-import { useCallback, useMemo, useState } from 'react';
+import { Fragment, useCallback, useMemo, useState } from 'react';
 import { View, Pressable, StyleSheet, Text, type LayoutChangeEvent } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter, type Href } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, {
@@ -28,12 +29,20 @@ import { NotificationCenter } from '../../components/ui/NotificationCenter';
 import { useNotifications } from '../../hooks/useNotifications';
 import { AuraSkeleton } from '../../components/ui/AuraSkeleton';
 import { AuraSymbol } from '../../components/ui/AuraSymbol';
-import { TaskBlock, TASK_BLOCK_DOT_CENTER } from '../../components/ui/TaskBlock';
 import { RiverLine } from '../../components/ui/RiverLine';
 import { CalmEmptyState } from '../../components/ui/CalmEmptyState';
 import { StreakChip } from '../../components/ui/StreakChip';
 import { DayPulse } from '../../components/schedule/DayPulse';
 import { NowHeroCard } from '../../components/schedule/NowHeroCard';
+import {
+  TimelineRow,
+  TIMELINE_TIME_WIDTH,
+  TIMELINE_RAIL_WIDTH,
+  TIMELINE_CARD_GAP,
+  TIMELINE_RAIL_X,
+} from '../../components/schedule/TimelineRow';
+import { PastRow } from '../../components/schedule/PastRow';
+import { NowDivider } from '../../components/schedule/NowDivider';
 import { useStreak } from '../../hooks/useStreak';
 import { haptic } from '../../lib/haptics';
 import { toLocalDayIso } from '../../lib/localDate';
@@ -41,11 +50,6 @@ import { useAuth } from '../../hooks/useAuth';
 import { useRequirePro } from '../../lib/requirePro';
 import type { Task, ScheduledBlock, FixedEvent } from '@chronos/shared/types';
 const STAGGER_MS = 40;
-// Timeline geometry — the time column and the gap before each block. The river's
-// x is these plus the TaskBlock's own dot inset, so the line threads every dot.
-const TIME_COL_WIDTH = 48;
-const BLOCK_GAP = 16;
-const RIVER_LINE_X = TIME_COL_WIDTH + BLOCK_GAP + TASK_BLOCK_DOT_CENTER;
 // Scroll distance over which the greeting collapses
 const GREETING_COLLAPSE_RANGE = 80;
 // Hero parallax: translate at 0.3x scroll speed, capped at -30
@@ -83,7 +87,7 @@ function getGreeting(): string {
   return 'Good evening,';
 }
 
-interface TimelineRow {
+interface RiverRow {
   key: string;
   clock: Clock;
   variant: 'fixed' | 'scheduled';
@@ -103,8 +107,8 @@ function msFromHHMM(hhmm: string): number {
   return d.getTime();
 }
 
-function buildRows(blocks: ScheduledBlock[], events: FixedEvent[]): TimelineRow[] {
-  const rows: TimelineRow[] = [];
+function buildRows(blocks: ScheduledBlock[], events: FixedEvent[]): RiverRow[] {
+  const rows: RiverRow[] = [];
 
   for (const event of events) {
     rows.push({
@@ -239,6 +243,11 @@ export default function TodayScreen() {
     [scheduledBlocks, fixedEvents],
   );
 
+  // "Now" splits the river: rows that ended collapse into compact done lines,
+  // and the NOW marker sits right before the first row still ahead of us.
+  const nowMs = Date.now();
+  const firstUpcomingIndex = rows.findIndex((row) => row.endMs >= nowMs);
+
   // River geometry — the thread should begin at the first dot and end at the
   // last, not overhang the ends. Each dot sits at its row's vertical center, so
   // we inset the line by half the first/last row's measured height.
@@ -295,7 +304,9 @@ export default function TodayScreen() {
 
       <Animated.ScrollView
         style={styles.scroll}
-        contentContainerStyle={{ paddingBottom: 160 }}
+        // Clears the FAB (bottom: insets.bottom + 100, 52 tall) plus breathing
+        // room, so the last card can always scroll out from under it.
+        contentContainerStyle={{ paddingBottom: insets.bottom + 180 }}
         showsVerticalScrollIndicator={false}
         bounces={false}
         onScroll={scrollHandler}
@@ -344,13 +355,14 @@ export default function TodayScreen() {
         {/* Loading — the river forming, so the wait reads as "settling" */}
         {loading && (
           <View style={styles.timeline}>
-            <RiverLine x={RIVER_LINE_X} />
+            <RiverLine x={TIMELINE_RAIL_X} />
             {[0, 1, 2].map((i) => (
-              <View key={i} style={styles.timelineRow}>
-                <View style={styles.timelineTimeWrap}>
+              <View key={i} style={styles.skeletonRow}>
+                <View style={styles.skeletonTimeWrap}>
                   <AuraSkeleton width={32} height={14} />
                 </View>
-                <View style={styles.timelineBlock}>
+                <View style={styles.skeletonRail} />
+                <View style={styles.skeletonCard}>
                   <AuraSkeleton height={60} style={styles.skeletonBlock} />
                 </View>
               </View>
@@ -378,40 +390,62 @@ export default function TodayScreen() {
           </View>
         )}
 
-        {/* River Timeline */}
+        {/* River Timeline — past rows collapse, a NOW marker splits done from ahead */}
         {!loading && !error && rows.length > 0 && (
           <View style={styles.timeline}>
-            <RiverLine x={RIVER_LINE_X} top={riverTopInset} bottom={riverBottomInset} />
+            <RiverLine x={TIMELINE_RAIL_X} top={riverTopInset} bottom={riverBottomInset} />
             {rows.map((row, i) => (
-              <Animated.View
-                key={row.key}
-                entering={FadeIn.delay(STAGGER_MS * (5 + i)).duration(200)}
-                onLayout={(e) => handleRowLayout(i, e)}
-              >
-                {/* Dim on an inner wrapper — the entering FadeIn animates the
-                    outer view's opacity to 1 and would cancel it out. */}
-                <View
-                  style={[styles.timelineRow, row.endMs < Date.now() && styles.timelineRowPast]}
+              <Fragment key={row.key}>
+                {i === firstUpcomingIndex && i > 0 && (
+                  <Animated.View
+                    entering={FadeIn.delay(STAGGER_MS * (5 + i)).duration(200)}
+                    style={styles.rowSpacing}
+                  >
+                    <NowDivider />
+                  </Animated.View>
+                )}
+                <Animated.View
+                  entering={FadeIn.delay(STAGGER_MS * (5 + i)).duration(200)}
+                  onLayout={(e) => handleRowLayout(i, e)}
+                  style={styles.rowSpacing}
                 >
-                  <View style={styles.timelineTimeWrap}>
-                    <Text style={styles.timelineTimeValue}>{row.clock.hh}</Text>
-                    <Text style={styles.timelineTimeMer}>{row.clock.mer}</Text>
-                  </View>
-                  <View style={styles.timelineBlock}>
-                    <TaskBlock
+                  {row.endMs < nowMs ? (
+                    <PastRow
+                      timeValue={row.clock.hh}
+                      meridiem={row.clock.mer}
+                      title={row.title}
+                      variant={row.variant}
+                    />
+                  ) : (
+                    <TimelineRow
+                      timeValue={row.clock.hh}
+                      meridiem={row.clock.mer}
                       title={row.title}
                       subject={row.subject}
                       estimatedMinutes={row.estimatedMinutes}
                       difficulty={row.difficulty}
                       variant={row.variant}
                     />
-                  </View>
-                </View>
-              </Animated.View>
+                  )}
+                </Animated.View>
+              </Fragment>
             ))}
           </View>
         )}
       </Animated.ScrollView>
+
+      {/* Bottom scrim — quiet fade to canvas so the FAB and tab bar sit on a
+          settled layer instead of colliding with the last timeline rows. */}
+      <LinearGradient
+        colors={[
+          colors.background.primary + '00',
+          colors.background.primary + 'CC',
+          colors.background.primary,
+        ]}
+        locations={[0, 0.55, 1]}
+        style={[styles.bottomScrim, { height: insets.bottom + 150 }]}
+        pointerEvents="none"
+      />
 
       <NotificationCenter
         visible={notifVisible}
@@ -474,9 +508,8 @@ function makeStyles(c: ThemeColors) {
       marginTop: 6,
     },
     date: {
-      fontSize: 15,
-      fontWeight: '400' as const,
-      color: c.text.tertiary,
+      ...typography.body,
+      color: c.text.secondary,
     },
     headerRight: {
       flexDirection: 'row',
@@ -485,16 +518,16 @@ function makeStyles(c: ThemeColors) {
       marginTop: 6,
     },
     bellBtn: {
-      width: 36,
-      height: 36,
-      borderRadius: 18,
+      width: 44,
+      height: 44,
+      borderRadius: 22,
       alignItems: 'center',
       justifyContent: 'center',
     },
     bellBadge: {
       position: 'absolute',
-      top: 0,
-      right: 0,
+      top: 4,
+      right: 4,
       minWidth: 16,
       height: 16,
       borderRadius: 8,
@@ -546,37 +579,30 @@ function makeStyles(c: ThemeColors) {
     timeline: {
       position: 'relative',
     },
-    timelineRow: {
+    rowSpacing: {
+      marginBottom: spacing.itemGap,
+    },
+    skeletonRow: {
       flexDirection: 'row',
       alignItems: 'center',
       marginBottom: spacing.itemGap,
     },
-    timelineRowPast: {
-      opacity: 0.45,
-    },
-    timelineTimeWrap: {
-      width: TIME_COL_WIDTH,
+    skeletonTimeWrap: {
+      width: TIMELINE_TIME_WIDTH,
       alignItems: 'flex-end',
-      paddingTop: 2,
     },
-    timelineTimeValue: {
-      fontSize: 15,
-      fontWeight: '600',
-      letterSpacing: -0.2,
-      color: c.text.secondary,
-      fontVariant: ['tabular-nums'],
-      lineHeight: 18,
+    skeletonRail: {
+      width: TIMELINE_RAIL_WIDTH,
     },
-    timelineTimeMer: {
-      fontSize: 9,
-      fontWeight: '700',
-      letterSpacing: 1.1,
-      color: c.text.tertiary,
-      marginTop: -1,
-    },
-    timelineBlock: {
+    skeletonCard: {
       flex: 1,
-      marginLeft: BLOCK_GAP,
+      marginLeft: TIMELINE_CARD_GAP,
+    },
+    bottomScrim: {
+      position: 'absolute',
+      left: -spacing.screenPadding,
+      right: -spacing.screenPadding,
+      bottom: 0,
     },
     fab: {
       position: 'absolute',
@@ -587,11 +613,13 @@ function makeStyles(c: ThemeColors) {
       backgroundColor: c.accent.blue,
       alignItems: 'center',
       justifyContent: 'center',
+      // The scrim below the FAB handles separation from the list; the shadow
+      // is just a soft lift now, not a glow doing collision control.
       shadowColor: c.accent.blue,
-      shadowOpacity: 0.5,
-      shadowRadius: 16,
+      shadowOpacity: 0.3,
+      shadowRadius: 10,
       shadowOffset: { width: 0, height: 4 },
-      elevation: 8,
+      elevation: 6,
     },
   });
 }

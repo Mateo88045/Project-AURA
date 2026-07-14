@@ -72,24 +72,6 @@ const TAB_LABELS: Record<string, string> = {
   settings: 'Settings',
 };
 
-// ---------------------------------------------------------------------------
-// Glass availability — synchronous, cached
-// ---------------------------------------------------------------------------
-
-let _glassAvailable: boolean | null = null;
-
-function isGlassAvailable(): boolean {
-  if (_glassAvailable !== null) return _glassAvailable;
-  try {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const mod = require('expo-glass-effect') as typeof import('expo-glass-effect');
-    _glassAvailable = mod.isLiquidGlassAvailable?.() ?? false;
-  } catch {
-    _glassAvailable = false;
-  }
-  return _glassAvailable;
-}
-
 interface GlassBackgroundProps {
   children: ReactNode;
   styles: ReturnType<typeof makeStyles>;
@@ -122,16 +104,10 @@ function GlassBackground({ children, styles, resolvedMode }: GlassBackgroundProp
     return <View style={[styles.pill, styles.solidBg]}>{children}</View>;
   }
 
-  if (isGlassAvailable()) {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const { GlassView } = require('expo-glass-effect') as typeof import('expo-glass-effect');
-    return (
-      <GlassView glassEffectStyle="regular" style={styles.pill}>
-        {children}
-      </GlassView>
-    );
-  }
-
+  // Deliberately NOT iOS 26 GlassView here: UIGlassEffect's edge lensing
+  // refracts the content scrolling beneath the pill into mirrored, upside-down
+  // ghost text, and the effect composites above child views so no scrim can
+  // cover it. A tinted blur reads just as glassy without the artifacts.
   return (
     <BlurView
       intensity={70}
