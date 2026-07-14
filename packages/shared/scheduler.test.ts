@@ -105,6 +105,24 @@ test('multi-day chunking splits work across days', () => {
   assert(result.overloadedTasks.length === 0, 'should not overload');
 });
 
+test('max_hours_per_day holds when one task spans multiple slots in a day', () => {
+  // A midday event splits the day into two large free slots. A 150-min task
+  // with a 60-min/day cap must not fill both slots on day one.
+  const midday: FixedEvent[] = [
+    { id: 'lunch', userId: 'u', title: 'Lunch', startTime: '12:00', endTime: '13:00', daysOfWeek: [1, 2], createdAt: '' },
+  ];
+  const result = schedule({
+    tasks: [task('t1', 150)],
+    fixedEventsByDay: { '2026-06-01': midday, '2026-06-02': midday },
+    dayKeys: ['2026-06-01', '2026-06-02'],
+    guardrails: [
+      { id: 'g', userId: 'u', ruleType: 'max_hours_per_day', value: { hours: 1 }, active: true, createdAt: '' },
+    ],
+  });
+  const day1 = result.scheduledChunks.filter((c) => c.day === '2026-06-01').reduce((a, c) => a + c.chunkMinutes, 0);
+  assert(day1 <= 60, `day1 exceeded 60-min cap across slots: ${day1}`);
+});
+
 test('no_work_after guardrail is respected', () => {
   const result = schedule({
     tasks: [task('t1', 300)],

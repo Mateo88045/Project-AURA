@@ -29,8 +29,6 @@ import { gradeAssignmentPhoto } from '../../services/ocr';
 import { haptic } from '../../lib/haptics';
 import { useAuth } from '../../hooks/useAuth';
 
-const STAGGER_MS = 40;
-
 const TASK_TYPES: { value: TaskType; label: string }[] = [
   { value: 'essay', label: 'Essay' },
   { value: 'problem_set', label: 'Problem Set' },

@@ -283,11 +283,11 @@ function Row({
 // Appearance picker — three-way pill toggle (Light / Dark / Auto)
 // ---------------------------------------------------------------------------
 
-const APPEARANCE_OPTIONS: Array<{
+const APPEARANCE_OPTIONS: {
   value: ThemeMode;
   label: string;
   icon: string;
-}> = [
+}[] = [
   { value: 'light', label: 'Light', icon: 'sun.max.fill' },
   { value: 'dark',  label: 'Dark',  icon: 'moon.fill' },
   { value: 'auto',  label: 'Auto',  icon: 'circle.lefthalf.filled' },

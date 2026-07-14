@@ -9,7 +9,7 @@ import {
   subscribeGuestMode,
 } from '../lib/guest';
 
-interface AuthUser extends Pick<User, 'id' | 'email' | 'displayName'> {}
+type AuthUser = Pick<User, 'id' | 'email' | 'displayName'>;
 
 const GUEST_USER: AuthUser = {
   id: GUEST_USER_ID,

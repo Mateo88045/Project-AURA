@@ -1,20 +1,11 @@
 import { useMemo, useState } from 'react';
-import {
-  View,
-  StyleSheet,
-  Text,
-  TextInput,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  Pressable,
-} from 'react-native';
+import { View, StyleSheet, Text } from 'react-native';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeIn, FadeInDown, FadeInUp } from 'react-native-reanimated';
 import Svg, { Path } from 'react-native-svg';
-import { radius, spacing, typography } from '@chronos/shared/theme';
+import { spacing, typography } from '@chronos/shared/theme';
 import type { ThemeColors } from '@chronos/shared/theme';
 import { useTheme, type ResolvedMode } from '../lib/theme';
 import { AmbientOrbs } from '../components/ui/AmbientOrbs';
@@ -25,7 +16,6 @@ import {
   initiateAppleSignIn,
   isAppleSignInAvailable,
 } from '../services/oauthService';
-import { supabase } from '@chronos/shared/supabase';
 import { haptic } from '../lib/haptics';
 import { enableGuestMode } from '../lib/guest';
 

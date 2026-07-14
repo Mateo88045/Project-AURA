@@ -12,6 +12,7 @@ import type { Config } from 'tailwindcss';
 
 export default {
   content: ["./app/**/*.{js,jsx,ts,tsx}", "./components/**/*.{js,jsx,ts,tsx}"],
+  // eslint-disable-next-line @typescript-eslint/no-require-imports -- tailwind presets must be require()'d
   presets: [require("nativewind/preset")],
   theme: {
     extend: {

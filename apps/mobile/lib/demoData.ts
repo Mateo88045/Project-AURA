@@ -94,7 +94,7 @@ export function getDemoScheduledBlocksForDay(day: string): ScheduledBlock[] {
 
   const statuses: ScheduledBlock['status'][] = ['approved', 'approved', 'shadow'];
   // Fixed after-school anchors: [hour, minute] local time.
-  const startTimes: Array<[number, number]> = [[15, 30], [19, 0], [20, 30]];
+  const startTimes: [number, number][] = [[15, 30], [19, 0], [20, 30]];
   const durations = [90, 60, 45];
 
   return DEMO_TASKS.map((task, i) => {

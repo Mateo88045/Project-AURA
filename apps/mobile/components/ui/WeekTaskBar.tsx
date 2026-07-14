@@ -1,5 +1,4 @@
 import { View, StyleSheet } from 'react-native';
-import { radius } from '@chronos/shared/theme';
 import { useTheme } from '../../lib/theme';
 
 // Compact stand-in for a task in the week-at-a-glance grid: a single glowing

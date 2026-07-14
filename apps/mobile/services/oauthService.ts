@@ -146,7 +146,7 @@ async function initiateAppleNative(): Promise<boolean> {
     // Lazy require — the native module isn't in Expo Go, so a top-level import
     // would crash there. `isAppleSignInAvailable` guards the call site, but we
     // also catch here as a belt-and-braces measure.
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     AppleAuthentication = require('expo-apple-authentication');
   } catch {
     console.warn('[Apple] expo-apple-authentication native module not available');

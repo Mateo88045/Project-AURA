@@ -66,8 +66,7 @@ export function schedule(input: SchedulerInput): ScheduleResult {
 
     for (const day of input.dayKeys) {
       if (remaining <= 0) break;
-      const dayCapacityLeft = (maxPerDay ?? Infinity) - (usedByDay[day] ?? 0);
-      if (dayCapacityLeft <= 0) continue;
+      if ((maxPerDay ?? Infinity) - usedByDay[day] <= 0) continue;
 
       // Sort slots longest first each iteration so picks stay fresh.
       const slots = slotsByDay[day]
@@ -77,12 +76,11 @@ export function schedule(input: SchedulerInput): ScheduleResult {
       for (const slot of slots) {
         if (remaining <= 0) break;
         const slotMin = slot.endMinute - slot.startMinute;
-        const chunkMin = Math.min(
-          slotMin,
-          remaining,
-          MAX_CHUNK_MIN,
-          dayCapacityLeft - (usedByDay[day] - (usedByDay[day] ?? 0)),
-        );
+        // Recompute remaining day capacity on every placement — a task may fill
+        // several slots in one day, and each chunk eats into the same daily cap.
+        const dayCapacityLeft = (maxPerDay ?? Infinity) - usedByDay[day];
+        if (dayCapacityLeft <= 0) break;
+        const chunkMin = Math.min(slotMin, remaining, MAX_CHUNK_MIN, dayCapacityLeft);
         if (chunkMin < MIN_CHUNK_MIN) continue;
 
         const start = slot.startMinute;

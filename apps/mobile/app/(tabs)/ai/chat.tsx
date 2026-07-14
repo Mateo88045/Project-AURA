@@ -393,7 +393,7 @@ export default function AIChatScreen() {
         .eq('user_id', userId)
         .maybeSingle();
       if (cancelled) return;
-      const history = (data?.messages ?? []) as Array<{ role?: string; content?: unknown }>;
+      const history = (data?.messages ?? []) as { role?: string; content?: unknown }[];
       const hydrated: Row[] = history
         .filter(
           (m): m is { role: 'user' | 'assistant'; content: string } =>

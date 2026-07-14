@@ -15,32 +15,18 @@ import Animated, {
   FadeInUp,
   useSharedValue,
   useAnimatedStyle,
-  withDelay,
   withRepeat,
   withSequence,
-  withSpring,
   withTiming,
   Easing,
 } from 'react-native-reanimated';
 import { spacing, typography } from '@chronos/shared/theme';
 import type { ThemeColors } from '@chronos/shared/theme';
-import { useTheme, type ResolvedMode } from '../../lib/theme';
+import { useTheme } from '../../lib/theme';
 import { AmbientOrbs } from '../../components/ui/AmbientOrbs';
 import { GlassCard } from '../../components/ui/GlassCard';
 import { AuraSymbol } from '../../components/ui/AuraSymbol';
 import { haptic } from '../../lib/haptics';
-
-function trackBg(mode: ResolvedMode): string {
-  return mode === 'light' ? 'rgba(15, 23, 42, 0.06)' : 'rgba(255, 255, 255, 0.06)';
-}
-
-function trackCenterLineBg(mode: ResolvedMode): string {
-  return mode === 'light' ? 'rgba(15, 23, 42, 0.18)' : 'rgba(255, 255, 255, 0.15)';
-}
-
-function peakBarBg(mode: ResolvedMode): string {
-  return mode === 'light' ? 'rgba(15, 23, 42, 0.05)' : 'rgba(255, 255, 255, 0.04)';
-}
 
 // ---------------------------------------------------------------------------
 // Brain orb — pulsing violet sphere at hero. Symbolizes the learned model.
@@ -147,313 +133,15 @@ function makeOrbStyles(c: ThemeColors) {
 }
 
 // ---------------------------------------------------------------------------
-// Velocity row — subject with animated multiplier bar
-// ---------------------------------------------------------------------------
-
-interface VelocityRowProps {
-  subject: string;
-  tint: string;
-  /** 1.0 = exactly as estimated. >1 = slower than estimated. <1 = faster. */
-  multiplier: number;
-  confidence: number; // 0–1
-  delay?: number;
-  colors: ThemeColors;
-  velocityStyles: ReturnType<typeof makeVelocityStyles>;
-}
-
-function VelocityRow({
-  subject,
-  tint,
-  multiplier,
-  confidence,
-  delay = 0,
-  colors,
-  velocityStyles,
-}: VelocityRowProps) {
-  const fillProgress = useSharedValue(0);
-
-  useEffect(() => {
-    // Map multiplier range [0.6 .. 1.4] to [0..1] for bar position
-    const clamped = Math.max(0.6, Math.min(1.4, multiplier));
-    const normalized = (clamped - 0.6) / 0.8;
-    fillProgress.value = withDelay(
-      delay,
-      withTiming(normalized, { duration: 900, easing: Easing.out(Easing.cubic) }),
-    );
-  }, [multiplier, delay, fillProgress]);
-
-  const fillStyle = useAnimatedStyle(() => ({
-    left: `${fillProgress.value * 100}%`,
-  }));
-
-  const label =
-    multiplier > 1.05
-      ? `${Math.round((multiplier - 1) * 100)}% longer`
-      : multiplier < 0.95
-        ? `${Math.round((1 - multiplier) * 100)}% faster`
-        : 'On target';
-
-  const labelColor =
-    multiplier > 1.1
-      ? colors.accent.coral
-      : multiplier < 0.9
-        ? colors.accent.emerald
-        : colors.accent.sky;
-
-  return (
-    <Animated.View
-      entering={FadeInUp.delay(delay).duration(500)}
-      style={velocityStyles.row}
-    >
-      <View style={velocityStyles.topRow}>
-        <View style={velocityStyles.subjectWrap}>
-          <View style={[velocityStyles.dot, { backgroundColor: tint }]} />
-          <Text style={velocityStyles.subject}>{subject}</Text>
-        </View>
-        <Text style={[velocityStyles.delta, { color: labelColor }]}>{label}</Text>
-      </View>
-      <View style={velocityStyles.track}>
-        <View style={velocityStyles.trackCenterLine} />
-        <Animated.View style={[velocityStyles.marker, { backgroundColor: tint }, fillStyle]} />
-      </View>
-      <View style={velocityStyles.confidenceRow}>
-        <Text style={velocityStyles.confidenceLabel}>
-          Confidence · based on {Math.round(confidence * 30)} tasks
-        </Text>
-      </View>
-    </Animated.View>
-  );
-}
-
-function makeVelocityStyles(c: ThemeColors, mode: ResolvedMode) {
-  return StyleSheet.create({
-    row: {
-      gap: 8,
-    },
-    topRow: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'baseline',
-    },
-    subjectWrap: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 8,
-    },
-    dot: {
-      width: 6,
-      height: 6,
-      borderRadius: 3,
-    },
-    subject: {
-      ...typography.bodyMedium,
-      color: c.text.primary,
-    },
-    delta: {
-      ...typography.callout,
-      fontVariant: ['tabular-nums'],
-    },
-    track: {
-      height: 6,
-      borderRadius: 3,
-      backgroundColor: trackBg(mode),
-      position: 'relative',
-      overflow: 'visible',
-    } as ViewStyle,
-    trackCenterLine: {
-      position: 'absolute',
-      left: '50%',
-      top: -2,
-      bottom: -2,
-      width: 1,
-      backgroundColor: trackCenterLineBg(mode),
-    },
-    marker: {
-      position: 'absolute',
-      top: -4,
-      width: 14,
-      height: 14,
-      borderRadius: 7,
-      marginLeft: -7,
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 0 },
-      shadowOpacity: 0.5,
-      shadowRadius: 6,
-    },
-    confidenceRow: {
-      marginTop: 2,
-    },
-    confidenceLabel: {
-      ...typography.micro,
-      color: c.text.tertiary,
-      textTransform: 'none',
-    },
-  });
-}
-
-// ---------------------------------------------------------------------------
-// Peak time card — when the user is most productive
-// ---------------------------------------------------------------------------
-
-interface PeakBarProps {
-  label: string;
-  score: number; // 0–1
-  tint: string;
-  delay?: number;
-  peakStyles: ReturnType<typeof makePeakStyles>;
-}
-
-function PeakBar({ label, score, tint, delay = 0, peakStyles }: PeakBarProps) {
-  const height = useSharedValue(0);
-
-  useEffect(() => {
-    height.value = withDelay(
-      delay,
-      withSpring(score, { damping: 14, stiffness: 140 }),
-    );
-  }, [score, delay, height]);
-
-  const fillStyle = useAnimatedStyle(() => ({
-    height: `${height.value * 100}%`,
-  }));
-
-  return (
-    <View style={peakStyles.col}>
-      <View style={peakStyles.barWrap}>
-        <Animated.View style={[peakStyles.bar, { backgroundColor: tint }, fillStyle]} />
-      </View>
-      <Text style={peakStyles.label}>{label}</Text>
-    </View>
-  );
-}
-
-function makePeakStyles(c: ThemeColors, mode: ResolvedMode) {
-  return StyleSheet.create({
-    col: {
-      flex: 1,
-      alignItems: 'center',
-      gap: 8,
-    },
-    barWrap: {
-      width: 22,
-      height: 80,
-      justifyContent: 'flex-end',
-      backgroundColor: peakBarBg(mode),
-      borderRadius: 11,
-      overflow: 'hidden',
-    },
-    bar: {
-      width: '100%',
-      borderRadius: 11,
-      shadowColor: c.accent.sky,
-      shadowOffset: { width: 0, height: 0 },
-      shadowOpacity: 0.4,
-      shadowRadius: 8,
-    } as ViewStyle,
-    label: {
-      ...typography.micro,
-      color: c.text.tertiary,
-    },
-  });
-}
-
-// ---------------------------------------------------------------------------
-// Insight row — Chronos's narrative findings
-// ---------------------------------------------------------------------------
-
-interface InsightRowProps {
-  icon: string;
-  tint: string;
-  title: string;
-  body: string;
-  isLast?: boolean;
-  insightStyles: ReturnType<typeof makeInsightStyles>;
-}
-
-function InsightRow({ icon, tint, title, body, isLast = false, insightStyles }: InsightRowProps) {
-  return (
-    <>
-      <View style={insightStyles.row}>
-        <View style={[insightStyles.iconBox, { backgroundColor: tint + '22' }]}>
-          <AuraSymbol name={icon} size={14} color={tint} weight="semibold" />
-        </View>
-        <View style={insightStyles.textCol}>
-          <Text style={insightStyles.title}>{title}</Text>
-          <Text style={insightStyles.body}>{body}</Text>
-        </View>
-      </View>
-      {!isLast ? <View style={insightStyles.divider} /> : null}
-    </>
-  );
-}
-
-function makeInsightStyles(c: ThemeColors) {
-  return StyleSheet.create({
-    row: {
-      flexDirection: 'row',
-      alignItems: 'flex-start',
-      gap: 12,
-      paddingHorizontal: spacing.cardPadding,
-      paddingVertical: 14,
-    },
-    iconBox: {
-      width: 28,
-      height: 28,
-      borderRadius: 9,
-      alignItems: 'center',
-      justifyContent: 'center',
-      marginTop: 2,
-    },
-    textCol: {
-      flex: 1,
-    },
-    title: {
-      ...typography.bodyMedium,
-      color: c.text.primary,
-    },
-    body: {
-      ...typography.callout,
-      color: c.text.secondary,
-      marginTop: 4,
-      lineHeight: 18,
-    },
-    divider: {
-      height: StyleSheet.hairlineWidth,
-      backgroundColor: c.border.subtle,
-      marginLeft: spacing.cardPadding + 40,
-    },
-  });
-}
-
-// ---------------------------------------------------------------------------
-// Mock data — tints resolved at render against the active theme
-// ---------------------------------------------------------------------------
-
-type AccentKey = 'coral' | 'blue' | 'emerald' | 'violet' | 'amber' | 'sky';
-
-interface VelocityData {
-  subject: string;
-  tintKey: AccentKey;
-  multiplier: number;
-  confidence: number;
-}
-
-// ---------------------------------------------------------------------------
 // Screen
 // ---------------------------------------------------------------------------
 
 export default function BrainViewerScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { colors, resolvedMode } = useTheme();
+  const { colors } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const orbStyles = useMemo(() => makeOrbStyles(colors), [colors]);
-  const velocityStyles = useMemo(
-    () => makeVelocityStyles(colors, resolvedMode),
-    [colors, resolvedMode],
-  );
-  const peakStyles = useMemo(() => makePeakStyles(colors, resolvedMode), [colors, resolvedMode]);
-  const insightStyles = useMemo(() => makeInsightStyles(colors), [colors]);
 
   return (
     <View style={styles.root}>

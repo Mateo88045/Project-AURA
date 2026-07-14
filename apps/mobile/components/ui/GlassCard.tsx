@@ -21,7 +21,7 @@ let _glassAvailable: boolean | null = null;
 function isGlassAvailable(): boolean {
   if (_glassAvailable !== null) return _glassAvailable;
   try {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const mod = require('expo-glass-effect') as typeof import('expo-glass-effect');
     _glassAvailable = mod.isLiquidGlassAvailable?.() ?? false;
   } catch {
@@ -112,7 +112,7 @@ export function GlassCard({
   // to a flat light-gray slab (the shadow-review sheet rendered near-white in
   // dark mode), so thick always takes the tinted-blur path below instead.
   if (isGlassAvailable() && intensity !== 'thick') {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { GlassView } = require('expo-glass-effect') as typeof import('expo-glass-effect');
     return (
       <GlassView

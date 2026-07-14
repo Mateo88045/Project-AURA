@@ -14,8 +14,6 @@ import Animated, {
   Extrapolation,
 } from 'react-native-reanimated';
 import { Springs } from '@chronos/shared/constants/motion';
-
-const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 import { radius, spacing, typography } from '@chronos/shared/theme';
 import type { ThemeColors } from '@chronos/shared/theme';
 import { useTheme } from '../../lib/theme';
@@ -49,6 +47,8 @@ import { toLocalDayIso } from '../../lib/localDate';
 import { useAuth } from '../../hooks/useAuth';
 import { useRequirePro } from '../../lib/requirePro';
 import type { Task, ScheduledBlock, FixedEvent } from '@chronos/shared/types';
+
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 const STAGGER_MS = 40;
 // Scroll distance over which the greeting collapses
 const GREETING_COLLAPSE_RANGE = 80;

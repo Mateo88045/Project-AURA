@@ -129,6 +129,10 @@ interface PlatformTileProps {
   onSync: () => void;
   onDisconnect: () => void;
   onConnect: () => void;
+  /** True while a sync job is in flight for this platform. */
+  syncing?: boolean;
+  /** True while the OAuth / token connect flow is in flight for this platform. */
+  connecting?: boolean;
   delay?: number;
   colors: ThemeColors;
   tileStyles: ReturnType<typeof makeTileStyles>;
@@ -152,6 +156,8 @@ function PlatformTile({
   onSync,
   onDisconnect,
   onConnect,
+  syncing = false,
+  connecting = false,
   delay = 0,
   colors,
   tileStyles,
@@ -210,6 +216,7 @@ function PlatformTile({
                 label="Sync now"
                 variant="outline"
                 size="md"
+                loading={syncing}
                 onPress={onSync}
                 style={tileStyles.primaryAction}
               />
@@ -234,6 +241,7 @@ function PlatformTile({
               variant="primary"
               size="md"
               fullWidth
+              loading={connecting}
               onPress={onConnect}
             />
           </>
@@ -470,6 +478,8 @@ export default function ConnectionsHubScreen() {
             onSync={() => handleSync('google_classroom')}
             onDisconnect={() => handleDisconnect('google_classroom')}
             onConnect={() => handleConnect('google_classroom')}
+            syncing={syncingPlatform === 'google_classroom'}
+            connecting={connectingGoogle}
             delay={140}
             colors={colors}
             tileStyles={tileStyles}
@@ -481,6 +491,7 @@ export default function ConnectionsHubScreen() {
             onSync={() => handleSync('canvas')}
             onDisconnect={() => handleDisconnect('canvas')}
             onConnect={() => handleConnect('canvas')}
+            syncing={syncingPlatform === 'canvas'}
             delay={220}
             colors={colors}
             tileStyles={tileStyles}

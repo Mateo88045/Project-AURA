@@ -3,7 +3,6 @@ import { View, type ViewStyle } from 'react-native';
 import Svg, {
   Path,
   Circle,
-  Ellipse,
   Rect,
   G,
   Line,
