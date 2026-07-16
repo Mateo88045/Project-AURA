@@ -15,7 +15,7 @@ import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { supabase } from '@chronos/shared/supabase';
 import { radius, spacing, typography } from '@chronos/shared/theme';
 import type { ThemeColors } from '@chronos/shared/theme';
-import { useTheme, type ResolvedMode } from '../../lib/theme';
+import { useTheme, backdropGradient } from '../../lib/theme';
 import { AmbientOrbs } from '../../components/ui/AmbientOrbs';
 import { GlassCard } from '../../components/ui/GlassCard';
 import { AuraButton } from '../../components/ui/AuraButton';
@@ -29,12 +29,6 @@ const STAGGER_MS = 40;
 
 type PlatformChoice = 'google_classroom' | 'canvas' | 'skip' | null;
 type ConnectStep = 'choose' | 'google_oauth_loading' | 'canvas_token' | 'success';
-
-function backdropColors(mode: ResolvedMode): [string, string, string] {
-  return mode === 'light'
-    ? ['#F8FAFC', '#F1F5F9', '#F8FAFC']
-    : ['#07090F', '#0D1117', '#07090F'];
-}
 
 interface PlatformOptionProps {
   label: string;
@@ -305,7 +299,7 @@ export default function OnboardingConnectScreen() {
   return (
     <View style={styles.root}>
       <LinearGradient
-        colors={backdropColors(resolvedMode)}
+        colors={backdropGradient(colors, resolvedMode)}
         locations={[0, 0.5, 1]}
         style={StyleSheet.absoluteFill}
         start={{ x: 0.2, y: 0 }}

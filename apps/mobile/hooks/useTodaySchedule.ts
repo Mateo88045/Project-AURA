@@ -31,6 +31,11 @@ export function useTodaySchedule(userId: string, day: string): TodayScheduleResu
       setLoading(true);
       setError(null);
 
+      // Auth not resolved yet (userId still ''). Hold in the loading state
+      // rather than querying a uuid column with an empty string (Postgres
+      // 22P02); the effect re-runs once a real id arrives.
+      if (!userId) return;
+
       // Guest mode has no real Supabase user row — never query a uuid column
       // with the guest sentinel id. Serve the fixed demo dataset instead.
       if (isGuestId(userId)) {

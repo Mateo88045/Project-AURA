@@ -16,7 +16,7 @@ import Animated, { FadeIn, FadeInDown, FadeInUp } from 'react-native-reanimated'
 import { supabase } from '@chronos/shared/supabase';
 import { radius, spacing, typography } from '@chronos/shared/theme';
 import type { ThemeColors } from '@chronos/shared/theme';
-import { useTheme, type ResolvedMode } from '../../lib/theme';
+import { useTheme, backdropGradient } from '../../lib/theme';
 import { AmbientOrbs } from '../../components/ui/AmbientOrbs';
 import { GlassCard } from '../../components/ui/GlassCard';
 import { AuraButton } from '../../components/ui/AuraButton';
@@ -43,12 +43,6 @@ const TEMPLATES = [
   { label: 'Club', title: 'Club meeting', startTime: '15:00', endTime: '16:00', daysOfWeek: [2, 4] },
   { label: 'Meal', title: 'Dinner', startTime: '18:30', endTime: '19:15', daysOfWeek: [0, 1, 2, 3, 4, 5, 6] },
 ];
-
-function backdropColors(mode: ResolvedMode): [string, string, string] {
-  return mode === 'light'
-    ? ['#F8FAFC', '#F1F5F9', '#F8FAFC']
-    : ['#07090F', '#0D1117', '#07090F'];
-}
 
 function formatTime12(time24: string): string {
   const [hStr, mStr] = time24.split(':');
@@ -229,7 +223,7 @@ export default function OnboardingScheduleScreen() {
   return (
     <View style={styles.root}>
       <LinearGradient
-        colors={backdropColors(resolvedMode)}
+        colors={backdropGradient(colors, resolvedMode)}
         locations={[0, 0.5, 1]}
         style={StyleSheet.absoluteFill}
         start={{ x: 0.2, y: 0 }}

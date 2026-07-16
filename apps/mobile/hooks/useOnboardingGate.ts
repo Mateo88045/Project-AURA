@@ -55,7 +55,7 @@ export function useOnboardingGate(userId: string | null): OnboardingGateResult {
       const { data, error } = await supabase
         .from('users')
         .select('onboarding_step')
-        .eq('id', userId)
+        .eq('id', userId as string)
         .single();
 
       if (!isMounted) return;

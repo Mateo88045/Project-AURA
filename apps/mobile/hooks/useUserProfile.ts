@@ -57,6 +57,11 @@ export function useUserProfile(userId: string): UserProfileResult {
       setLoading(true);
       setError(null);
 
+      // Auth not resolved yet (userId still ''). Hold in the loading state
+      // rather than querying a uuid column with an empty string (Postgres
+      // 22P02); the effect re-runs once a real id arrives.
+      if (!userId) return;
+
       if (isGuestId(userId)) {
         const stored = await loadGuestProfile();
         if (isMounted) {
@@ -86,7 +91,7 @@ export function useUserProfile(userId: string): UserProfileResult {
           email: data.email,
           displayName: data.display_name ?? '',
           gradeLevel: data.grade_level ?? 11,
-          onboardingAnswers: data.onboarding_answers ?? {
+          onboardingAnswers: (data.onboarding_answers as User['onboardingAnswers'] | null) ?? {
             subjects: [],
             extracurriculars: [],
             averageHomeworkHours: 0,

@@ -14,6 +14,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { supabase } from '@chronos/shared/supabase';
+import type { Json } from '@chronos/shared/supabase';
 import { radius, spacing, typography } from '@chronos/shared/theme';
 import type { ThemeColors } from '@chronos/shared/theme';
 import type { Difficulty, SubjectStrength } from '@chronos/shared/types';
@@ -21,7 +22,7 @@ import {
   DEFAULT_STAGE_ID,
   stageById,
 } from '@chronos/shared/constants/userStage';
-import { useTheme, type ResolvedMode } from '../../lib/theme';
+import { useTheme, backdropGradient } from '../../lib/theme';
 import { AmbientOrbs } from '../../components/ui/AmbientOrbs';
 import { GlassCard } from '../../components/ui/GlassCard';
 import { AuraButton } from '../../components/ui/AuraButton';
@@ -36,12 +37,6 @@ const DEFAULT_SUBJECTS = [
   'Math', 'English', 'Science', 'History',
   'Spanish', 'Art', 'Computer Science', 'PE',
 ];
-
-function backdropColors(mode: ResolvedMode): [string, string, string] {
-  return mode === 'light'
-    ? ['#F8FAFC', '#F1F5F9', '#F8FAFC']
-    : ['#07090F', '#0D1117', '#07090F'];
-}
 
 // ── Confidence dots ─────────────────────────────────────────────────────
 
@@ -207,7 +202,7 @@ export default function OnboardingProfileScreen() {
         .update({
           display_name: trimmedName,
           grade_level: gradeLevel,
-          onboarding_answers: { subjects },
+          onboarding_answers: { subjects } as unknown as Json,
           onboarding_step: 2,
         })
         .eq('id', userId);
@@ -228,7 +223,7 @@ export default function OnboardingProfileScreen() {
   return (
     <View style={styles.root}>
       <LinearGradient
-        colors={backdropColors(resolvedMode)}
+        colors={backdropGradient(colors, resolvedMode)}
         locations={[0, 0.5, 1]}
         style={StyleSheet.absoluteFill}
         start={{ x: 0.2, y: 0 }}

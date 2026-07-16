@@ -121,15 +121,18 @@ let configured = false;
 
 export async function configurePurchases(userId: string): Promise<void> {
   if (configured) return;
-  configured = true;
 
   if (!isBillingConfigured()) {
     // PREVIEW mode — nothing to configure.
+    configured = true;
     return;
   }
 
+  // Mark configured only after configure() succeeds — if the native module
+  // fails to load, a later call must be able to retry rather than skip setup.
   const Purchases = await loadPurchases();
   Purchases.configure({ apiKey: REVENUECAT_KEY!, appUserID: userId });
+  configured = true;
 }
 
 export async function getOfferings(): Promise<SubscriptionPlan[]> {

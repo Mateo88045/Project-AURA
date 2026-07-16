@@ -340,7 +340,15 @@ export default function AIChatScreen() {
       setRows((prev) => [...prev, userRow]);
       setLoading(true);
 
-      const msgs: ChatMessagePayload[] = [...rows, userRow].map(
+      // The welcome bubble is UI chrome, not conversation — drop it, then peel
+      // any leading assistant turns. The Anthropic Messages API requires the
+      // transcript to open on a user turn; without this the first send of a
+      // fresh thread 400s on the direct-Anthropic path.
+      const transcript = [...rows, userRow].filter((r) => r.id !== 'welcome');
+      while (transcript.length > 0 && transcript[0].role !== 'user') {
+        transcript.shift();
+      }
+      const msgs: ChatMessagePayload[] = transcript.map(
         ({ role, content }) => ({ role, content }),
       );
 

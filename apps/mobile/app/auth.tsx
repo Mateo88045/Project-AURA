@@ -7,7 +7,7 @@ import Animated, { FadeIn, FadeInDown, FadeInUp } from 'react-native-reanimated'
 import Svg, { Path } from 'react-native-svg';
 import { spacing, typography } from '@chronos/shared/theme';
 import type { ThemeColors } from '@chronos/shared/theme';
-import { useTheme, type ResolvedMode } from '../lib/theme';
+import { useTheme, type ResolvedMode, backdropGradient } from '../lib/theme';
 import { AmbientOrbs } from '../components/ui/AmbientOrbs';
 import { AuraButton } from '../components/ui/AuraButton';
 import { AuraSymbol } from '../components/ui/AuraSymbol';
@@ -20,12 +20,6 @@ import { haptic } from '../lib/haptics';
 import { enableGuestMode } from '../lib/guest';
 
 const STAGGER_MS = 60;
-
-function backdropColors(mode: ResolvedMode): [string, string, string] {
-  return mode === 'light'
-    ? ['#F8FAFC', '#F1F5F9', '#F8FAFC']
-    : ['#07090F', '#0D1117', '#07090F'];
-}
 
 // ---------------------------------------------------------------------------
 // Brand icons — proper Google multicolor G and Apple logo
@@ -151,7 +145,7 @@ export default function AuthScreen() {
   return (
     <View style={styles.root}>
       <LinearGradient
-        colors={backdropColors(resolvedMode)}
+        colors={backdropGradient(colors, resolvedMode)}
         locations={[0, 0.5, 1]}
         style={StyleSheet.absoluteFill}
         start={{ x: 0.2, y: 0 }}

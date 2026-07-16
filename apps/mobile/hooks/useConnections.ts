@@ -24,6 +24,11 @@ export function useConnections(userId: string): ConnectionsResult {
       setLoading(true);
       setError(null);
 
+      // Auth not resolved yet (userId still ''). Hold in the loading state
+      // rather than querying a uuid column with an empty string (Postgres
+      // 22P02); the effect re-runs once a real id arrives.
+      if (!userId) return;
+
       if (isGuestId(userId)) {
         if (isMounted) {
           setConnections([]);

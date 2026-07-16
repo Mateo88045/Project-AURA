@@ -244,6 +244,11 @@ export async function saveCanvasToken(
         user_id: userId,
         platform: 'canvas',
         canvas_api_token: token,
+        // connections.oauth_token / refresh_token are NOT NULL, but a Canvas
+        // connection authenticates with a PAT and has no OAuth tokens — store
+        // empty strings to satisfy the constraint (Canvas never reads them).
+        oauth_token: '',
+        refresh_token: '',
         status: 'active',
       },
       { onConflict: 'user_id,platform' },

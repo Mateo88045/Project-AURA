@@ -75,16 +75,20 @@ export function useStreak(userId: string): StreakResult {
 
     const current = await loadStreak(userId);
     let newCurrent: number;
+    let didIncrement: boolean;
 
     if (current.lastDate === today) {
       // Already completed today — no increment
       newCurrent = current.current;
+      didIncrement = false;
     } else if (current.lastDate === yesterday || current.lastDate === null) {
       // Consecutive day (or first ever)
       newCurrent = current.current + 1;
+      didIncrement = true;
     } else {
       // Streak broken — reset to 1
       newCurrent = 1;
+      didIncrement = true;
     }
 
     const newLongest = Math.max(current.longest, newCurrent);
@@ -92,7 +96,9 @@ export function useStreak(userId: string): StreakResult {
     await saveStreak(userId, updated);
     setStored(updated);
 
-    const milestoneReached = MILESTONES.includes(newCurrent);
+    // Only celebrate a milestone the day the count actually crosses it — a
+    // second completion on the same milestone day must not re-fire it.
+    const milestoneReached = didIncrement && MILESTONES.includes(newCurrent);
     return {
       currentStreak: newCurrent,
       longestStreak: newLongest,

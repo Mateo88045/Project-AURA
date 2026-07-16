@@ -44,6 +44,11 @@ export function useActiveTask(taskId: string, userId: string): ActiveTaskResult 
         return;
       }
 
+      // Auth not resolved yet (userId still ''). Hold in the loading state
+      // rather than querying a uuid column with an empty string (Postgres
+      // 22P02); the effect re-runs once a real id arrives.
+      if (!userId) return;
+
       try {
         const { data, error: queryError } = await supabase
           .from('tasks')

@@ -5,3 +5,4 @@ export {
   resolveAutoMode,
 } from './ThemeContext';
 export type { ThemeMode, ResolvedMode } from './ThemeContext';
+export { backdropGradient } from './backdrop';

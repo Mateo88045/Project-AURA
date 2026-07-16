@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { radius, spacing, typography } from '@chronos/shared/theme';
 import type { ThemeColors } from '@chronos/shared/theme';
-import { useTheme, type ResolvedMode } from '../../lib/theme';
+import { useTheme, backdropGradient } from '../../lib/theme';
 import { AmbientOrbs } from '../../components/ui/AmbientOrbs';
 import { GlassCard } from '../../components/ui/GlassCard';
 import { AuraButton } from '../../components/ui/AuraButton';
@@ -14,14 +14,6 @@ import { AuraSymbol } from '../../components/ui/AuraSymbol';
 import { enableGuestMode } from '../../lib/guest';
 
 const STAGGER_MS = 40;
-
-// Background gradient stops differ per mode so the hero sits on a matched
-// atmosphere rather than fighting the canvas.
-function backdropColors(mode: ResolvedMode): [string, string, string] {
-  return mode === 'light'
-    ? ['#F8FAFC', '#F1F5F9', '#F8FAFC']
-    : ['#07090F', '#0D1117', '#07090F'];
-}
 
 export default function OnboardingWelcomeScreen() {
   const router = useRouter();
@@ -38,7 +30,7 @@ export default function OnboardingWelcomeScreen() {
   return (
     <View style={styles.root}>
       <LinearGradient
-        colors={backdropColors(resolvedMode)}
+        colors={backdropGradient(colors, resolvedMode)}
         locations={[0, 0.5, 1]}
         style={StyleSheet.absoluteFill}
         start={{ x: 0.2, y: 0 }}

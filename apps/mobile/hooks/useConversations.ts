@@ -24,6 +24,11 @@ export function useConversations(userId: string): ConversationsResult {
       setLoading(true);
       setError(null);
 
+      // Auth not resolved yet (userId still ''). Hold in the loading state
+      // rather than querying a uuid column with an empty string (Postgres
+      // 22P02); the effect re-runs once a real id arrives.
+      if (!userId) return;
+
       // Guest mode has no real conversation rows to read — show the empty
       // state rather than querying with a non-uuid sentinel id.
       if (isGuestId(userId)) {
@@ -53,7 +58,7 @@ export function useConversations(userId: string): ConversationsResult {
         const mapped: Conversation[] = (data ?? []).map((row) => ({
           id: row.id,
           userId: row.user_id,
-          messages: row.messages ?? [],
+          messages: (row.messages ?? []) as unknown as Conversation['messages'],
           createdAt: row.created_at,
           updatedAt: row.updated_at,
         }));

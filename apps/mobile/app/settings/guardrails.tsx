@@ -29,6 +29,7 @@ import { GlassCard } from '../../components/ui/GlassCard';
 import { AuraSymbol } from '../../components/ui/AuraSymbol';
 import { haptic } from '../../lib/haptics';
 import { supabase } from '@chronos/shared/supabase';
+import type { Json } from '@chronos/shared/supabase';
 import { useAuth } from '../../hooks/useAuth';
 import { isGuestId } from '../../lib/guest';
 
@@ -365,7 +366,7 @@ export default function GuardrailsEditorScreen() {
             {
               user_id: userId,
               rule_type: ruleTypeMap[key],
-              value,
+              value: value as unknown as Json,
               active,
             },
             { onConflict: 'user_id,rule_type' },

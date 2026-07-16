@@ -16,7 +16,7 @@ import Animated, { FadeIn, FadeInDown, FadeInUp } from 'react-native-reanimated'
 import { supabase } from '@chronos/shared/supabase';
 import { radius, spacing, typography } from '@chronos/shared/theme';
 import type { ThemeColors } from '@chronos/shared/theme';
-import { useTheme, type ResolvedMode } from '../../lib/theme';
+import { useTheme, backdropGradient } from '../../lib/theme';
 import { AmbientOrbs } from '../../components/ui/AmbientOrbs';
 import { GlassCard } from '../../components/ui/GlassCard';
 import { AuraButton } from '../../components/ui/AuraButton';
@@ -53,12 +53,6 @@ const BENEFITS: { icon: string; title: string; body: string }[] = [
     body: 'Ask Chronos to move tasks, lighten a night, or explain your week.',
   },
 ];
-
-function backdropColors(mode: ResolvedMode): [string, string, string] {
-  return mode === 'light'
-    ? ['#F8FAFC', '#F1F5F9', '#F8FAFC']
-    : ['#07090F', '#0D1117', '#07090F'];
-}
 
 const extra = (Constants.expoConfig?.extra ?? {}) as {
   termsUrl?: string;
@@ -147,7 +141,7 @@ export default function OnboardingPaywallScreen() {
   return (
     <View style={styles.root}>
       <LinearGradient
-        colors={backdropColors(resolvedMode)}
+        colors={backdropGradient(colors, resolvedMode)}
         locations={[0, 0.5, 1]}
         style={StyleSheet.absoluteFill}
         start={{ x: 0.2, y: 0 }}

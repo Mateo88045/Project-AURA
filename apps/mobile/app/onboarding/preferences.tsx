@@ -14,9 +14,10 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { supabase } from '@chronos/shared/supabase';
+import type { Json } from '@chronos/shared/supabase';
 import { radius, spacing, typography } from '@chronos/shared/theme';
 import type { ThemeColors } from '@chronos/shared/theme';
-import { useTheme, type ResolvedMode } from '../../lib/theme';
+import { useTheme, backdropGradient } from '../../lib/theme';
 import { AmbientOrbs } from '../../components/ui/AmbientOrbs';
 import { GlassCard } from '../../components/ui/GlassCard';
 import { AuraButton } from '../../components/ui/AuraButton';
@@ -35,12 +36,6 @@ const STUDY_OPTIONS: { value: StudyTime; label: string; icon: string }[] = [
 ];
 
 const HOUR_OPTIONS = [1, 2, 3, 4, 5, 6];
-
-function backdropColors(mode: ResolvedMode): [string, string, string] {
-  return mode === 'light'
-    ? ['#F8FAFC', '#F1F5F9', '#F8FAFC']
-    : ['#07090F', '#0D1117', '#07090F'];
-}
 
 export default function OnboardingPreferencesScreen() {
   const router = useRouter();
@@ -75,7 +70,7 @@ export default function OnboardingPreferencesScreen() {
         .eq('id', userId)
         .single();
 
-      const existingAnswers = existingUser?.onboarding_answers ?? {};
+      const existingAnswers = (existingUser?.onboarding_answers ?? {}) as Record<string, unknown>;
       const fullAnswers = {
         ...existingAnswers,
         extracurriculars: [],
@@ -87,7 +82,7 @@ export default function OnboardingPreferencesScreen() {
       await supabase
         .from('users')
         .update({
-          onboarding_answers: fullAnswers,
+          onboarding_answers: fullAnswers as unknown as Json,
           daily_trigger_time: dailyTriggerTime,
           timezone,
           onboarding_step: 4,
@@ -119,7 +114,7 @@ export default function OnboardingPreferencesScreen() {
   return (
     <View style={styles.root}>
       <LinearGradient
-        colors={backdropColors(resolvedMode)}
+        colors={backdropGradient(colors, resolvedMode)}
         locations={[0, 0.5, 1]}
         style={StyleSheet.absoluteFill}
         start={{ x: 0.2, y: 0 }}
