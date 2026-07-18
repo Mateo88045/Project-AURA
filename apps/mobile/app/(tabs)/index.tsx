@@ -31,6 +31,7 @@ import { RiverLine } from '../../components/ui/RiverLine';
 import { CalmEmptyState } from '../../components/ui/CalmEmptyState';
 import { StreakChip } from '../../components/ui/StreakChip';
 import { DayPulse } from '../../components/schedule/DayPulse';
+import { DraftReviewChip } from '../../components/schedule/DraftReviewChip';
 import { NowHeroCard } from '../../components/schedule/NowHeroCard';
 import {
   TimelineRow,
@@ -97,6 +98,8 @@ interface RiverRow {
   difficulty: 1 | 2 | 3 | 4 | 5;
   /** Epoch ms when this row's block/event ends — rows behind us fade upstream. */
   endMs: number;
+  /** Shadow block awaiting the user's approval. */
+  isDraft: boolean;
 }
 
 // HH:MM (today, local) → epoch ms
@@ -120,6 +123,7 @@ function buildRows(blocks: ScheduledBlock[], events: FixedEvent[]): RiverRow[] {
       estimatedMinutes: 0,
       difficulty: 1,
       endMs: msFromHHMM(event.endTime),
+      isDraft: false,
     });
   }
 
@@ -135,6 +139,7 @@ function buildRows(blocks: ScheduledBlock[], events: FixedEvent[]): RiverRow[] {
       estimatedMinutes: task.estimatedMinutes,
       difficulty: task.difficulty,
       endMs: new Date(block.endTime).getTime(),
+      isDraft: block.status === 'shadow',
     });
   }
 
@@ -226,9 +231,10 @@ export default function TodayScreen() {
   // "NOW" must never point at a finished or phantom block.
   const heroBlock = useMemo(() => {
     const nowMs = Date.now();
-    const sorted = [...scheduledBlocks].sort(
-      (a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime(),
-    );
+    // Shadow drafts are proposals — they can't be "NOW" and can't be started.
+    const sorted = scheduledBlocks
+      .filter((b) => b.status !== 'shadow')
+      .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
     const live = sorted.find(
       (b) => new Date(b.startTime).getTime() <= nowMs && nowMs < new Date(b.endTime).getTime(),
     );
@@ -241,6 +247,10 @@ export default function TodayScreen() {
   const rows = useMemo(
     () => buildRows(scheduledBlocks, fixedEvents),
     [scheduledBlocks, fixedEvents],
+  );
+  const draftCount = useMemo(
+    () => scheduledBlocks.filter((b) => b.task && b.status === 'shadow').length,
+    [scheduledBlocks],
   );
 
   // "Now" splits the river: rows that ended collapse into compact done lines,
@@ -350,6 +360,17 @@ export default function TodayScreen() {
               <DayPulse blocks={scheduledBlocks} fixedEvents={fixedEvents} />
             </Animated.View>
           )}
+          {!loading && !error && draftCount > 0 && (
+            <Animated.View
+              entering={FadeIn.delay(STAGGER_MS * 6).duration(280)}
+              style={styles.draftChipWrap}
+            >
+              <DraftReviewChip
+                count={draftCount}
+                onPress={() => router.push('/schedule/review' as Href)}
+              />
+            </Animated.View>
+          )}
         </View>
 
         {/* Loading — the river forming, so the wait reads as "settling" */}
@@ -415,6 +436,7 @@ export default function TodayScreen() {
                       meridiem={row.clock.mer}
                       title={row.title}
                       variant={row.variant}
+                      isDraft={row.isDraft}
                     />
                   ) : (
                     <TimelineRow
@@ -425,6 +447,7 @@ export default function TodayScreen() {
                       estimatedMinutes={row.estimatedMinutes}
                       difficulty={row.difficulty}
                       variant={row.variant}
+                      isDraft={row.isDraft}
                     />
                   )}
                 </Animated.View>
@@ -554,6 +577,9 @@ function makeStyles(c: ThemeColors) {
     timelineHeader: {
       marginTop: spacing.sectionGap,
       marginBottom: spacing.md,
+    },
+    draftChipWrap: {
+      marginTop: spacing.md,
     },
     timelineTitle: {
       ...typography.title1,

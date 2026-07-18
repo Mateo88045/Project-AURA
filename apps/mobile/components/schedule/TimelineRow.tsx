@@ -23,13 +23,16 @@ interface TimelineRowProps {
   estimatedMinutes: number;
   difficulty: 1 | 2 | 3 | 4 | 5;
   variant: 'fixed' | 'scheduled';
+  /** Shadow-draft block awaiting approval — hollow sky dot, dashed card. */
+  isDraft?: boolean;
 }
 
 /**
  * One upcoming row on the Today river: time column, rail dot, task card.
  * Scheduled work gets a filled glowing dot (alive); fixed events get a hollow
- * ghost dot. Both are opaque over the canvas so the river reads as connecting
- * the dots rather than crossing them.
+ * ghost dot; shadow drafts get a hollow sky dot — proposed, not yet real.
+ * All are opaque over the canvas so the river reads as connecting the dots
+ * rather than crossing them.
  */
 export function TimelineRow({
   timeValue,
@@ -39,6 +42,7 @@ export function TimelineRow({
   estimatedMinutes,
   difficulty,
   variant,
+  isDraft = false,
 }: TimelineRowProps) {
   const { colors } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
@@ -51,7 +55,12 @@ export function TimelineRow({
         <Text style={styles.timeMer}>{meridiem}</Text>
       </View>
       <View style={styles.rail}>
-        <View style={[styles.dot, isScheduled ? styles.dotScheduled : styles.dotFixed]} />
+        <View
+          style={[
+            styles.dot,
+            isDraft ? styles.dotDraft : isScheduled ? styles.dotScheduled : styles.dotFixed,
+          ]}
+        />
       </View>
       <View style={styles.card}>
         <TaskBlock
@@ -60,6 +69,7 @@ export function TimelineRow({
           estimatedMinutes={estimatedMinutes}
           difficulty={difficulty}
           variant={variant}
+          isDraft={isDraft}
           showDot={false}
         />
       </View>
@@ -111,6 +121,12 @@ function makeStyles(c: ThemeColors) {
     dotFixed: {
       borderWidth: 1.5,
       borderColor: c.text.secondary,
+    },
+    dotDraft: {
+      // Hollow like a fixed event (not yet committed) but in the river's sky
+      // hue (it belongs to Chronos) — the visual midpoint the draft occupies.
+      borderWidth: 1.5,
+      borderColor: c.accent.sky,
     },
     card: {
       flex: 1,

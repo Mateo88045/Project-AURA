@@ -1,6 +1,5 @@
 import { useEffect } from 'react';
 import { View, StyleSheet } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import Animated, {
   FadeIn,
   useSharedValue,
@@ -14,6 +13,7 @@ import { spacing } from '@chronos/shared/theme';
 import { useTheme } from '../../lib/theme';
 import { AuraSymbol } from './AuraSymbol';
 import { AuraText } from './AuraText';
+import { RadialGlow } from './RadialGlow';
 
 // Slow breath — matched to AmbientOrbs so the empty state feels like the same
 // atmosphere settling, not a separate widget.
@@ -57,13 +57,7 @@ export function CalmEmptyState({ title, body, icon = 'sparkles' }: CalmEmptyStat
     <Animated.View entering={FadeIn.duration(500)} style={styles.wrap}>
       <View style={styles.orbWrap}>
         <Animated.View style={[styles.glow, glowStyle]}>
-          <LinearGradient
-            colors={[colors.accent.sky + '55', colors.accent.blue + '22', 'transparent']}
-            locations={[0, 0.5, 1]}
-            style={StyleSheet.absoluteFill}
-            start={{ x: 0.5, y: 0.5 }}
-            end={{ x: 1, y: 1 }}
-          />
+          <RadialGlow size={ORB_SIZE} color={colors.accent.sky} centerOpacity={0.4} />
         </Animated.View>
         <AuraSymbol name={icon} size={44} color={colors.accent.sky} weight="light" />
       </View>
@@ -93,8 +87,6 @@ const styles = StyleSheet.create({
     position: 'absolute',
     width: ORB_SIZE,
     height: ORB_SIZE,
-    borderRadius: ORB_SIZE / 2,
-    overflow: 'hidden',
   },
   title: {
     textAlign: 'center',

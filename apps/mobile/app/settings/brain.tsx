@@ -26,6 +26,7 @@ import { useTheme } from '../../lib/theme';
 import { AmbientOrbs } from '../../components/ui/AmbientOrbs';
 import { GlassCard } from '../../components/ui/GlassCard';
 import { AuraSymbol } from '../../components/ui/AuraSymbol';
+import { RadialGlow } from '../../components/ui/RadialGlow';
 import { haptic } from '../../lib/haptics';
 
 // ---------------------------------------------------------------------------
@@ -73,12 +74,7 @@ function BrainOrb({ colors, orbStyles }: BrainOrbProps) {
           the same atmospheric vocabulary as the AI hub orb — no violet, no
           tertiary "logo gradient" hue. */}
       <Animated.View style={[orbStyles.glow, glowStyle]}>
-        <LinearGradient
-          colors={[colors.accent.sky + '55', 'transparent']}
-          style={StyleSheet.absoluteFill}
-          start={{ x: 0.5, y: 0.5 }}
-          end={{ x: 1, y: 1 }}
-        />
+        <RadialGlow size={200} color={colors.accent.sky} centerOpacity={0.4} />
       </Animated.View>
       <Animated.View style={[orbStyles.core, orbStyle]}>
         <LinearGradient
@@ -105,8 +101,6 @@ function makeOrbStyles(c: ThemeColors) {
       position: 'absolute',
       width: 200,
       height: 200,
-      borderRadius: 100,
-      overflow: 'hidden',
     },
     core: {
       width: 88,

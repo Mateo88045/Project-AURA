@@ -17,6 +17,9 @@ interface PastRowProps {
   meridiem: string;
   title: string;
   variant: 'fixed' | 'scheduled';
+  /** Shadow draft whose slot has passed — never shown as "done"; it was
+      only ever proposed. Rendered hollow-sky with a DRAFT word instead. */
+  isDraft?: boolean;
 }
 
 /**
@@ -24,10 +27,11 @@ interface PastRowProps {
  * day's remaining work owns the screen. Completed work gets an emerald dot
  * and checkmark ("done"); past fixed events simply fade — they weren't tasks.
  */
-export function PastRow({ timeValue, meridiem, title, variant }: PastRowProps) {
+export function PastRow({ timeValue, meridiem, title, variant, isDraft = false }: PastRowProps) {
   const { colors } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const isScheduled = variant === 'scheduled';
+  const isDone = isScheduled && !isDraft;
 
   return (
     <View style={styles.row}>
@@ -36,15 +40,18 @@ export function PastRow({ timeValue, meridiem, title, variant }: PastRowProps) {
         <Text style={styles.timeMer}>{meridiem}</Text>
       </View>
       <View style={styles.rail}>
-        <View style={[styles.dot, isScheduled ? styles.dotDone : styles.dotFixed]} />
+        <View
+          style={[styles.dot, isDraft ? styles.dotDraft : isDone ? styles.dotDone : styles.dotFixed]}
+        />
       </View>
       <View style={styles.content}>
-        {isScheduled && (
+        {isDone && (
           <AuraSymbol name="checkmark" size={11} color={colors.accent.emerald} />
         )}
         <Text style={styles.title} numberOfLines={1}>
           {title}
         </Text>
+        {isDraft && <Text style={styles.draftWord}>draft</Text>}
       </View>
     </View>
   );
@@ -94,6 +101,10 @@ function makeStyles(c: ThemeColors) {
       borderWidth: 1.5,
       borderColor: c.border.glass,
     },
+    dotDraft: {
+      borderWidth: 1.5,
+      borderColor: c.accent.sky,
+    },
     content: {
       flex: 1,
       marginLeft: TIMELINE_CARD_GAP,
@@ -108,6 +119,13 @@ function makeStyles(c: ThemeColors) {
       ...typography.callout,
       color: c.text.secondary,
       flexShrink: 1,
+    },
+    draftWord: {
+      fontSize: 9,
+      fontWeight: '600' as const,
+      letterSpacing: 1.2,
+      textTransform: 'uppercase' as const,
+      color: c.accent.sky,
     },
   });
 }

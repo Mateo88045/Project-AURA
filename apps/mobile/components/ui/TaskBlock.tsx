@@ -30,6 +30,9 @@ interface TaskBlockProps {
   estimatedMinutes: number;
   difficulty: 1 | 2 | 3 | 4 | 5;
   variant: 'fixed' | 'scheduled';
+  /** Shadow-draft block awaiting the user's approval — rendered as a proposal,
+      not a commitment: dashed sky outline + DRAFT tag. */
+  isDraft?: boolean;
   onPress?: () => void;
   /** Called when the user swipes right past the threshold. Scheduled tasks only. */
   onComplete?: () => void;
@@ -44,6 +47,7 @@ export function TaskBlock({
   estimatedMinutes,
   difficulty,
   variant,
+  isDraft = false,
   onPress,
   onComplete,
   showDot = true,
@@ -156,12 +160,19 @@ export function TaskBlock({
           styles.base,
           isScheduled
             ? {
-                backgroundColor: colors.glass.accent,
-                borderColor: colors.border.glass,
+                backgroundColor: isDraft ? 'transparent' : colors.glass.accent,
+                borderColor: isDraft ? colors.accent.sky + '66' : colors.border.glass,
                 borderWidth: 1,
+                borderStyle: isDraft ? ('dashed' as const) : ('solid' as const),
               }
             : styles.fixedBg,
-          { borderLeftColor: isScheduled ? difficultyColor : colors.border.subtle },
+          {
+            borderLeftColor: isDraft
+              ? colors.accent.sky + '66'
+              : isScheduled
+                ? difficultyColor
+                : colors.border.subtle,
+          },
           pressStyle,
         ]}
       >
@@ -201,6 +212,11 @@ export function TaskBlock({
             </Text>
           )}
         </View>
+        {isDraft && (
+          <View style={[styles.draftTag, { borderColor: colors.accent.sky + '66' }]}>
+            <Text style={[styles.draftTagText, { color: colors.accent.sky }]}>DRAFT</Text>
+          </View>
+        )}
       </AnimatedPressable>
     </View>
   );
@@ -237,4 +253,15 @@ const styles = StyleSheet.create({
   titleFixed: { ...typography.body },
   meta: { ...typography.callout, marginTop: 2 },
   difficultyWord: { fontWeight: '600' as const },
+  draftTag: {
+    borderWidth: 1,
+    borderRadius: radius.sm,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  },
+  draftTagText: {
+    fontSize: 9,
+    fontWeight: '600' as const,
+    letterSpacing: 1.2,
+  },
 });

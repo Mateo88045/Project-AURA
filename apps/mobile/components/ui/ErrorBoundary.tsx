@@ -1,5 +1,8 @@
 import React from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
+// Static dark palette, not useTheme() — this boundary must render even when
+// the theme provider itself is what crashed.
+import { darkColors, radius } from '@chronos/shared/theme';
 
 interface State { hasError: boolean; error: Error | null }
 
@@ -36,9 +39,20 @@ export class ErrorBoundary extends React.Component<
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#07090F', padding: 24 },
-  title: { fontSize: 20, fontWeight: '600', color: '#F8FAFC', marginBottom: 8 },
-  body: { fontSize: 14, color: '#94A3B8', textAlign: 'center', marginBottom: 24 },
-  btn: { paddingHorizontal: 20, paddingVertical: 10, borderRadius: 8, backgroundColor: '#457B9D' },
-  btnText: { color: '#FFFFFF', fontWeight: '600', fontSize: 14 },
+  root: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: darkColors.background.primary,
+    padding: 24,
+  },
+  title: { fontSize: 20, fontWeight: '600', color: darkColors.text.primary, marginBottom: 8 },
+  body: { fontSize: 14, color: darkColors.text.secondary, textAlign: 'center', marginBottom: 24 },
+  btn: {
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: radius.sm,
+    backgroundColor: darkColors.accent.blue,
+  },
+  btnText: { color: darkColors.text.inverse, fontWeight: '600', fontSize: 14 },
 });

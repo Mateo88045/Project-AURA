@@ -84,7 +84,12 @@ function buildStats(
 
   let voiceLine: string;
   if (blocksLeft.length === 0) {
-    voiceLine = 'All done for today — the evening is yours \u{1F389}';
+    // Never celebrate over an unreviewed draft — the stats line says
+    // "N drafts pending", and the voice line must agree with it.
+    voiceLine =
+      draftBlocks.length > 0
+        ? `Today's work is done — ${draftBlocks.length === 1 ? 'a draft awaits' : `${draftBlocks.length} drafts await`} your review`
+        : 'All done for today — the evening is yours \u{1F389}';
   } else {
     const blockWord = blocksLeft.length === 1 ? 'block' : 'blocks';
     const freeAt = formatClock(lastBusyMinute);
