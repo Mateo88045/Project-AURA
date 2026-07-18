@@ -68,9 +68,12 @@ export function schedule(input: SchedulerInput): ScheduleResult {
       if (remaining <= 0) break;
       if ((maxPerDay ?? Infinity) - usedByDay[day] <= 0) continue;
 
-      // Sort slots longest first each iteration so picks stay fresh.
+      // Sort slots longest first each iteration so picks stay fresh. A task
+      // (or tail remainder) under the chunk floor is still placeable at its
+      // own size — otherwise 15-min tasks are permanently unschedulable.
+      const effectiveMin = Math.min(MIN_CHUNK_MIN, remaining);
       const slots = slotsByDay[day]
-        .filter((s) => s.endMinute - s.startMinute >= MIN_CHUNK_MIN)
+        .filter((s) => s.endMinute - s.startMinute >= effectiveMin)
         .sort((a, b) => b.endMinute - b.startMinute - (a.endMinute - a.startMinute));
 
       for (const slot of slots) {
@@ -81,7 +84,7 @@ export function schedule(input: SchedulerInput): ScheduleResult {
         const dayCapacityLeft = (maxPerDay ?? Infinity) - usedByDay[day];
         if (dayCapacityLeft <= 0) break;
         const chunkMin = Math.min(slotMin, remaining, MAX_CHUNK_MIN, dayCapacityLeft);
-        if (chunkMin < MIN_CHUNK_MIN) continue;
+        if (chunkMin < Math.min(MIN_CHUNK_MIN, remaining)) continue;
 
         const start = slot.startMinute;
         const end = start + chunkMin;

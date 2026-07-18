@@ -158,8 +158,14 @@ export default function ScanTaskScreen() {
       haptic.success();
       toast.show('Added to your schedule', 'success');
       router.back();
-    } catch {
-      toast.show('Something went wrong — try again', 'error');
+    } catch (err) {
+      haptic.error();
+      toast.show(
+        err instanceof Error && err.message
+          ? err.message
+          : 'Something went wrong — try again',
+        'error',
+      );
     }
   }
 

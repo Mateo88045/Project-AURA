@@ -91,8 +91,14 @@ export default function NewTaskScreen() {
       haptic.success();
       toast.show('Task added', 'success');
       router.back();
-    } catch {
-      toast.show('Something went wrong — try again', 'error');
+    } catch (err) {
+      haptic.error();
+      toast.show(
+        err instanceof Error && err.message
+          ? err.message
+          : 'Something went wrong — try again',
+        'error',
+      );
     }
   }
 

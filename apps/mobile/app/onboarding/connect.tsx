@@ -115,13 +115,13 @@ export default function OnboardingConnectScreen() {
       setStep('google_oauth_loading');
       setSubmitting(true);
 
-      const oauthResult = await initiateGoogleOAuth();
+      const oauthOutcome = await initiateGoogleOAuth();
 
-      // Null result = user cancelled, network error, or Supabase Google
-      // provider isn't configured. Reset to 'choose' instead of silently
-      // advancing to success so the user can retry.
-      if (!oauthResult || !userId) {
-        haptic.error();
+      // Anything but a full success (cancelled, config error, or a session
+      // without Classroom tokens) resets to 'choose' instead of silently
+      // advancing so the user can retry.
+      if (oauthOutcome.status !== 'success' || !userId) {
+        if (oauthOutcome.status !== 'cancelled') haptic.error();
         setSubmitting(false);
         setStep('choose');
         return;
@@ -132,8 +132,8 @@ export default function OnboardingConnectScreen() {
           user_id: userId,
           platform: 'google_classroom',
           status: 'active',
-          oauth_token: oauthResult.providerToken,
-          refresh_token: oauthResult.providerRefreshToken,
+          oauth_token: oauthOutcome.providerToken,
+          refresh_token: oauthOutcome.providerRefreshToken,
         },
         { onConflict: 'user_id,platform' },
       );
@@ -154,10 +154,17 @@ export default function OnboardingConnectScreen() {
   async function handleConnectCanvas() {
     if (!canvasToken.trim()) return;
     setSubmitting(true);
-    await saveCanvasToken(userId, canvasToken.trim());
-    haptic.success();
-    setSubmitting(false);
-    setStep('success');
+    try {
+      await saveCanvasToken(userId, canvasToken.trim());
+      haptic.success();
+      setStep('success');
+    } catch {
+      // Save failed (offline, RLS, missing user row) — stay on the token step
+      // so the user can retry instead of stranding the spinner.
+      haptic.error();
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   function handleFinishSuccess() {

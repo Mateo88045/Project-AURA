@@ -30,7 +30,7 @@ export async function sendCopilotMessage(
   const base = getAuraApiBaseUrl().replace(/\/$/, '');
   const res = await fetch(`${base}/v1/chat`, {
     method: 'POST',
-    headers: getAuraApiHeaders(userId),
+    headers: await getAuraApiHeaders(userId),
     body: JSON.stringify({ messages }),
   });
 

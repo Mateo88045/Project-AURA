@@ -30,19 +30,24 @@ const redirectUri = makeRedirectUri({ scheme: 'chronos', path: 'auth/callback' }
 // ---------------------------------------------------------------------------
 
 /**
- * Result of a successful Google OAuth flow.
+ * Outcome of the Google OAuth flow.
  *
- * `providerToken` is the Google access token (bearer token for Classroom API).
- * `providerRefreshToken` is the Google refresh token — used by the backend
- * (Trigger.dev Classroom fetch job) to obtain a fresh access token when the
- * current one expires. Persist both to the `connections` table.
+ * On success, `providerToken` is the Google access token (bearer token for the
+ * Classroom API) and `providerRefreshToken` is the Google refresh token — the
+ * backend uses it to mint fresh access tokens. Persist both to `connections`.
+ *
+ * `cancelled` means the user dismissed the browser sheet — never show an error
+ * for it. `error` carries a user-presentable message.
  */
-export interface GoogleOAuthResult {
-  providerToken: string;
-  providerRefreshToken: string;
-}
+export type GoogleOAuthOutcome =
+  | { status: 'success'; providerToken: string; providerRefreshToken: string }
+  /** Supabase session established but Google returned no Classroom tokens —
+   *  sign-in worked, connecting Classroom did not. */
+  | { status: 'signed_in_no_classroom' }
+  | { status: 'cancelled' }
+  | { status: 'error'; message: string };
 
-export async function initiateGoogleOAuth(): Promise<GoogleOAuthResult | null> {
+export async function initiateGoogleOAuth(): Promise<GoogleOAuthOutcome> {
   // 1. Ask Supabase for the OAuth URL
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
@@ -60,7 +65,10 @@ export async function initiateGoogleOAuth(): Promise<GoogleOAuthResult | null> {
 
   if (error || !data.url) {
     console.warn('[OAuth] Failed to get Google OAuth URL:', error?.message);
-    return null;
+    return {
+      status: 'error',
+      message: 'Google sign-in is unavailable right now — try again shortly.',
+    };
   }
 
   // 2. Open the URL in an in-app browser and wait for redirect
@@ -68,7 +76,7 @@ export async function initiateGoogleOAuth(): Promise<GoogleOAuthResult | null> {
 
   if (result.type !== 'success') {
     // User cancelled or dismissed
-    return null;
+    return { status: 'cancelled' };
   }
 
   // 3. Extract tokens from the redirect URL fragment
@@ -85,7 +93,10 @@ export async function initiateGoogleOAuth(): Promise<GoogleOAuthResult | null> {
 
   if (!accessToken || !refreshToken) {
     console.warn('[OAuth] Missing tokens in redirect URL');
-    return null;
+    return {
+      status: 'error',
+      message: "Google didn't finish signing you in — try again.",
+    };
   }
 
   // 4. Set the session in Supabase client
@@ -96,7 +107,10 @@ export async function initiateGoogleOAuth(): Promise<GoogleOAuthResult | null> {
 
   if (sessionError) {
     console.warn('[OAuth] Failed to set session:', sessionError.message);
-    return null;
+    return {
+      status: 'error',
+      message: "Couldn't start your session — try again.",
+    };
   }
 
   // 5. Surface Google provider tokens to the caller so they can be persisted
@@ -106,10 +120,10 @@ export async function initiateGoogleOAuth(): Promise<GoogleOAuthResult | null> {
     console.warn(
       '[OAuth] No provider_token in redirect — check Supabase Google provider config',
     );
-    return null;
+    return { status: 'signed_in_no_classroom' };
   }
 
-  return { providerToken, providerRefreshToken };
+  return { status: 'success', providerToken, providerRefreshToken };
 }
 
 // ---------------------------------------------------------------------------
@@ -124,7 +138,10 @@ export async function initiateGoogleOAuth(): Promise<GoogleOAuthResult | null> {
  */
 export const isAppleSignInAvailable = Platform.OS === 'ios' && !isExpoGo;
 
-export async function initiateAppleSignIn(): Promise<boolean> {
+/** Outcome of an Apple sign-in attempt — cancel is not an error. */
+export type AppleSignInOutcome = 'success' | 'cancelled' | 'error';
+
+export async function initiateAppleSignIn(): Promise<AppleSignInOutcome> {
   if (isAppleSignInAvailable) {
     return initiateAppleNative();
   }
@@ -133,14 +150,14 @@ export async function initiateAppleSignIn(): Promise<boolean> {
       '[Apple] Sign-In is unavailable in Expo Go (native module not bundled). ' +
       'Use a custom dev client or standalone build to test Apple auth.',
     );
-    return false;
+    return 'error';
   }
   // Non-iOS standalone (shouldn't happen — app is iOS-only — but defensive)
   return initiateAppleOAuth();
 }
 
 /** Native Apple Sign In (iOS dev-client/standalone only). */
-async function initiateAppleNative(): Promise<boolean> {
+async function initiateAppleNative(): Promise<AppleSignInOutcome> {
   let AppleAuthentication: AppleAuthModule;
   try {
     // Lazy require — the native module isn't in Expo Go, so a top-level import
@@ -150,7 +167,7 @@ async function initiateAppleNative(): Promise<boolean> {
     AppleAuthentication = require('expo-apple-authentication');
   } catch {
     console.warn('[Apple] expo-apple-authentication native module not available');
-    return false;
+    return 'error';
   }
 
   try {
@@ -171,7 +188,7 @@ async function initiateAppleNative(): Promise<boolean> {
 
     if (!credential.identityToken) {
       console.warn('[Apple] No identity token returned');
-      return false;
+      return 'error';
     }
 
     // Exchange the Apple ID token for a Supabase session
@@ -183,23 +200,23 @@ async function initiateAppleNative(): Promise<boolean> {
 
     if (error) {
       console.warn('[Apple] Supabase signInWithIdToken failed:', error.message);
-      return false;
+      return 'error';
     }
 
-    return true;
+    return 'success';
   } catch (err: unknown) {
     const code = (err as { code?: string }).code;
     if (code === 'ERR_REQUEST_CANCELED') {
       // User cancelled — not an error
-      return false;
+      return 'cancelled';
     }
     console.warn('[Apple] Sign in failed:', err);
-    return false;
+    return 'error';
   }
 }
 
 /** Supabase OAuth fallback for Apple (web/Android). */
-async function initiateAppleOAuth(): Promise<boolean> {
+async function initiateAppleOAuth(): Promise<AppleSignInOutcome> {
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'apple',
     options: { redirectTo: redirectUri },
@@ -207,26 +224,26 @@ async function initiateAppleOAuth(): Promise<boolean> {
 
   if (error || !data.url) {
     console.warn('[OAuth] Failed to get Apple OAuth URL:', error?.message);
-    return false;
+    return 'error';
   }
 
   const result = await WebBrowser.openAuthSessionAsync(data.url, redirectUri);
 
-  if (result.type !== 'success') return false;
+  if (result.type !== 'success') return 'cancelled';
 
   const url = new URL(result.url);
   const params = new URLSearchParams(url.hash.substring(1));
   const accessToken = params.get('access_token');
   const refreshToken = params.get('refresh_token');
 
-  if (!accessToken || !refreshToken) return false;
+  if (!accessToken || !refreshToken) return 'error';
 
   const { error: sessionError } = await supabase.auth.setSession({
     access_token: accessToken,
     refresh_token: refreshToken,
   });
 
-  return !sessionError;
+  return sessionError ? 'error' : 'success';
 }
 
 // ---------------------------------------------------------------------------

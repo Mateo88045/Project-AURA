@@ -1,8 +1,16 @@
 import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '@chronos/shared/supabase';
 import type { Task } from '@chronos/shared/types';
-import { isGuestId } from '../lib/guest';
+import { isGuestId, loadGuestTasks, subscribeGuestTasks } from '../lib/guest';
 import { getDemoTasksForDay } from '../lib/demoData';
+
+/** Same visibility rule the Supabase query applies, for guest-local tasks. */
+function isOpenTaskForDay(task: Task, day: string): boolean {
+  return (
+    task.dueDate >= `${day}T00:00:00Z` &&
+    ['pending', 'scheduled', 'in_progress'].includes(task.status)
+  );
+}
 
 interface TasksForDayResult {
   tasks: Task[];
@@ -52,8 +60,15 @@ export function useTasksForDay(userId: string, day: string): TasksForDayResult {
       if (!userId) return;
 
       if (isGuestId(userId)) {
+        const guestTasks = (await loadGuestTasks()).filter((t) =>
+          isOpenTaskForDay(t, day),
+        );
         if (isMounted) {
-          setTasks(getDemoTasksForDay(day));
+          setTasks(
+            [...getDemoTasksForDay(day), ...guestTasks].sort((a, b) =>
+              a.dueDate.localeCompare(b.dueDate),
+            ),
+          );
           setLoading(false);
         }
         return;
@@ -87,8 +102,15 @@ export function useTasksForDay(userId: string, day: string): TasksForDayResult {
 
     load();
 
+    // Guest-created tasks can arrive while this screen is mounted (e.g. the
+    // New Task modal saves locally) — refetch so they appear immediately.
+    const unsubscribe = isGuestId(userId)
+      ? subscribeGuestTasks(() => load())
+      : undefined;
+
     return () => {
       isMounted = false;
+      unsubscribe?.();
     };
   }, [userId, day, trigger]);
 

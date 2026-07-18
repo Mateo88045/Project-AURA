@@ -1,18 +1,14 @@
 import { task } from '@trigger.dev/sdk/v3';
-import type {
-  FixedEvent,
-  Guardrail,
-  ScheduledBlock,
-  Task,
-} from '@chronos/shared/types';
-import { buildSchedule } from '@chronos/shared/scheduler';
+import type { FixedEvent, Guardrail, Task } from '@chronos/shared/types';
+import { schedule } from '@chronos/shared/scheduler';
 
 /**
  * Re-plan shadow schedule for a single day (Pipeline A scheduling only — no LLM).
  *
- * The scheduler itself is implemented in @chronos/shared/scheduler. This task is
- * the I/O wrapper: it loads inputs from Supabase, runs buildSchedule, and
- * writes the resulting chunks back as shadow blocks.
+ * NOTE: Trigger.dev is not part of the launch deployment. The production
+ * replan lives in supabase/functions/_shared/scheduleRunner.ts and runs inside
+ * the daily-trigger Edge Function. This job remains a typed stub for a future
+ * Trigger.dev migration.
  */
 export const shadowReplanTask = task({
   id: 'shadow-replan',
@@ -21,35 +17,26 @@ export const shadowReplanTask = task({
     console.log('[shadow-replan]', { userId, day });
 
     // Entitlement gate — docs/entitlement-design.md (Option A "frozen").
-    // Skip the entire re-plan for lapsed users; their last-known schedule
-    // is preserved. This is the same guard daily-trigger applies.
-    // TODO: Supabase — SELECT entitlement_status FROM users WHERE id = userId.
-    //   If status === 'lapsed', return early:
-    //     return { ok: true as const, userId, day, skipped: 'lapsed',
-    //              scheduledChunkCount: 0, overloadedTaskCount: 0 };
+    // TODO: Supabase — SELECT entitlement_status FROM users WHERE id = userId;
+    //   if 'lapsed', return early with skipped: 'lapsed'.
 
     // TODO: Supabase — load these from DB:
-    //   tasks         FROM tasks WHERE user_id = userId AND status IN ('pending', 'scheduled')
-    //   fixedEvents   FROM fixed_events WHERE user_id = userId
-    //   guardrails    FROM guardrails WHERE user_id = userId AND active = true
-    //   existingBlocks FROM scheduled_blocks WHERE user_id = userId AND day = day
+    //   tasks       FROM tasks WHERE user_id = userId AND status IN ('pending', 'scheduled')
+    //   fixedEvents FROM fixed_events WHERE user_id = userId (expanded per weekday)
+    //   guardrails  FROM guardrails WHERE user_id = userId AND active = true
     const tasks: Task[] = [];
-    const fixedEvents: FixedEvent[] = [];
+    const fixedEventsByDay: Record<string, FixedEvent[]> = { [day]: [] };
     const guardrails: Guardrail[] = [];
-    const existingBlocks: ScheduledBlock[] = [];
 
-    const { scheduledChunks, overloadedTasks } = buildSchedule({
+    const { scheduledChunks, overloadedTasks } = schedule({
       tasks,
-      fixedEvents,
+      fixedEventsByDay,
+      dayKeys: [day],
       guardrails,
-      existingBlocks,
-      targetDay: day,
     });
 
-    // TODO: Supabase — for each chunk, INSERT into scheduled_blocks with
-    //   status='shadow', user_id=userId, task_id=chunk.taskId,
-    //   start_time=chunk.startTime, end_time=chunk.endTime, day=chunk.day.
-    // First DELETE existing shadow blocks for (userId, day) to replace cleanly.
+    // TODO: Supabase — DELETE existing shadow blocks for (userId, day), then
+    //   INSERT each chunk as status='shadow'.
 
     return {
       ok: true as const,

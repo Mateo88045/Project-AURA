@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import type { Task } from '@chronos/shared/types';
 
 /**
  * Guest mode — App Store Guideline 5.1.1 compliance.
@@ -13,6 +14,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const GUEST_KEY = 'chronos_guest_mode';
 const GUEST_PROFILE_KEY = 'chronos_guest_profile';
+const GUEST_TASKS_KEY = 'chronos_guest_tasks';
 
 /** Stable synthetic id used while in guest mode. Never written to Supabase. */
 export const GUEST_USER_ID = 'guest-user';
@@ -75,6 +77,41 @@ export function isGuestId(id: string | null | undefined): boolean {
   return id === GUEST_USER_ID;
 }
 
+// ---------------------------------------------------------------------------
+// Guest tasks — locally created tasks while exploring without an account.
+// Guideline 5.1.1: core functionality (adding a task) must work for guests.
+// Stored in AsyncStorage; merged with the demo dataset by the task hooks and
+// wiped on sign-in/sign-out via exitGuestMode.
+// ---------------------------------------------------------------------------
+
+type GuestTasksListener = (tasks: Task[]) => void;
+const taskListeners = new Set<GuestTasksListener>();
+
+export async function loadGuestTasks(): Promise<Task[]> {
+  const raw = await AsyncStorage.getItem(GUEST_TASKS_KEY);
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(raw) as unknown;
+    return Array.isArray(parsed) ? (parsed as Task[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+export async function addGuestTask(task: Task): Promise<void> {
+  const existing = await loadGuestTasks();
+  const next = [...existing, task];
+  await AsyncStorage.setItem(GUEST_TASKS_KEY, JSON.stringify(next));
+  taskListeners.forEach((l) => l(next));
+}
+
+export function subscribeGuestTasks(listener: GuestTasksListener): () => void {
+  taskListeners.add(listener);
+  return () => {
+    taskListeners.delete(listener);
+  };
+}
+
 type GuestListener = (isGuest: boolean) => void;
 const listeners = new Set<GuestListener>();
 
@@ -91,8 +128,9 @@ export async function enableGuestMode(): Promise<void> {
 
 /** Leave guest mode — called on real sign-in or sign-out. */
 export async function exitGuestMode(): Promise<void> {
-  await AsyncStorage.multiRemove([GUEST_KEY, GUEST_PROFILE_KEY]);
+  await AsyncStorage.multiRemove([GUEST_KEY, GUEST_PROFILE_KEY, GUEST_TASKS_KEY]);
   profileListeners.forEach((l) => l(null));
+  taskListeners.forEach((l) => l([]));
   listeners.forEach((listener) => listener(false));
 }
 

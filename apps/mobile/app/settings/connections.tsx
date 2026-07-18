@@ -391,26 +391,33 @@ export default function ConnectionsHubScreen() {
     haptic.primaryCTA();
     if (platform === 'google_classroom') {
       setConnectingGoogle(true);
-      const result = await initiateGoogleOAuth();
+      const outcome = await initiateGoogleOAuth();
       setConnectingGoogle(false);
-      if (result) {
+      if (outcome.status === 'success') {
         const { error: connError } = await supabase
           .from('connections')
           .upsert(
             {
               user_id: authUser?.id ?? '',
               platform: 'google_classroom',
-              oauth_token: result.providerToken,
-              refresh_token: result.providerRefreshToken,
+              oauth_token: outcome.providerToken,
+              refresh_token: outcome.providerRefreshToken,
               status: 'active',
             },
             { onConflict: 'user_id,platform' },
           );
-        if (connError) console.warn('[Connections] Failed to save GC connection:', connError.message);
-        toast.show('Google Classroom connected', 'success');
-      } else {
-        toast.show('Something went wrong — try again', 'error');
+        if (connError) {
+          console.warn('[Connections] Failed to save GC connection:', connError.message);
+          toast.show('Connected, but saving failed — try again', 'error');
+        } else {
+          toast.show('Google Classroom connected', 'success');
+        }
+      } else if (outcome.status === 'signed_in_no_classroom') {
+        toast.show('Google didn’t grant Classroom access — try again', 'error');
+      } else if (outcome.status === 'error') {
+        toast.show(outcome.message, 'error');
       }
+      // 'cancelled' → user backed out; no toast.
     } else if (platform === 'canvas') {
       setShowCanvasSheet(true);
     }

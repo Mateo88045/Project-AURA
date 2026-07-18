@@ -45,7 +45,7 @@ export async function gradeAssignmentPhoto(
   const base = getAuraApiBaseUrl().replace(/\/$/, '');
   const res = await fetch(`${base}/v1/ocr`, {
     method: 'POST',
-    headers: getAuraApiHeaders(userId),
+    headers: await getAuraApiHeaders(userId),
     body: JSON.stringify({ image: base64Image }),
   });
 

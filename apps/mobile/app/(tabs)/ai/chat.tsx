@@ -332,6 +332,14 @@ export default function AIChatScreen() {
     async (text: string) => {
       if (!text || loading) return;
 
+      // Guests have no session for the AI API to verify — surface the real
+      // ask (an account) instead of letting the request die with a 401.
+      if (isGuestId(authUser?.id ?? '')) {
+        setError('Chatting with Chronos needs an account — sign in to continue.');
+        lastFailedInput.current = null;
+        return;
+      }
+
       haptic.primaryCTA();
       const userRow: Row = { id: `u-${Date.now()}`, role: 'user', content: text };
       setInput('');

@@ -18,6 +18,7 @@ import {
 } from '../services/oauthService';
 import { haptic } from '../lib/haptics';
 import { enableGuestMode } from '../lib/guest';
+import { useAuraToast } from '../components/ui/AuraToast';
 
 const STAGGER_MS = 60;
 
@@ -110,16 +111,23 @@ export default function AuthScreen() {
   const insets = useSafeAreaInsets();
   const { colors, resolvedMode } = useTheme();
   const styles = useMemo(() => makeStyles(colors, resolvedMode), [colors, resolvedMode]);
+  const toast = useAuraToast();
   const [loading, setLoading] = useState<'google' | 'apple' | null>(null);
 
   async function handleGoogleSignIn() {
     haptic.primaryCTA();
     setLoading('google');
     try {
-      await initiateGoogleOAuth();
-      // On success, useAuth listener in _layout.tsx will auto-redirect
+      const outcome = await initiateGoogleOAuth();
+      // On success (or signed_in_no_classroom — the session still exists),
+      // the useAuth listener in _layout.tsx auto-redirects.
+      if (outcome.status === 'error') {
+        haptic.error();
+        toast.show(outcome.message, 'error');
+      }
     } catch {
-      // User cancelled or network error — just reset
+      haptic.error();
+      toast.show("Couldn't sign in with Google — try again", 'error');
     }
     setLoading(null);
   }
@@ -128,9 +136,14 @@ export default function AuthScreen() {
     haptic.primaryCTA();
     setLoading('apple');
     try {
-      await initiateAppleSignIn();
+      const outcome = await initiateAppleSignIn();
+      if (outcome === 'error') {
+        haptic.error();
+        toast.show("Couldn't sign in with Apple — try again", 'error');
+      }
     } catch {
-      // User cancelled or network error
+      haptic.error();
+      toast.show("Couldn't sign in with Apple — try again", 'error');
     }
     setLoading(null);
   }

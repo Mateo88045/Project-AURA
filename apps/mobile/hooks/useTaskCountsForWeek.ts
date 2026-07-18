@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '@chronos/shared/supabase';
-import { isGuestId } from '../lib/guest';
+import { isGuestId, loadGuestTasks, subscribeGuestTasks } from '../lib/guest';
 import { getDemoTaskCounts } from '../lib/demoData';
 
 interface TaskCountsResult {
@@ -41,8 +41,16 @@ export function useTaskCountsForWeek(
       if (!userId) return;
 
       if (isGuestId(userId)) {
+        // Demo counts plus any tasks the guest created locally.
+        const merged = { ...getDemoTaskCounts(days) };
+        const guestTasks = await loadGuestTasks();
+        for (const t of guestTasks) {
+          if (!['pending', 'scheduled', 'in_progress'].includes(t.status)) continue;
+          const dayIso = t.dueDate.slice(0, 10);
+          if (days.includes(dayIso)) merged[dayIso] = (merged[dayIso] ?? 0) + 1;
+        }
         if (isMounted) {
-          setCounts(getDemoTaskCounts(days));
+          setCounts(merged);
           setLoading(false);
         }
         return;
@@ -86,8 +94,14 @@ export function useTaskCountsForWeek(
 
     load();
 
+    // Reflect guest-created tasks in the week counts as soon as they save.
+    const unsubscribe = isGuestId(userId)
+      ? subscribeGuestTasks(() => load())
+      : undefined;
+
     return () => {
       isMounted = false;
+      unsubscribe?.();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId, daysKey, trigger]);

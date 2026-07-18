@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { supabase } from '@chronos/shared/supabase';
-import type { Difficulty, TaskSource, TaskType } from '@chronos/shared/types';
-import { isGuestId } from '../lib/guest';
+import type { Difficulty, Task, TaskSource, TaskType } from '@chronos/shared/types';
+import { GUEST_USER_ID, addGuestTask, isGuestId } from '../lib/guest';
 
 export interface CreateTaskInput {
   title: string;
@@ -29,12 +29,34 @@ export function useCreateTask(userId: string): CreateTaskResult {
     setError(null);
 
     if (isGuestId(userId)) {
-      // Guest mode has no real user row to attach a task to — inserting
-      // with the sentinel id would 400 on the uuid column.
-      const message = 'Sign in to save tasks beyond this session.';
-      setError(message);
-      setLoading(false);
-      throw new Error(message);
+      // Guest mode has no real user row — persist the task locally instead of
+      // hitting Supabase (the sentinel id would 400 on the uuid column). The
+      // task hooks merge these into their guest/demo datasets.
+      const now = new Date().toISOString();
+      const guestTask: Task = {
+        id: `guest-task-${Date.now()}`,
+        userId: GUEST_USER_ID,
+        title: input.title,
+        subject: input.subject,
+        source: input.source ?? 'manual',
+        dueDate: input.dueDate,
+        difficulty: input.difficulty,
+        estimatedMinutes: input.estimatedMinutes,
+        taskType: input.taskType,
+        status: 'pending',
+        createdAt: now,
+        updatedAt: now,
+      };
+      try {
+        await addGuestTask(guestTask);
+        setLoading(false);
+      } catch (err) {
+        setLoading(false);
+        const message = 'Could not save the task on this device.';
+        setError(message);
+        throw err instanceof Error ? err : new Error(message);
+      }
+      return;
     }
 
     try {

@@ -2,7 +2,7 @@ import { serve } from '@hono/node-server';
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { env } from './env.js';
-import { devAuth, type ApiVariables } from './middleware/auth.js';
+import { apiAuth, type ApiVariables } from './middleware/auth.js';
 import { requireActiveEntitlement } from './middleware/requireActiveEntitlement.js';
 import { jobsRouter } from './routes/jobs.js';
 import { chatRouter } from './routes/chat.js';
@@ -21,7 +21,7 @@ app.get('/health', (c) => c.json({ ok: true }));
 app.route('/webhooks', webhooksRouter);
 
 const v1 = new Hono<{ Variables: ApiVariables }>();
-v1.use('/*', devAuth);
+v1.use('/*', apiAuth);
 // Paid-tier endpoints — guard with entitlement check after auth.
 // See docs/entitlement-design.md (Option A "frozen").
 v1.use('/jobs/*', requireActiveEntitlement);
