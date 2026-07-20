@@ -1,0 +1,266 @@
+:root {
+  --bg-dark: #0A1118;
+  --mist: #A8DADC;
+  --steel: #457B9D;
+  --green: #7ECFA0;
+  --amber: #F4A261;
+  --red: #E76F6F;
+  --text-primary: #F1FAEE;
+  --text-secondary: #8EAFC2;
+  --radius-hero: 22px;
+  --radius-card: 14px;
+  --radius-button: 8px;
+  --screen-padding: 28px;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg-dark);
+  color: var(--text-primary);
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", "Segoe UI", sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  min-height: 100vh;
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* Ambient orbs — static atmosphere, per CLAUDE.md visual language */
+.orb {
+  position: fixed;
+  border-radius: 50%;
+  filter: blur(100px);
+  pointer-events: none;
+  z-index: 0;
+}
+.orb-1 { width: 420px; height: 420px; top: -120px; left: -100px; background: var(--mist); opacity: 0.10; }
+.orb-2 { width: 380px; height: 380px; bottom: -140px; right: -80px; background: var(--steel); opacity: 0.12; }
+.orb-3 { width: 300px; height: 300px; top: 40%; right: 10%; background: var(--mist); opacity: 0.08; }
+
+.wrap {
+  position: relative;
+  z-index: 1;
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 64px var(--screen-padding) 96px;
+}
+
+/* Top nav / breadcrumb */
+.topnav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 48px;
+  font-size: 13px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+.topnav a {
+  color: var(--text-secondary);
+  text-decoration: none;
+}
+.topnav a:hover { color: var(--mist); }
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text-primary);
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+  font-size: 15px;
+}
+.brand-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--mist);
+  box-shadow: 0 0 12px 2px rgba(168, 218, 220, 0.6);
+}
+
+/* Hero (index page) */
+.hero-eyebrow {
+  font-size: 12px;
+  font-weight: 300;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  margin-bottom: 14px;
+}
+h1.hero-title {
+  font-size: 44px;
+  font-weight: 700;
+  letter-spacing: -1.2px;
+  line-height: 1.08;
+  margin: 0 0 18px;
+}
+p.hero-sub {
+  font-size: 17px;
+  font-weight: 400;
+  color: var(--text-secondary);
+  line-height: 1.55;
+  max-width: 520px;
+  margin: 0 0 48px;
+}
+
+/* Doc cards — the "branches" */
+.branches {
+  display: grid;
+  gap: 14px;
+  margin-bottom: 56px;
+}
+.branch-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px 22px;
+  border-radius: var(--radius-card);
+  background: rgba(168, 218, 220, 0.04);
+  border: 1px solid rgba(142, 175, 194, 0.16);
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.branch-card:hover {
+  border-color: var(--mist);
+  background: rgba(168, 218, 220, 0.08);
+}
+.branch-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--mist);
+  box-shadow: 0 0 10px 2px rgba(168, 218, 220, 0.5);
+  flex-shrink: 0;
+}
+.branch-body { flex: 1; min-width: 0; }
+.branch-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 4px;
+}
+.branch-desc {
+  font-size: 13.5px;
+  font-weight: 400;
+  color: var(--text-secondary);
+  margin: 0;
+  line-height: 1.4;
+}
+.branch-arrow {
+  color: var(--text-secondary);
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.meta-row {
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  border-top: 1px solid rgba(142, 175, 194, 0.16);
+  padding-top: 20px;
+}
+.meta-row b { color: var(--text-primary); font-weight: 500; }
+
+/* Document pages */
+.doc h1 {
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  margin: 0 0 6px;
+}
+.doc > p:first-of-type em {
+  color: var(--text-secondary);
+  font-style: normal;
+  font-size: 13px;
+}
+.doc h2 {
+  font-size: 19px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 40px 0 12px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(142, 175, 194, 0.14);
+}
+.doc h2:first-of-type { border-top: none; padding-top: 0; margin-top: 28px; }
+.doc h3 {
+  font-size: 15.5px;
+  font-weight: 600;
+  color: var(--mist);
+  margin: 22px 0 8px;
+}
+.doc p, .doc li {
+  font-size: 15px;
+  font-weight: 400;
+  line-height: 1.65;
+  color: var(--text-secondary);
+}
+.doc strong { color: var(--text-primary); font-weight: 600; }
+.doc a { color: var(--mist); text-decoration: underline; }
+.doc ul, .doc ol { padding-left: 22px; margin: 10px 0; }
+.doc li { margin-bottom: 6px; }
+.doc blockquote {
+  margin: 18px 0;
+  padding: 14px 18px;
+  border-left: 2px solid var(--amber);
+  background: rgba(244, 162, 97, 0.06);
+  border-radius: 0 var(--radius-card) var(--radius-card) 0;
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+.doc blockquote p { margin: 0; color: var(--text-secondary); }
+.doc hr {
+  border: none;
+  border-top: 1px solid rgba(142, 175, 194, 0.16);
+  margin: 36px 0;
+}
+.doc table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 16px 0;
+  font-size: 13.5px;
+}
+.doc th, .doc td {
+  text-align: left;
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(142, 175, 194, 0.14);
+  color: var(--text-secondary);
+}
+.doc th {
+  color: var(--text-primary);
+  font-weight: 600;
+  font-size: 12px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+.doc code {
+  background: rgba(168, 218, 220, 0.08);
+  color: var(--mist);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 13px;
+}
+
+.footer-nav {
+  margin-top: 56px;
+  padding-top: 24px;
+  border-top: 1px solid rgba(142, 175, 194, 0.16);
+  display: flex;
+  gap: 20px;
+  font-size: 13.5px;
+}
+.footer-nav a { color: var(--text-secondary); text-decoration: none; }
+.footer-nav a:hover { color: var(--mist); }
+
+@media (max-width: 600px) {
+  h1.hero-title { font-size: 34px; }
+  .wrap { padding: 40px 20px 64px; }
+}

@@ -18,469 +18,619 @@ export default function TermsPage() {
             Chronos Terms of Service
           </h1>
           <p className="text-secondary" style={{ fontStyle: 'italic', marginBottom: 32 }}>
-            Effective date: 2026-05-28
+            Last updated: 2026-07-12
           </p>
 
           <p>
-            These Terms of Service (&ldquo;<strong>Terms</strong>&rdquo;) form a binding legal
-            agreement between you and <strong>Project Aura Studios</strong>, a New Jersey company
-            (&ldquo;<strong>Project Aura Studios</strong>,&rdquo; &ldquo;we,&rdquo;
-            &ldquo;us,&rdquo; or &ldquo;our&rdquo;), governing your access to and use of the
-            Chronos mobile application, website, and related services (collectively, the
-            &ldquo;<strong>Service</strong>&rdquo;).
-          </p>
-          <p>
             <strong>
-              PLEASE READ THESE TERMS CAREFULLY. THEY CONTAIN A BINDING ARBITRATION AGREEMENT, A
-              CLASS-ACTION WAIVER, LIMITATIONS ON OUR LIABILITY, AND YOUR ASSUMPTION OF ALL RISK
-              ARISING FROM YOUR USE OF THE SERVICE. BY USING CHRONOS, YOU AGREE TO BE BOUND BY
-              THESE TERMS.
+              PLEASE READ THESE TERMS CAREFULLY. THEY INCLUDE A BINDING ARBITRATION CLAUSE AND
+              CLASS ACTION WAIVER IN SECTION 15 THAT AFFECT YOUR LEGAL RIGHTS.
             </strong>
           </p>
           <p>
-            Operated by Project Aura Studios —{' '}
-            <a href="mailto:privacy@chronos-app.com">privacy@chronos-app.com</a> —{' '}
-            <a href="https://chronos-app.com">chronos-app.com</a>
+            These Terms of Service (&ldquo;Terms&rdquo;) are a legal agreement between you and{' '}
+            <strong>Chronos Labs, Inc.</strong>, a New Jersey corporation (&ldquo;Chronos,&rdquo;
+            &ldquo;we,&rdquo; &ldquo;us,&rdquo; &ldquo;our&rdquo;), governing your access to and
+            use of the Chronos mobile application, any related websites, and all features,
+            content, and services we offer (collectively, the &ldquo;Service&rdquo;).
           </p>
+          <p>
+            By creating an account, tapping &ldquo;I agree,&rdquo; starting a free trial, or
+            otherwise using the Service, you agree to these Terms and to our{' '}
+            <Link href="/privacy">Privacy Policy</Link>, which is incorporated here by reference.
+            If you do not agree, do not use the Service.
+          </p>
+
+          <blockquote
+            style={{
+              borderLeft: '2px solid var(--border)',
+              paddingLeft: 20,
+              margin: '24px 0',
+            }}
+            className="text-secondary"
+          >
+            <p>
+              <strong>A note on how to read this document:</strong> This is a template drafted to
+              anticipate the specific risk areas a scheduling app for minors, with paid
+              subscriptions and third-party AI processing, is likely to face. It is{' '}
+              <strong>
+                not a substitute for review by an attorney licensed in Chronos&rsquo;s state of
+                incorporation
+              </strong>
+              , and no set of Terms can make a consumer-facing product immune to being sued —
+              only to being <em>well-defended</em> if it is. Bracketed items (e.g.,{' '}
+              <code>[State]</code>) must be filled in with real values, and the arbitration
+              provider, notice address, and governing-law state should be confirmed with counsel
+              before this is published as binding.
+            </p>
+          </blockquote>
 
           <hr />
 
-          <h2>1. Acceptance of Terms</h2>
+          <h2>1. Eligibility</h2>
           <p>
-            By downloading, installing, accessing, or using the Service, you agree to these
-            Terms, our <Link href="/privacy">Privacy Policy</Link>, and any additional
-            guidelines, policies, or supplemental terms we publish. If you do not agree, do not
-            access or use the Service. Your only remedy if you are dissatisfied with the Service
-            or these Terms is to stop using the Service.
+            You must be at least <strong>13 years old</strong> to use Chronos. Chronos does not
+            verify your age at sign-up; you are responsible for the accuracy of the information
+            you provide.
+          </p>
+          <p>
+            <strong>If you are between 13 and 17 years old</strong>, by using Chronos you
+            represent that: (a) you have your parent&rsquo;s or legal guardian&rsquo;s permission
+            to use the Service and to enter into these Terms to the extent you are able to under
+            applicable law; and (b) if you start a paid subscription, you represent that you are
+            authorized to make that purchase or that your parent/guardian has authorized it.
+          </p>
+          <p>
+            <strong>If you are the parent or legal guardian of a user under 18</strong> and you
+            did not authorize their use of the Service, a subscription charge, or wish to
+            disaffirm this agreement on their behalf, contact{' '}
+            <a href="mailto:privacy@chronos-app.com">
+              <strong>privacy@chronos-app.com</strong>
+            </a>
+            . We will, upon reasonable verification that you are the account holder&rsquo;s parent
+            or guardian, (i) delete the account and associated data per our Privacy Policy, and
+            (ii) refund the most recent billing period&rsquo;s charge. This commitment applies
+            regardless of general refund policy in Section 6 and is intended to make disaffirmance
+            of a minor&rsquo;s contract with us a fast, low-friction process rather than a
+            disputed one.
+          </p>
+          <p>
+            Chronos is not intended for use by anyone under 13. If we learn an account belongs to
+            a user under 13, we will terminate it per our Privacy Policy.
           </p>
 
-          <h2>2. Eligibility &amp; Parental Consent</h2>
+          <h2>2. Your Account</h2>
           <p>
-            The Service is intended for users aged <strong>13 and older</strong>. Users under 13
-            may not create accounts or use the Service. If you are between 13 and 17 years old,
-            you represent and warrant that your parent or legal guardian has reviewed and agreed
-            to these Terms on your behalf and consents to your use of the Service, and that your
-            parent or legal guardian agrees to be bound by these Terms (including the arbitration
-            agreement, class-action waiver, and liability limitations) as your legal
-            representative.
+            You are responsible for maintaining the confidentiality of your login credentials and
+            for all activity under your account. Notify us immediately at{' '}
+            <a href="mailto:privacy@chronos-app.com">privacy@chronos-app.com</a> if you suspect
+            unauthorized use.
           </p>
           <p>
-            We do not knowingly collect data from children under 13. If we discover we have, we
-            will delete the account immediately. Contact{' '}
-            <a href="mailto:privacy@chronos-app.com">privacy@chronos-app.com</a> if you believe a
-            child under 13 has created an account.
+            You may sign in using Sign in with Apple, Sign in with Google, or another supported
+            method. You represent that the information you provide (name, email, grade level) is
+            accurate.
           </p>
 
-          <h2>3. Account Registration &amp; Security</h2>
+          <h2>3. The Service</h2>
           <p>
-            You must provide accurate, current, and complete information when creating an
-            account and keep it updated. You are responsible for safeguarding your credentials
-            and for all activity that occurs under your account, whether or not authorized by
-            you. You agree to notify us immediately at{' '}
-            <a href="mailto:privacy@chronos-app.com">privacy@chronos-app.com</a> of any actual or
-            suspected unauthorized access. We are not liable for any loss or damage arising from
-            your failure to safeguard your credentials.
-          </p>
-
-          <h2>4. What Chronos Does — AI Scheduling Disclosure &amp; Assumption of Risk</h2>
-          <p>
-            Chronos is an AI-powered study scheduler. Once you connect your accounts and complete
-            onboarding, Chronos autonomously builds and adjusts your weekly study schedule —
-            creating time blocks, setting task priorities, sending reminders, and otherwise
-            taking automated action — without requiring your approval for each individual
-            decision. You expressly authorize Chronos to take these actions on your behalf.
+            Chronos connects to Google Classroom and/or Canvas (with your authorization) to pull
+            assignments, uses AI to estimate their difficulty and duration, and schedules them
+            into your free time using a deterministic algorithm that accounts for the fixed
+            events, guardrails, and preferences you provide.
           </p>
           <p>
-            <strong>You acknowledge, understand, and agree that:</strong>
+            <strong>Chronos is a planning tool, not an academic guarantee.</strong> You remain
+            solely responsible for:
           </p>
           <ul>
             <li>
-              AI scheduling and grading decisions are probabilistic, may contain errors, and may
-              produce inaccurate, incomplete, biased, or inappropriate output;
+              Confirming assignment due dates, requirements, and submission with your teacher or
+              the source platform (Google Classroom, Canvas) — Chronos&rsquo;s copy of an
+              assignment may be incomplete, stale, or mis-parsed.
             </li>
+            <li>Actually completing and submitting your work on time.</li>
             <li>
-              the Service is <strong>not</strong> a substitute for your own judgment,
-              calendaring, academic planning, or professional advice;
-            </li>
-            <li>
-              you remain solely responsible for reviewing your schedule, verifying due dates,
-              completing assignments, and meeting all academic, parental, and other obligations;
-            </li>
-            <li>
-              <strong>
-                you assume all risk arising from your use of, or reliance on, the Service,
-                including any AI output, schedule, reminder, estimate, or recommendation it
-                generates;
-              </strong>{' '}
-              and
-            </li>
-            <li>
-              we are not liable for missed assignments, missed deadlines, lower grades, academic
-              consequences, scheduling conflicts, data inaccuracies, delays, or any other
-              consequence of your use of the Service.
+              Your academic outcomes, including any grade, deadline, or consequence resulting from
+              reliance on Chronos&rsquo;s schedule, AI difficulty estimate, or copilot response.
             </li>
           </ul>
-
-          <h2>5. Connected Platforms (Google Classroom, Canvas, and Others)</h2>
           <p>
-            By connecting Google Classroom, Canvas, or any other third-party platform, you
-            authorize Chronos to read your assignments, due dates, and course information from
-            those platforms. Your use of those platforms is governed by the third party&rsquo;s
-            own terms and privacy policy. We do not control, are not responsible for, and make
-            no warranties regarding any third-party service, content, availability, accuracy, or
-            data practices. You may disconnect any platform at any time via Settings →
-            Connections. We are not liable for any loss, damage, or claim arising from a
-            third-party platform&rsquo;s outage, error, change, or termination.
+            See Section 8 (AI Features) and Section 10 (Disclaimers) for more on the limits of
+            what Chronos can promise you.
           </p>
 
-          <h2>6. Acceptable Use</h2>
-          <p>You agree not to, and not to attempt to:</p>
+          <h2>4. License to Use the Service</h2>
+          <p>
+            Subject to these Terms, Chronos grants you a limited, personal, non-exclusive,
+            non-transferable, revocable license to install and use the Chronos app on a device you
+            own or control, for your own personal, non-commercial, educational use.
+          </p>
+          <p>
+            You may <strong>not</strong>:
+          </p>
           <ul>
-            <li>use the Service for any unlawful, harmful, fraudulent, or infringing purpose;</li>
-            <li>reverse engineer, decompile, disassemble, or extract source code from the Service;</li>
-            <li>use automated tools, bots, scrapers, or crawlers to access or interact with the Service;</li>
-            <li>impersonate any person or entity or misrepresent your affiliation;</li>
             <li>
-              gain unauthorized access to any account, system, network, or data associated with
-              the Service;
-            </li>
-            <li>upload, transmit, or introduce malicious code, viruses, or harmful content;</li>
-            <li>
-              interfere with, disrupt, overburden, or degrade the Service or any related
-              infrastructure;
+              Reverse engineer, decompile, or disassemble the app, except where applicable law
+              gives you the right to do so despite this limitation.
             </li>
             <li>
-              use the Service to harass, threaten, defame, or harm any person, or to violate any
-              third party&rsquo;s rights;
+              Scrape, crawl, or use automated means to access the Service or extract data from
+              it, other than through the connections (Google Classroom, Canvas) you personally
+              authorize through official APIs.
             </li>
             <li>
-              resell, sublicense, lease, or otherwise exploit the Service for commercial purposes
-              not expressly authorized by us; or
+              Resell, sublicense, rent, or provide the Service to third parties as your own
+              product.
             </li>
-            <li>circumvent any technical or access-control measure.</li>
+            <li>
+              Circumvent, disable, or interfere with any security or access-control feature,
+              including entitlement/paywall checks.
+            </li>
+            <li>
+              Use the Service to violate your school&rsquo;s academic integrity policy (e.g.,
+              submitting AI-generated work as your own — Chronos schedules and estimates
+              difficulty; it does not write your assignments for you).
+            </li>
+            <li>
+              Upload content you don&rsquo;t have the right to upload, or content that is
+              unlawful, infringing, or contains another person&rsquo;s personal information
+              without their consent (e.g., a classmate&rsquo;s graded paper with their name
+              visible).
+            </li>
           </ul>
           <p>
-            We reserve the right to investigate and take appropriate action against any violation,
-            including suspending or terminating accounts and reporting conduct to law enforcement.
+            We reserve the right to suspend or terminate accounts that violate this section.
           </p>
 
-          <h2>7. Intellectual Property</h2>
+          <h2>5. Your Content</h2>
           <p>
-            The Service, including all software, source code, design, algorithms, models,
-            content, trademarks, logos, and branding (the &ldquo;<strong>Chronos IP</strong>&rdquo;),
-            is owned by Project Aura Studios or its licensors and is protected by U.S. and
-            international intellectual-property and other laws. Subject to your compliance with
-            these Terms, we grant you a limited, personal, non-exclusive, non-transferable,
-            non-sublicensable, revocable license to access and use the Service for your
-            personal, non-commercial use. All rights not expressly granted are reserved.
+            &ldquo;Your Content&rdquo; means anything you submit to Chronos — photos of
+            assignments, manually entered tasks, chat messages to the copilot, feedback on time
+            estimates, and onboarding answers.
           </p>
           <p>
-            You retain ownership of personal data you submit to Chronos (assignments, schedules,
-            notes — &ldquo;<strong>Your Content</strong>&rdquo;). You grant Project Aura Studios
-            a worldwide, royalty-free, sublicensable license to host, store, reproduce, modify,
-            adapt, transmit, process, and display Your Content solely to provide, maintain,
-            improve, and develop the Service, including for security, compliance, and
-            anonymized-aggregate analytics purposes.
+            You retain ownership of Your Content. You grant Chronos a worldwide, non-exclusive,
+            royalty-free license to host, store, reproduce, and process Your Content{' '}
+            <strong>solely to operate and improve the Service for you</strong> (including sending
+            relevant portions to our AI sub-processors as described in the Privacy Policy). This
+            license ends when you delete the content or your account, except for backup copies
+            that age out per our retention schedule and any aggregated, de-identified data already
+            generated from it.
           </p>
           <p>
-            If you submit feedback, comments, ideas, or suggestions (&ldquo;
-            <strong>Feedback</strong>&rdquo;), you grant Project Aura Studios a perpetual,
-            irrevocable, worldwide, royalty-free, fully paid-up, sublicensable, transferable
-            license to use, reproduce, modify, distribute, and exploit the Feedback for any
-            purpose, without obligation, credit, or compensation to you.
+            You represent that Your Content doesn&rsquo;t infringe anyone else&rsquo;s rights and
+            that you have the right to submit it (e.g., it&rsquo;s your own assignment, not copied
+            from a classmate without permission).
           </p>
 
-          <h2>8. Subscriptions, Billing &amp; Refunds</h2>
+          <h2>6. Subscriptions, Free Trials, and Billing</h2>
+
+          <h3>Free trial</h3>
           <p>
-            Chronos offers a free tier and a paid Pro subscription. Paid subscriptions are
-            processed and billed through the Apple App Store on a recurring basis (monthly or
-            annual, as selected). Subscriptions automatically renew at the then-current price at
-            the end of each billing period unless cancelled at least 24 hours before the renewal
-            date. You may manage or cancel your subscription in your Apple ID settings. Except
-            as required by Apple&rsquo;s policies or applicable law, all fees are
-            <strong> non-refundable</strong>, including for partial periods, unused features, or
-            account terminations for cause. We may change pricing, plan features, or
-            subscription terms with notice; continued use after the effective date constitutes
-            acceptance.
+            Chronos may offer a free trial (currently 7 days, as disclosed in the app at the time
+            you start it — the length and terms shown to you in-app at checkout control over any
+            figure in this document if they ever differ). Unless you cancel before the trial ends,
+            your selected paid plan begins automatically and your payment method will be charged.
           </p>
 
-          <h2>9. Privacy</h2>
+          <h3>Subscription plans</h3>
           <p>
-            Your use of the Service is governed by our{' '}
-            <Link href="/privacy">Privacy Policy</Link>, which is incorporated by reference. We
-            do <strong>not</strong> sell your personal information.
+            Chronos Pro is offered on a recurring subscription basis (currently monthly and annual
+            plans, as priced in-app). <strong>Subscriptions automatically renew</strong> for
+            successive periods of the same length, at the then-current price, until cancelled.
           </p>
 
-          <h2>10. Beta &amp; Experimental Features</h2>
+          <h3>Billing</h3>
           <p>
-            We may, from time to time, offer beta, preview, or experimental features
-            (&ldquo;<strong>Beta Features</strong>&rdquo;). Beta Features are provided
-            &ldquo;AS IS&rdquo; and &ldquo;AS AVAILABLE&rdquo;, may be unstable or unreliable,
-            and may be modified or discontinued at any time without notice. Your use of Beta
-            Features is at your sole risk.
+            All purchases are processed by the Apple App Store or Google Play Store, or by our
+            subscription-management vendor (RevenueCat) acting on our behalf.{' '}
+            <strong>We do not receive or store your full payment card number.</strong> Your
+            relationship with Apple/Google as a payment processor is also governed by their own
+            terms.
           </p>
 
-          <h2>11. No Professional Advice; No Reliance</h2>
+          <h3>Cancellation</h3>
           <p>
-            The Service does not provide medical, mental-health, educational, academic,
-            financial, legal, or other professional advice. Nothing in the Service should be
-            relied upon as such. You should consult a qualified professional for any decision
-            that warrants professional judgment. You agree not to rely on the Service for any
-            decision affecting your health, safety, finances, or academic standing without
-            independent verification.
+            You can cancel anytime, effective at the end of the current billing period, with{' '}
+            <strong>
+              no phone call, no retention offer, and no &ldquo;are you sure&rdquo; gauntlet
+            </strong>
+            :
+          </p>
+          <ul>
+            <li>
+              In-app: Settings → Manage Subscription, which opens your App Store (or Google Play)
+              subscription page where cancellation is a single tap.
+            </li>
+            <li>
+              Directly with the platform: your Apple ID subscription settings or Google Play
+              subscription settings.
+            </li>
+          </ul>
+          <p>
+            Because billing is handled by Apple and Google, cancellation on their subscription
+            page takes effect immediately for future renewals and does not require going through
+            Chronos at all.
+          </p>
+          <p>
+            Cancelling stops future renewals; it does not retroactively refund the current period
+            except as described below or as required by law.
           </p>
 
-          <h2>12. Disclaimers</h2>
+          <h3>Refunds</h3>
+          <p>
+            Purchases made through the Apple App Store or Google Play Store are subject to those
+            platforms&rsquo; refund policies, which Chronos does not control. Independent of
+            platform policy, Chronos will refund the most recent charge, at our discretion or as
+            required by law, where:
+          </p>
+          <ul>
+            <li>
+              The charge resulted from a minor&rsquo;s use without parental authorization (see
+              Section 1); or
+            </li>
+            <li>A verified billing or technical error on our part caused the charge.</li>
+          </ul>
+
+          <h3>Price changes</h3>
+          <p>
+            We will provide notice (in-app or by email) before a price increase takes effect for
+            existing subscribers, and any increase will apply only to renewals after the notice
+            period, not to your current paid term.
+          </p>
+
+          <h2>7. Educational Platform Connections</h2>
+          <p>
+            When you connect Google Classroom or Canvas, you authorize Chronos to access your
+            assignment and course data through each platform&rsquo;s official API, under the scope
+            you grant during that platform&rsquo;s own OAuth consent screen. Chronos accesses only
+            official APIs — never scraping or credential-sharing — and you can revoke access at
+            any time in Settings → Connections or directly through Google&rsquo;s or
+            Canvas&rsquo;s account permissions.
+          </p>
+          <p>
+            Our use of data received from Google APIs is additionally governed by the Google API
+            Services User Data Policy, including its Limited Use requirements, as described in the
+            &ldquo;Google API Services Limited Use&rdquo; section of our{' '}
+            <Link href="/privacy">Privacy Policy</Link>. Your use of Google Classroom and Canvas
+            remains subject to Google&rsquo;s and Instructure&rsquo;s own terms.
+          </p>
+          <p>
+            Chronos is not affiliated with, endorsed by, or sponsored by Google, Instructure
+            (Canvas), Apple, or your school. We are not responsible for outages, API changes, data
+            accuracy, or policy changes on those platforms that affect Chronos&rsquo;s
+            functionality.
+          </p>
+
+          <h2>8. AI Features</h2>
+          <p>
+            Chronos uses third-party AI models (currently Google Gemini for difficulty grading and
+            photo OCR, Anthropic Claude for the conversational copilot) to generate estimates,
+            structured data, and conversational responses.
+          </p>
+          <p>
+            <strong>AI output can be wrong.</strong> Difficulty grades, time estimates, OCR&rsquo;d
+            assignment text, and copilot suggestions are generated automatically and may be
+            inaccurate, incomplete, or not reflect your teacher&rsquo;s actual requirements. You
+            should treat AI-generated content as a starting point, not a verified fact, and
+            independently confirm anything time-sensitive or graded.
+          </p>
+          <p>
+            Chronos&rsquo;s core scheduling engine (which decides <em>when</em> a task is placed
+            in your day) is deterministic, rule-based software — not an AI model — but it depends
+            on inputs (due dates, difficulty, your fixed events) that may themselves come from AI
+            estimates or from data you or a connected platform provided, and can therefore still
+            be wrong if those inputs are wrong.
+          </p>
+
+          <h2>9. Push Notifications and Communications</h2>
+          <p>
+            By using Chronos, you consent to receive push notifications related to your schedule,
+            assignments, and account (e.g., reminders, trial-ending notices). You can disable push
+            notifications in your device settings at any time, though this may reduce the
+            usefulness of the Service. We may also send account-related emails (e.g., security
+            notices, deletion confirmations) that are not promotional and cannot be opted out of
+            while your account is active.
+          </p>
+
+          <h2>10. Disclaimers</h2>
           <p>
             <strong>
-              THE SERVICE, INCLUDING ALL CONTENT, FEATURES, AI OUTPUTS, AND THIRD-PARTY
-              INTEGRATIONS, IS PROVIDED &ldquo;AS IS&rdquo; AND &ldquo;AS AVAILABLE&rdquo;,
-              WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, WHETHER EXPRESS, IMPLIED, OR
-              STATUTORY, TO THE FULLEST EXTENT PERMITTED BY LAW.
-            </strong>{' '}
-            PROJECT AURA STUDIOS AND ITS AFFILIATES, OFFICERS, DIRECTORS, EMPLOYEES, AGENTS, AND
-            LICENSORS (COLLECTIVELY, THE &ldquo;<strong>CHRONOS PARTIES</strong>&rdquo;) HEREBY
-            DISCLAIM ALL WARRANTIES, INCLUDING WITHOUT LIMITATION IMPLIED WARRANTIES OF
-            MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, TITLE, NON-INFRINGEMENT, ACCURACY,
-            QUIET ENJOYMENT, AND ANY WARRANTIES ARISING FROM COURSE OF DEALING OR USAGE OF TRADE.
+              TO THE MAXIMUM EXTENT PERMITTED BY LAW, THE SERVICE IS PROVIDED &ldquo;AS IS&rdquo;
+              AND &ldquo;AS AVAILABLE,&rdquo; WITHOUT WARRANTIES OF ANY KIND, WHETHER EXPRESS,
+              IMPLIED, OR STATUTORY, INCLUDING WITHOUT LIMITATION WARRANTIES OF MERCHANTABILITY,
+              FITNESS FOR A PARTICULAR PURPOSE, NON-INFRINGEMENT, AND ANY WARRANTY ARISING FROM
+              COURSE OF DEALING OR USAGE OF TRADE.
+            </strong>
           </p>
+          <p>Without limiting the foregoing, Chronos does not warrant that:</p>
+          <ul>
+            <li>The Service will be uninterrupted, timely, secure, or error-free;</li>
+            <li>
+              Any assignment data pulled from Google Classroom or Canvas will be complete or
+              accurate;
+            </li>
+            <li>
+              Any AI-generated difficulty grade, time estimate, OCR result, or copilot response
+              will be accurate;
+            </li>
+            <li>
+              Using Chronos will improve your grades, time management, or any academic outcome.
+            </li>
+          </ul>
           <p>
-            THE CHRONOS PARTIES DO NOT WARRANT THAT: (a) THE SERVICE WILL MEET YOUR REQUIREMENTS;
-            (b) THE SERVICE WILL BE UNINTERRUPTED, TIMELY, SECURE, OR ERROR-FREE; (c) AI OUTPUTS,
-            SCHEDULES, OR REMINDERS WILL BE ACCURATE, COMPLETE, OR RELIABLE; (d) DEFECTS WILL BE
-            CORRECTED; OR (e) THE SERVICE OR ANY SERVER USED IS FREE OF VIRUSES OR HARMFUL
-            COMPONENTS. <strong>USE OF THE SERVICE IS AT YOUR SOLE RISK.</strong>
+            Some jurisdictions do not allow the exclusion of certain warranties, so some of the
+            above exclusions may not apply to you.
           </p>
 
-          <h2>13. Limitation of Liability</h2>
+          <h2>11. Limitation of Liability</h2>
           <p>
             <strong>
-              TO THE MAXIMUM EXTENT PERMITTED BY LAW, IN NO EVENT WILL THE CHRONOS PARTIES BE
-              LIABLE TO YOU FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, EXEMPLARY, OR
-              PUNITIVE DAMAGES, OR FOR ANY LOSS OF PROFITS, REVENUE, DATA, GOODWILL, ACADEMIC
-              STANDING, GRADES, OPPORTUNITIES, OR OTHER INTANGIBLE LOSSES, WHETHER ARISING IN
-              CONTRACT, TORT (INCLUDING NEGLIGENCE), STATUTE, OR OTHERWISE, EVEN IF ADVISED OF
-              THE POSSIBILITY OF SUCH DAMAGES.
+              TO THE MAXIMUM EXTENT PERMITTED BY LAW, IN NO EVENT WILL CHRONOS, ITS OFFICERS,
+              EMPLOYEES, OR SUB-PROCESSORS BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL,
+              CONSEQUENTIAL, EXEMPLARY, OR PUNITIVE DAMAGES, INCLUDING WITHOUT LIMITATION DAMAGES
+              FOR LOST GRADES, LOST ACADEMIC OPPORTUNITY, MISSED DEADLINES, LOST DATA, OR LOST
+              PROFITS, ARISING OUT OF OR RELATED TO YOUR USE OF THE SERVICE, EVEN IF CHRONOS HAS
+              BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
             </strong>
           </p>
           <p>
             <strong>
-              IN NO EVENT WILL THE AGGREGATE LIABILITY OF THE CHRONOS PARTIES ARISING OUT OF OR
-              RELATING TO THESE TERMS OR THE SERVICE EXCEED THE GREATER OF (i) THE AMOUNT YOU
-              PAID PROJECT AURA STUDIOS IN THE TWELVE (12) MONTHS PRECEDING THE EVENT GIVING
-              RISE TO THE CLAIM, OR (ii) ONE HUNDRED U.S. DOLLARS (US$100).
+              CHRONOS&rsquo;S TOTAL CUMULATIVE LIABILITY TO YOU FOR ALL CLAIMS ARISING OUT OF OR
+              RELATED TO THE SERVICE WILL NOT EXCEED THE GREATER OF (A) THE AMOUNT YOU PAID
+              CHRONOS IN THE 12 MONTHS BEFORE THE CLAIM AROSE, OR (B) $100 USD.
             </strong>
           </p>
           <p>
-            The limitations in this Section apply to all claims, in the aggregate, by you and
-            anyone claiming through you, and apply regardless of the failure of any limited
-            remedy of its essential purpose. Some jurisdictions do not allow the exclusion or
-            limitation of certain damages; in such jurisdictions, the Chronos Parties&rsquo;
-            liability is limited to the maximum extent permitted by law.
+            This limitation applies regardless of the legal theory of liability (contract, tort,
+            negligence, strict liability, or otherwise) and even if a remedy fails its essential
+            purpose. Some jurisdictions do not allow the limitation or exclusion of liability for
+            certain damages (including, in some states, claims brought by or on behalf of a
+            minor), so some of the above limitations may not apply to you, or may apply only to
+            the extent permitted by that jurisdiction&rsquo;s law.
+          </p>
+          <p>
+            Nothing in these Terms limits liability that cannot be limited under applicable law,
+            including liability for gross negligence, willful misconduct, fraud, or death or
+            personal injury caused by our negligence.
           </p>
 
-          <h2>14. Assumption of Risk</h2>
+          <h2>12. Indemnification</h2>
           <p>
-            You expressly assume all risk arising from your access to or use of the Service,
-            including but not limited to: AI errors; missed deadlines or assignments; incorrect
-            scheduling, prioritization, or reminders; data loss or corruption; unauthorized
-            access to your account caused by your own conduct; outages or errors of third-party
-            platforms (including Google Classroom, Canvas, Apple, Google, Anthropic, Supabase,
-            Trigger.dev, Expo); and any other consequence of use or non-use of the Service.
+            To the extent permitted by applicable law — and, where you are a minor, subject to the
+            limits your jurisdiction places on enforcing indemnification obligations against
+            minors — you agree to indemnify and hold Chronos harmless from third-party claims,
+            damages, and reasonable legal fees arising from: (a) Your Content, (b) your violation
+            of these Terms, or (c) your violation of any law or a third party&rsquo;s rights
+            (including your school&rsquo;s academic integrity policy) through your use of the
+            Service. Chronos will provide notice of any such claim and reasonable cooperation.
           </p>
 
-          <h2>15. Indemnification</h2>
+          <h2>13. Intellectual Property</h2>
           <p>
-            You agree to defend, indemnify, and hold harmless the Chronos Parties from and
-            against any and all claims, demands, actions, liabilities, damages, losses, costs,
-            and expenses (including reasonable attorneys&rsquo; fees and court costs) arising
-            out of or relating to: (a) your access to or use of the Service; (b) Your Content;
-            (c) your violation of these Terms; (d) your violation of any law or third-party
-            right (including intellectual-property, privacy, or publicity rights); or (e) any
-            misuse of your account. We reserve the right, at our own expense, to assume the
-            exclusive defense and control of any matter otherwise subject to indemnification by
-            you, in which event you agree to cooperate with our defense.
+            Chronos and its licensors own all right, title, and interest in the Service, including
+            its software, design, &ldquo;Chronos&rdquo; name and logo, and all related trademarks.
+            These Terms do not grant you any rights to our trademarks or branding.
+          </p>
+          <p>
+            If you send us feedback or suggestions about the Service, you grant Chronos a
+            perpetual, irrevocable, royalty-free license to use them without restriction or
+            compensation to you.
           </p>
 
-          <h2>16. Termination &amp; Suspension</h2>
+          <h3>DMCA / Copyright complaints</h3>
           <p>
-            You may delete your account and terminate these Terms at any time via Settings →
-            Delete Account, or by contacting{' '}
-            <a href="mailto:privacy@chronos-app.com">privacy@chronos-app.com</a>. We may
-            suspend, restrict, or terminate your access to all or part of the Service at any
-            time, with or without notice, for any reason or no reason, including for any
-            violation (or suspected violation) of these Terms, applicable law, or our policies.
-          </p>
-          <p>
-            Upon termination, your license to use the Service ends immediately. Sections that by
-            their nature should survive termination will survive, including Sections 4 (AI
-            Assumption of Risk), 7 (Intellectual Property), 8 (Billing — for accrued amounts),
-            9 (Privacy), 11–15 (No Reliance, Disclaimers, Limitation of Liability, Assumption of
-            Risk, Indemnification), and 17–22 (Disputes, Governing Law, and General).
+            If you believe content accessible through Chronos infringes your copyright, send a
+            notice to{' '}
+            <a href="mailto:privacy@chronos-app.com">
+              <strong>privacy@chronos-app.com</strong>
+            </a>{' '}
+            including: identification of the copyrighted work, identification of the allegedly
+            infringing material, your contact information, a statement of good-faith belief that
+            the use is unauthorized, and a statement under penalty of perjury that the notice is
+            accurate and you are authorized to act. We will respond per applicable law.
           </p>
 
-          <h2>17. Force Majeure</h2>
+          <h2>14. Termination</h2>
           <p>
-            We will not be liable for any failure or delay in performance to the extent caused
-            by events or circumstances beyond our reasonable control, including acts of God,
-            natural disasters, fire, flood, war, terrorism, civil unrest, pandemic, government
-            action, labor disputes, internet or telecommunications failure, third-party service
-            outages (including Apple, Google, Anthropic, Supabase, Trigger.dev, Expo, Canvas, or
-            similar), cyberattacks, or any other force majeure event.
+            You may stop using Chronos and delete your account at any time (Settings → Delete
+            Account, or by emailing{' '}
+            <a href="mailto:privacy@chronos-app.com">privacy@chronos-app.com</a>).
+          </p>
+          <p>
+            We may suspend or terminate your access if you violate these Terms, if required by
+            law, or if we discontinue the Service, with notice where reasonably practicable.
+            Sections that by their nature should survive termination (including Sections 10–13,
+            15, and 17) will survive.
           </p>
 
-          <h2>18. Dispute Resolution — Binding Arbitration &amp; Class-Action Waiver</h2>
+          <h2>15. Dispute Resolution — Binding Arbitration and Class Action Waiver</h2>
           <p>
-            <strong>Please read this Section carefully. It affects your legal rights.</strong>
-          </p>
-          <p>
-            <strong>(a) Informal resolution.</strong> Before initiating arbitration, you agree to
-            attempt to resolve any dispute, claim, or controversy arising out of or relating to
-            these Terms or the Service (&ldquo;<strong>Dispute</strong>&rdquo;) informally by
-            emailing{' '}
-            <a href="mailto:privacy@chronos-app.com">privacy@chronos-app.com</a> with a written
-            description and a proposed resolution. The parties shall negotiate in good faith for
-            at least thirty (30) days before commencing arbitration.
-          </p>
-          <p>
-            <strong>(b) Binding arbitration.</strong> All Disputes that are not resolved
-            informally shall be resolved exclusively by final and binding individual arbitration
-            administered by JAMS under its Comprehensive (or, where applicable, Streamlined)
-            Arbitration Rules then in effect. The arbitration shall be conducted by a single
-            arbitrator in New Jersey, or by telephone or video at your election. The arbitrator
-            shall have exclusive authority to resolve all issues, including issues of
-            arbitrability, the scope or enforceability of this agreement to arbitrate, and
-            whether any claim is within its scope. Judgment on the award may be entered in any
-            court of competent jurisdiction.
-          </p>
-          <p>
-            <strong>(c) Class-action waiver.</strong>{' '}
             <strong>
-              YOU AND PROJECT AURA STUDIOS AGREE THAT EACH MAY BRING CLAIMS AGAINST THE OTHER
-              ONLY IN YOUR OR ITS INDIVIDUAL CAPACITY, AND NOT AS A PLAINTIFF OR CLASS MEMBER IN
-              ANY PURPORTED CLASS, COLLECTIVE, CONSOLIDATED, OR REPRESENTATIVE ACTION.
+              Please read this section carefully. It affects your rights, including your right to
+              file a lawsuit in court or participate in a class action.
+            </strong>
+          </p>
+
+          <h3>Agreement to arbitrate</h3>
+          <p>
+            Except for disputes that qualify for small claims court or for injunctive relief to
+            protect intellectual property or confidential information, you and Chronos agree that
+            any dispute arising out of or relating to these Terms or the Service will be resolved
+            through <strong>final and binding individual arbitration</strong>, rather than in
+            court, administered by the American Arbitration Association (AAA), under its Consumer
+            Arbitration Rules, except that either party may bring an individual action in small
+            claims court.
+          </p>
+
+          <h3>Class action and jury trial waiver</h3>
+          <p>
+            <strong>
+              You and Chronos each waive the right to a jury trial and to participate in a class
+              action, class arbitration, or representative action.
             </strong>{' '}
-            The arbitrator may not consolidate more than one person&rsquo;s claims or preside
-            over any form of representative or class proceeding. If this class-action waiver is
-            found unenforceable, then the entirety of this Section 18 shall be null and void,
-            and the Dispute shall proceed in court subject to Section 19 (Governing Law and
-            Venue).
-          </p>
-          <p>
-            <strong>(d) Exceptions.</strong> Either party may bring an individual action in
-            small-claims court, and either party may seek injunctive or other equitable relief
-            in court to prevent actual or threatened infringement, misappropriation, or
-            violation of intellectual-property rights.
-          </p>
-          <p>
-            <strong>(e) Opt-out.</strong> You may opt out of this arbitration agreement by
-            sending written notice to{' '}
-            <a href="mailto:privacy@chronos-app.com">privacy@chronos-app.com</a> within thirty
-            (30) days of first accepting these Terms, including your name, account email, and a
-            clear statement that you wish to opt out of arbitration. Opting out will not affect
-            any other provision of these Terms.
-          </p>
-          <p>
-            <strong>(f) Statute of limitations.</strong> Any Dispute must be filed within one
-            (1) year after the cause of action arises; otherwise it is permanently barred, to
-            the extent permitted by applicable law.
+            Disputes must be brought in an individual capacity only.
           </p>
 
-          <h2>19. Governing Law &amp; Venue</h2>
+          <h3>30-day opt-out</h3>
           <p>
-            These Terms and any Dispute are governed by the laws of the State of{' '}
-            <strong>New Jersey</strong> and applicable U.S. federal law, without regard to its
-            conflict-of-law principles. Subject to Section 18, the exclusive venue for any
-            action permitted to be brought in court shall be the state and federal courts located
-            in New Jersey, and you and Project Aura Studios each consent to personal jurisdiction
-            in those courts and waive any objection based on inconvenient forum.
+            You may opt out of this arbitration agreement by emailing{' '}
+            <a href="mailto:privacy@chronos-app.com">
+              <strong>privacy@chronos-app.com</strong>
+            </a>{' '}
+            with the subject &ldquo;Arbitration Opt-Out&rdquo; within 30 days of first accepting
+            these Terms, including your name and account email. Opting out does not affect any
+            other part of these Terms.
           </p>
 
-          <h2>20. Changes to These Terms</h2>
+          <h3>Minors and this section</h3>
           <p>
-            We may update these Terms at any time. Material changes will be communicated via
-            in-app notification, push, or email at least seven (7) days before they take
-            effect. Continued use of the Service after the effective date constitutes your
-            acceptance of the updated Terms. If you do not agree to the updated Terms, your sole
-            remedy is to stop using the Service.
+            If you are under 18, your continued use of the Service after your parent or guardian
+            has permitted that use (per Section 1) constitutes your parent or guardian&rsquo;s
+            agreement to this Section 15 on your behalf, to the extent enforcement of an
+            arbitration agreement against a minor requires guardian consent under applicable law.{' '}
+            <strong>
+              We recognize that the enforceability of arbitration agreements against minors varies
+              by state and is an unsettled area of law; a court may decline to enforce this
+              section against a user who was a minor at the time of the dispute.
+            </strong>{' '}
+            This section is severable — if a court finds it unenforceable as to a particular user
+            or claim, the rest of these Terms remains in effect, and that dispute proceeds in
+            court under Section 16 instead.
           </p>
 
-          <h2>21. Apple App Store Terms</h2>
+          <h2>16. Governing Law and Venue</h2>
           <p>
-            The following additional terms apply if you access the Service through an iOS device:
-            (a) these Terms are between you and Project Aura Studios only, not with Apple Inc.
-            (&ldquo;Apple&rdquo;); (b) Project Aura Studios, not Apple, is solely responsible for
-            the Service and its content; (c) Apple has no obligation to provide maintenance or
-            support for the Service; (d) in the event of any failure of the Service to conform to
-            an applicable warranty, you may notify Apple, and Apple will refund the purchase
-            price (if any); to the maximum extent permitted by law, Apple has no other warranty
-            obligation whatsoever; (e) Apple is not responsible for addressing any claims by you
-            or any third party relating to the Service; (f) Apple is not responsible for the
-            investigation, defense, settlement, or discharge of any third-party intellectual-
-            property claim; (g) you represent that you are not located in a country subject to a
-            U.S.-government embargo or designated as &ldquo;terrorist-supporting,&rdquo; and that
-            you are not on any U.S.-government list of prohibited or restricted parties; and (h)
-            Apple and its subsidiaries are third-party beneficiaries of these Terms and, upon
-            your acceptance, will have the right to enforce these Terms against you.
+            These Terms are governed by the laws of the State of New Jersey, without regard to
+            conflict-of-laws principles. For any dispute not subject to arbitration under Section
+            15, you and Chronos consent to the exclusive jurisdiction of the state and federal
+            courts located in Bergen County, New Jersey.
           </p>
 
-          <h2>22. General</h2>
+          <h2>17. General</h2>
           <p>
-            <strong>Entire agreement.</strong> These Terms, together with the Privacy Policy,
-            constitute the entire agreement between you and Project Aura Studios regarding the
-            Service and supersede all prior agreements.
+            <strong>Changes to these Terms.</strong> We may update these Terms from time to time.
+            We will notify you of material changes via in-app notice or email before they take
+            effect. Continued use of the Service after the effective date constitutes acceptance.
+            If you don&rsquo;t agree to updated Terms, stop using the Service and delete your
+            account.
           </p>
           <p>
             <strong>Severability.</strong> If any provision of these Terms is found
-            unenforceable, that provision shall be enforced to the maximum extent permissible,
-            and the remaining provisions shall remain in full force and effect.
+            unenforceable, the rest remain in full force, and the unenforceable provision will be
+            modified to the minimum extent necessary to make it enforceable.
           </p>
           <p>
-            <strong>No waiver.</strong> Our failure to enforce any right or provision of these
-            Terms is not a waiver of that right or provision.
+            <strong>No waiver.</strong> Our failure to enforce a provision is not a waiver of our
+            right to do so later.
           </p>
           <p>
-            <strong>Assignment.</strong> You may not assign or transfer these Terms or your
-            rights hereunder without our prior written consent. We may assign these Terms at any
-            time without notice or consent.
+            <strong>Assignment.</strong> You may not assign these Terms. Chronos may assign these
+            Terms in connection with a merger, acquisition, or sale of assets, with notice to you.
           </p>
           <p>
-            <strong>Notices.</strong> We may provide notices to you via the Service, push
-            notification, or the email associated with your account. You consent to receive
-            communications electronically. Notices to us must be sent to{' '}
-            <a href="mailto:privacy@chronos-app.com">privacy@chronos-app.com</a>.
+            <strong>Entire agreement.</strong> These Terms, together with the Privacy Policy, are
+            the entire agreement between you and Chronos regarding the Service and supersede any
+            prior agreements.
           </p>
           <p>
-            <strong>Relationship.</strong> No agency, partnership, joint venture, or employment
-            is created by these Terms.
+            <strong>Export/sanctions compliance.</strong> You may not use the Service if you are
+            located in a country subject to a U.S. government embargo or are on any U.S.
+            government restricted-party list.
           </p>
           <p>
-            <strong>Export control.</strong> You agree to comply with all applicable export and
-            re-export restrictions and regulations.
-          </p>
-          <p>
-            <strong>Headings.</strong> Section headings are for convenience only and have no
-            legal effect.
+            <strong>Force majeure.</strong> Chronos is not liable for delays or failures caused by
+            events beyond our reasonable control (e.g., outages at Google, Apple, Anthropic, or
+            our infrastructure providers).
           </p>
 
-          <h2>23. Contact</h2>
+          <h2>18. Apple App Store Additional Terms</h2>
+          <p>These terms apply if you download Chronos from the Apple App Store:</p>
+          <ul>
+            <li>
+              <strong>Acknowledgement.</strong> These Terms are between you and Chronos only, not
+              with Apple. Chronos, not Apple, is solely responsible for the app and its content.
+            </li>
+            <li>
+              <strong>Scope of license.</strong> Your license to use Chronos is limited to a
+              non-transferable license to use it on any Apple-branded device you own or control,
+              as permitted by the App Store Usage Rules, except that Chronos may be accessed by
+              other accounts associated with you via Family Sharing or volume purchasing.
+            </li>
+            <li>
+              <strong>Maintenance and support.</strong> Chronos is solely responsible for
+              providing any maintenance and support for the app. Apple has no obligation to
+              furnish any maintenance or support services.
+            </li>
+            <li>
+              <strong>Warranty.</strong> Chronos is solely responsible for any product warranties,
+              whether express or implied by law, to the extent not effectively disclaimed. If the
+              app fails to conform to any applicable warranty, you may notify Apple, and Apple
+              will refund the purchase price (if any) for the app; to the maximum extent permitted
+              by law, Apple has no other warranty obligation, and any other claims, losses,
+              liabilities, damages, costs, or expenses attributable to a failure to conform to a
+              warranty are Chronos&rsquo;s responsibility.
+            </li>
+            <li>
+              <strong>Product claims.</strong> Chronos, not Apple, is responsible for addressing
+              any claims by you or a third party relating to the app or your use of it, including
+              product-liability claims, any claim that the app fails to conform to a legal or
+              regulatory requirement, and claims arising under consumer protection, privacy, or
+              similar legislation.
+            </li>
+            <li>
+              <strong>Intellectual property.</strong> In the event of a third-party claim that the
+              app or your use of it infringes that third party&rsquo;s intellectual property
+              rights, Chronos, not Apple, is solely responsible for the investigation, defense,
+              settlement, and discharge of that claim.
+            </li>
+            <li>
+              <strong>Legal compliance.</strong> You represent that you are not located in a
+              country subject to a U.S. Government embargo or designated as &ldquo;terrorist
+              supporting,&rdquo; and that you are not on any U.S. Government restricted-party
+              list.
+            </li>
+            <li>
+              <strong>Third-party beneficiary.</strong> Apple and Apple&rsquo;s subsidiaries are
+              third-party beneficiaries of these Terms, and upon your acceptance, Apple will have
+              the right (and will be deemed to have accepted the right) to enforce these Terms
+              against you as a third-party beneficiary.
+            </li>
+          </ul>
+
+          <h2>19. Schools and Districts</h2>
           <p>
-            <strong>Project Aura Studios</strong>
-            <br />
-            State of incorporation: New Jersey
-            <br />
-            <a href="mailto:privacy@chronos-app.com">privacy@chronos-app.com</a>
-            <br />
-            <a href="https://chronos-app.com">chronos-app.com</a>
+            These Terms govern individual student use of Chronos. They do not, by themselves,
+            satisfy a school district&rsquo;s data-sharing, FERPA-official, or procurement
+            requirements. If your school or district wants to formally authorize Chronos for its
+            students, contact{' '}
+            <a href="mailto:privacy@chronos-app.com">
+              <strong>privacy@chronos-app.com</strong>
+            </a>{' '}
+            to discuss a separate data-sharing agreement — do not rely on a student accepting
+            these Terms as district-level approval.
+          </p>
+
+          <h2>20. Contact</h2>
+          <p>
+            Questions about these Terms:{' '}
+            <a href="mailto:privacy@chronos-app.com">
+              <strong>privacy@chronos-app.com</strong>
+            </a>
+            .
           </p>
 
           <hr />
 
-          <p className="text-secondary" style={{ fontSize: 13, marginTop: 24 }}>
-            These Terms are intended to satisfy Apple App Store Guidelines and applicable U.S.
-            consumer-protection law. They are provided for informational purposes and do not
-            constitute legal advice. You should consult an attorney regarding your specific
-            obligations.
+          <p className="text-secondary" style={{ fontSize: 13, marginTop: 24, fontStyle: 'italic' }}>
+            This document is a drafting template informed by common patterns in consumer
+            subscription apps serving minors (age representations, trial/cancellation disclosures,
+            liability caps, arbitration with a minor-consent carve-out). It has not been reviewed
+            by a licensed attorney. Before this governs real users and real payments, have it
+            reviewed by counsel admitted in Chronos&rsquo;s state of incorporation, who can
+            confirm the arbitration provider, venue, and minor-enforceability language against
+            current law in the states where your users live.
           </p>
         </article>
       </main>
