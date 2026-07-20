@@ -39,6 +39,7 @@ import { useStreak } from '../../hooks/useStreak';
 import { haptic } from '../../lib/haptics';
 import { useAuth } from '../../hooks/useAuth';
 import { useRequirePro } from '../../lib/requirePro';
+import { toLocalDayIso } from '../../lib/dates';
 import type { Task, ScheduledBlock, FixedEvent } from '@chronos/shared/types';
 const STAGGER_MS = 40;
 // Timeline geometry — the time column and the gap before each block. The river's
@@ -76,6 +77,14 @@ function clockFromHHMM(hhmm: string): Clock {
   return { hh: `${h12}:${mStr.padStart(2, '0')}`, mer };
 }
 
+function formatTimeRange(startHHMM: string, endHHMM: string): string {
+  const start = clockFromHHMM(startHHMM);
+  const end = clockFromHHMM(endHHMM);
+  return start.mer === end.mer
+    ? `${start.hh} – ${end.hh} ${end.mer}`
+    : `${start.hh} ${start.mer} – ${end.hh} ${end.mer}`;
+}
+
 function getGreeting(): string {
   const h = new Date().getHours();
   if (h < 12) return 'Good morning,';
@@ -91,6 +100,7 @@ interface TimelineRow {
   subject: string;
   estimatedMinutes: number;
   difficulty: 1 | 2 | 3 | 4 | 5;
+  timeRange?: string;
 }
 
 function buildRows(blocks: ScheduledBlock[], events: FixedEvent[]): TimelineRow[] {
@@ -105,6 +115,7 @@ function buildRows(blocks: ScheduledBlock[], events: FixedEvent[]): TimelineRow[
       subject: 'Fixed',
       estimatedMinutes: 0,
       difficulty: 1,
+      timeRange: formatTimeRange(event.startTime, event.endTime),
     });
   }
 
@@ -141,7 +152,7 @@ export default function TodayScreen() {
   const { colors } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const today = useMemo(() => new Date(), []);
-  const dayIso = today.toISOString().slice(0, 10);
+  const dayIso = toLocalDayIso(today);
   const { user: authUser } = useAuth();
   const [notifVisible, setNotifVisible] = useState(false);
   const {
@@ -363,6 +374,7 @@ export default function TodayScreen() {
                     estimatedMinutes={row.estimatedMinutes}
                     difficulty={row.difficulty}
                     variant={row.variant}
+                    timeRange={row.timeRange}
                   />
                 </View>
               </Animated.View>

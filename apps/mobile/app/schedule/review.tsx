@@ -28,6 +28,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { useAuraToast } from '../../components/ui/AuraToast';
 import { supabase } from '@chronos/shared/supabase';
 import { useRequirePro } from '../../lib/requirePro';
+import { toLocalDayIso } from '../../lib/dates';
 
 function formatTime(iso: string): string {
   return new Date(iso).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
@@ -44,7 +45,7 @@ export default function ShadowScheduleReviewScreen() {
   const styles = useMemo(() => makeStyles(colors, resolvedMode), [colors, resolvedMode]);
 
   const today = useMemo(() => new Date(), []);
-  const dayIso = today.toISOString().slice(0, 10);
+  const dayIso = toLocalDayIso(today);
   const { user: authUser } = useAuth();
 
   const { shadowBlocks, loading, error } = useShadowSchedule(authUser?.id ?? '', dayIso);

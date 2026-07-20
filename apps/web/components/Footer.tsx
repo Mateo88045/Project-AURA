@@ -24,7 +24,7 @@ export default function Footer() {
           <a
             href="#"
             aria-label="X / Twitter"
-            className="footer-x text-secondary transition-colors"
+            className="footer-x text-secondary transition-colors inline-flex items-center justify-center min-w-[44px] min-h-[44px] -m-[13px]"
             style={{ alignSelf: 'flex-start' }}
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
@@ -38,10 +38,16 @@ export default function Footer() {
           style={{ borderTop: '1px solid var(--border)' }}
         >
           <div className="flex gap-6 text-[13px] text-secondary">
-            <a href="/privacy" className="hover:text-primary">
+            <a
+              href="/privacy"
+              className="hover:text-primary inline-flex items-center min-h-[44px] -my-3"
+            >
               Privacy
             </a>
-            <a href="/terms" className="hover:text-primary">
+            <a
+              href="/terms"
+              className="hover:text-primary inline-flex items-center min-h-[44px] -my-3"
+            >
               Terms
             </a>
           </div>

@@ -78,6 +78,7 @@ export default function Hero() {
         </motion.div>
 
         <motion.h1
+          aria-label="Stop doing your homework’s scheduling."
           className="font-serif-i mt-5 text-[52px] sm:text-[80px] md:text-[100px] leading-[0.95]"
           style={{ letterSpacing: '-0.04em', color: 'var(--text-primary)' }}
           initial="hidden"
@@ -87,23 +88,25 @@ export default function Hero() {
             visible: { transition: { staggerChildren: 0.06, delayChildren: 0.15 } },
           }}
         >
-          {'Stop doing your homework’s scheduling.'.split(' ').map((word, i) => (
-            <motion.span
-              key={i}
-              variants={{
-                hidden: { opacity: 0, y: 24, filter: 'blur(8px)' },
-                visible: {
-                  opacity: 1,
-                  y: 0,
-                  filter: 'blur(0px)',
-                  transition: { duration: 0.9, ease: EASE },
-                },
-              }}
-              style={{ display: 'inline-block', marginRight: '0.22em' }}
-            >
-              {word}
-            </motion.span>
-          ))}
+          <span aria-hidden="true">
+            {'Stop doing your homework’s scheduling.'.split(' ').map((word, i) => (
+              <motion.span
+                key={i}
+                variants={{
+                  hidden: { opacity: 0, y: 24, filter: 'blur(8px)' },
+                  visible: {
+                    opacity: 1,
+                    y: 0,
+                    filter: 'blur(0px)',
+                    transition: { duration: 0.9, ease: EASE },
+                  },
+                }}
+                style={{ display: 'inline-block', marginRight: '0.22em' }}
+              >
+                {word}
+              </motion.span>
+            ))}
+          </span>
         </motion.h1>
 
         <motion.p

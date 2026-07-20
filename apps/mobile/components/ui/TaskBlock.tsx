@@ -40,6 +40,8 @@ interface TaskBlockProps {
   estimatedMinutes: number;
   difficulty: 1 | 2 | 3 | 4 | 5;
   variant: 'fixed' | 'scheduled';
+  /** Meta line for fixed events (e.g. "8:00 – 9:00 AM") — duration is meaningless for them. */
+  timeRange?: string;
   onPress?: () => void;
   /** Called when the user swipes right past the threshold. Scheduled tasks only. */
   onComplete?: () => void;
@@ -52,6 +54,7 @@ export function TaskBlock({
   estimatedMinutes,
   difficulty,
   variant,
+  timeRange,
   onPress,
   onComplete,
   style,
@@ -191,7 +194,7 @@ export function TaskBlock({
             {title}
           </Text>
           <Text style={[styles.meta, { color: colors.text.secondary }]}>
-            {subject} · {estimatedMinutes}m
+            {isScheduled ? `${subject} · ${estimatedMinutes}m` : timeRange ?? subject}
           </Text>
         </View>
         {isScheduled && <DifficultyBars level={difficulty} animated={false} />}

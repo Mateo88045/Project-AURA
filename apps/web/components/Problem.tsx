@@ -60,13 +60,6 @@ export default function Problem() {
           ))}
         </div>
       </div>
-
-      <style>{`
-        .sm\\:divide-x > * + * { border-left-width: 1px; border-color: var(--border); }
-        @media (max-width: 639px) {
-          .sm\\:divide-x > * + * { border-left-width: 0; }
-        }
-      `}</style>
     </section>
   );
 }

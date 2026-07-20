@@ -43,7 +43,10 @@ export default function Nav() {
             Chronos
           </span>
         </div>
-        <button onClick={scrollToWaitlist} className="btn-cta rounded-full px-5 py-2.5 text-[13.5px]">
+        <button
+          onClick={scrollToWaitlist}
+          className="btn-cta rounded-full px-5 py-2.5 text-[13.5px] min-h-[44px] inline-flex items-center"
+        >
           Join Waitlist
         </button>
       </div>
