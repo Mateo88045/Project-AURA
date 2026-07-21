@@ -248,3 +248,35 @@ export interface ScheduleResult {
   scheduledChunks: ScheduledChunk[];
   overloadedTasks: Task[];
 }
+
+// ---------------------------------------------------------------------------
+// Live Activity Types (iOS focus-session widget)
+// ---------------------------------------------------------------------------
+
+/** Lifecycle of a focus session as mirrored by the native Live Activity. */
+export type LiveActivityStatus = 'running' | 'paused' | 'completed' | 'cancelled';
+
+/**
+ * The dynamic payload pushed to the native Live Activity. Timestamps are epoch
+ * milliseconds so they cross the JS↔Swift bridge without locale parsing.
+ * `startsAt`/`endsAt` drive SwiftUI's self-animating `ProgressView(timerInterval:)`,
+ * so the countdown bar advances natively with no per-second push updates.
+ */
+export interface LiveActivityContentState {
+  title: string;
+  subject: string;
+  difficulty: Difficulty;
+  /** Epoch ms marking the start of the visible countdown window. */
+  startsAt: number;
+  /** Epoch ms when the countdown reaches zero. */
+  endsAt: number;
+  paused: boolean;
+  /** Remaining ms, frozen while paused so the card shows a static value. */
+  remainingMs: number;
+  status: LiveActivityStatus;
+}
+
+/** Static, immutable attributes for a Live Activity instance. */
+export interface LiveActivityAttributes {
+  taskId: string;
+}

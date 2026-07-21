@@ -19,6 +19,10 @@ export default {
       supportsTablet: false,
       bundleIdentifier: 'com.chronos.app',
       usesAppleSignIn: true,
+      // Apple Developer Team ID — required by @bacons/apple-targets to sign the
+      // Live Activity widget extension. Set EXPO_APPLE_TEAM_ID in the build
+      // environment (find it in Xcode → Signing & Capabilities).
+      appleTeamId: process.env.EXPO_APPLE_TEAM_ID,
       // expo-notifications reads/writes its installation ID and server
       // registration info in the keychain (kSecClassGenericPassword). Without a
       // keychain-access-group entitlement, those calls fail with
@@ -36,6 +40,9 @@ export default {
           'Chronos lets you pick a photo of an assignment from your library to schedule it automatically.',
         UIBackgroundModes: ['remote-notification'],
         ITSAppUsesNonExemptEncryption: false,
+        // Enables the focus-session Live Activity (lock screen + Dynamic
+        // Island). See modules/aura-live-activity/README.md.
+        NSSupportsLiveActivities: true,
       },
     },
     android: {
@@ -53,6 +60,9 @@ export default {
       'expo-router',
       'expo-apple-authentication',
       'expo-dev-client',
+      // Generates the AuraTaskActivity widget-extension target (Live Activity)
+      // from targets/aura-task-activity/ during `expo prebuild`.
+      '@bacons/apple-targets',
       [
         'expo-notifications',
         {
