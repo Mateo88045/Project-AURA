@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '@chronos/shared/supabase';
 import { isGuestId } from '../lib/guest';
+import { addDaysToDayIso, localDayStartUtc, toLocalDayIso } from '../lib/dates';
 import { getDemoTaskCounts } from '../lib/demoData';
 
 interface TaskCountsResult {
@@ -44,15 +45,18 @@ export function useTaskCountsForWeek(
       }
 
       try {
+        // Bound the whole window by local-day instants, then bucket each task
+        // into its local day. Both must match how useTasksForDay counts a
+        // column, otherwise the header total and the per-day bars disagree.
         const startDay = days[0];
-        const endDay = days[days.length - 1];
+        const endDayExclusive = addDaysToDayIso(days[days.length - 1], 1);
 
         const { data, error: queryError } = await supabase
           .from('tasks')
           .select('due_date')
           .eq('user_id', userId)
-          .gte('due_date', `${startDay}T00:00:00Z`)
-          .lte('due_date', `${endDay}T23:59:59Z`)
+          .gte('due_date', localDayStartUtc(startDay))
+          .lt('due_date', localDayStartUtc(endDayExclusive))
           .in('status', ['pending', 'scheduled', 'in_progress']);
 
         if (!isMounted) return;
@@ -63,10 +67,10 @@ export function useTaskCountsForWeek(
           return;
         }
 
-        // Aggregate counts by day
+        // Aggregate counts by local day (not the UTC date slice).
         const aggregated: Record<string, number> = {};
         for (const row of data ?? []) {
-          const dayIso = (row.due_date as string).slice(0, 10);
+          const dayIso = toLocalDayIso(new Date(row.due_date as string));
           aggregated[dayIso] = (aggregated[dayIso] ?? 0) + 1;
         }
 

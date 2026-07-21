@@ -43,6 +43,9 @@ export default function TaskActiveScreen() {
 
   const estimatedSeconds = (task?.estimatedMinutes ?? 60) * 60;
   const progressRatio = Math.min(elapsedSeconds / Math.max(estimatedSeconds, 1), 1);
+  // "Done Early" only reads true before the estimate is spent; after that it's
+  // just "Done".
+  const doneLabel = elapsedSeconds >= estimatedSeconds ? 'Done' : 'Done Early';
 
   // Mark task in_progress once it has loaded successfully.
   useEffect(() => {
@@ -181,7 +184,7 @@ export default function TaskActiveScreen() {
         style={styles.actions}
       >
         <AuraButton
-          label="Done Early"
+          label={doneLabel}
           size="lg"
           fullWidth
           onPress={handleDone}

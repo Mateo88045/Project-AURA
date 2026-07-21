@@ -21,7 +21,12 @@ export function useActiveTask(taskId: string, userId: string): ActiveTaskResult 
   const [error, setError] = useState<string | null>(null);
   const [elapsedSeconds, setElapsedSeconds] = useState<number>(0);
   const [isPaused, setIsPaused] = useState<boolean>(false);
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  // Wall-clock accounting: total ms accrued while running, plus the timestamp
+  // the current running segment began. Reading Date.now() (not a +1/sec counter)
+  // keeps elapsed accurate across app suspension — iOS throttles JS timers in
+  // the background, so a tick counter badly undercounts real study time.
+  const accumulatedMsRef = useRef<number>(0);
+  const segmentStartRef = useRef<number | null>(null);
   const startedRef = useRef<boolean>(false);
 
   // Load task — does NOT mutate status. Caller invokes start() explicitly.
@@ -72,18 +77,29 @@ export function useActiveTask(taskId: string, userId: string): ActiveTaskResult 
     };
   }, [taskId, userId]);
 
-  // Elapsed timer
+  // Elapsed timer — driven off wall-clock time, not a per-second increment.
   useEffect(() => {
-    if (isPaused || loading) return;
+    const running = !isPaused && !loading && !error && !!task;
+    if (!running) return;
 
-    intervalRef.current = setInterval(() => {
-      setElapsedSeconds((prev) => prev + 1);
-    }, 1000);
+    segmentStartRef.current = Date.now();
+    const tick = () => {
+      const segMs = segmentStartRef.current ? Date.now() - segmentStartRef.current : 0;
+      setElapsedSeconds(Math.floor((accumulatedMsRef.current + segMs) / 1000));
+    };
+    tick();
+    const id = setInterval(tick, 500);
 
     return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
+      clearInterval(id);
+      // Fold the just-ended running segment into the accumulated total so a
+      // pause (or unmount/remount) doesn't lose or double-count elapsed time.
+      if (segmentStartRef.current) {
+        accumulatedMsRef.current += Date.now() - segmentStartRef.current;
+        segmentStartRef.current = null;
+      }
     };
-  }, [isPaused, loading]);
+  }, [isPaused, loading, error, task]);
 
   const start = useCallback(async () => {
     if (startedRef.current) return;
@@ -95,8 +111,11 @@ export function useActiveTask(taskId: string, userId: string): ActiveTaskResult 
       .eq('id', taskId)
       .eq('user_id', userId);
     if (updateError) {
+      // Non-fatal: the timer keeps running and completion still records. Don't
+      // surface this as a load error — that would replace the whole active
+      // screen with "Couldn't load this task" over a successfully loaded task.
       startedRef.current = false;
-      setError(updateError.message);
+      console.warn('[ActiveTask] Failed to mark in_progress:', updateError.message);
     }
   }, [taskId, userId]);
 

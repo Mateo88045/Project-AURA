@@ -64,6 +64,12 @@ export default function ShadowScheduleReviewScreen() {
   );
   const pendingCount = displayBlocks.filter((b) => b.status === 'shadow').length;
   const anyBusy = bulkBusy || busyIds.size > 0;
+  // A task can span several blocks — count distinct tasks, not blocks, so the
+  // header doesn't claim "3 new tasks" for one essay chunked three ways.
+  const taskCount = useMemo(
+    () => new Set(shadowBlocks.map((b) => b.taskId ?? b.task?.id ?? b.id)).size,
+    [shadowBlocks],
+  );
 
   async function setBlockStatus(blockId: string, next: BlockStatus) {
     // Race guard — a bulk write in flight, or this row already mid-update, owns
@@ -195,7 +201,7 @@ export default function ShadowScheduleReviewScreen() {
           {/* Header */}
           <View style={styles.header}>
             <Text style={styles.headerTitle}>
-              Chronos found {shadowBlocks.length} new task{shadowBlocks.length === 1 ? '' : 's'}
+              Chronos found {taskCount} new task{taskCount === 1 ? '' : 's'}
             </Text>
             <Text style={styles.headerDate}>{friendlyDate}</Text>
           </View>

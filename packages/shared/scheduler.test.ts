@@ -20,14 +20,14 @@ function assert(cond: unknown, msg: string) {
   if (!cond) throw new Error(msg);
 }
 
-function task(id: string, minutes: number): Task {
+function task(id: string, minutes: number, dueDate = '2026-12-31T00:00:00Z'): Task {
   return {
     id,
     userId: 'u',
     title: id,
     subject: 'Math',
     source: 'manual',
-    dueDate: '2026-06-01T00:00:00Z',
+    dueDate,
     difficulty: 3,
     estimatedMinutes: minutes,
     taskType: 'problem_set',
@@ -130,6 +130,41 @@ test('overloaded tasks are surfaced', () => {
     ],
   });
   assert(result.overloadedTasks.length === 1, 'expected overflow');
+});
+
+test('a single large task never exceeds max_hours_per_day', () => {
+  // 200-min task, 2h/day cap, one wide-open day. The cap — not the task — must
+  // bound the day's total. Regression: the old budget term collapsed to 0 and
+  // let multiple 75-min chunks stack past the cap.
+  const result = schedule({
+    tasks: [task('t1', 200)],
+    fixedEventsByDay: { '2026-06-01': [] },
+    dayKeys: ['2026-06-01'],
+    guardrails: [
+      { id: 'g', userId: 'u', ruleType: 'max_hours_per_day', value: { hours: 2 }, active: true, createdAt: '' },
+    ],
+  });
+  const day1 = result.scheduledChunks
+    .filter((c) => c.day === '2026-06-01')
+    .reduce((a, c) => a + c.chunkMinutes, 0);
+  assert(day1 <= 120, `day1 exceeded 2h cap: ${day1}`);
+  assert(result.overloadedTasks.length === 1, 'remaining work should overload');
+});
+
+test('work is never scheduled after the due date', () => {
+  // Task due day 1 but two days available — the second day is past due and must
+  // not be used, so the un-fittable remainder overloads.
+  const result = schedule({
+    tasks: [task('t1', 150, '2026-06-01T23:59:00Z')],
+    fixedEventsByDay: { '2026-06-01': [], '2026-06-02': [] },
+    dayKeys: ['2026-06-01', '2026-06-02'],
+    guardrails: [
+      { id: 'g', userId: 'u', ruleType: 'max_hours_per_day', value: { hours: 1.25 }, active: true, createdAt: '' },
+    ],
+  });
+  const day2 = result.scheduledChunks.filter((c) => c.day === '2026-06-02');
+  assert(day2.length === 0, 'nothing may be scheduled the day after it is due');
+  assert(result.overloadedTasks.length === 1, 'the overflow past the due date should overload');
 });
 
 test('fully booked day yields zero placement', () => {

@@ -45,6 +45,14 @@ const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 type Row = ChatMessagePayload & { id: string };
 
+// Starter prompts, shown while the thread is just Chronos's opening line.
+const SUGGESTIONS = [
+  "What's on my schedule today?",
+  'Move my essay to Thursday',
+  'Give me a free evening',
+  "What's due this week?",
+] as const;
+
 // ---------------------------------------------------------------------------
 // Typing indicator — three 6px violet dots, pulsing opacity with stagger
 // ---------------------------------------------------------------------------
@@ -460,27 +468,6 @@ export default function AIChatScreen() {
               </GlassCard>
             </Animated.View>
           }
-          ListEmptyComponent={
-            rows.length === 0 ? (
-              <Animated.View entering={FadeInDown.delay(120).duration(300)} style={styles.emptyPrompts}>
-                <Text style={styles.emptyPromptsLabel}>Try asking…</Text>
-                {[
-                  "What's on my schedule today?",
-                  "Move my essay to Thursday",
-                  "Give me a free evening",
-                  "What's due this week?",
-                ].map((suggestion) => (
-                  <Pressable
-                    key={suggestion}
-                    onPress={() => { haptic.selection(); void sendMessage(suggestion); }}
-                    style={styles.suggestionChip}
-                  >
-                    <Text style={styles.suggestionChipText}>{suggestion}</Text>
-                  </Pressable>
-                ))}
-              </Animated.View>
-            ) : null
-          }
           renderItem={({ item, index }) => {
             const prev = rows[index - 1];
             const isFirstOfGroup = !prev || prev.role !== item.role;
@@ -495,6 +482,26 @@ export default function AIChatScreen() {
           }}
           ListFooterComponent={
             <>
+              {rows.length === 1 && !loading && !error ? (
+                <Animated.View
+                  entering={FadeInDown.delay(120).duration(300)}
+                  style={styles.emptyPrompts}
+                >
+                  <Text style={styles.emptyPromptsLabel}>Try asking…</Text>
+                  {SUGGESTIONS.map((suggestion) => (
+                    <Pressable
+                      key={suggestion}
+                      onPress={() => {
+                        haptic.selection();
+                        void sendMessage(suggestion);
+                      }}
+                      style={styles.suggestionChip}
+                    >
+                      <Text style={styles.suggestionChipText}>{suggestion}</Text>
+                    </Pressable>
+                  ))}
+                </Animated.View>
+              ) : null}
               {loading ? <TypingIndicator typingStyles={typingStyles} /> : null}
               {error ? (
                 <Animated.View

@@ -103,6 +103,31 @@ interface TimelineRow {
   timeRange?: string;
 }
 
+// The hero should reflect the clock, not just the first row. Prefer the block
+// happening right now; otherwise the next upcoming block; ignore completed and
+// already-finished blocks. `null` when the day is behind you — a calm hero, not
+// a stale "NOW".
+function pickHeroBlock(
+  blocks: ScheduledBlock[],
+): { task: Task; isNow: boolean } | null {
+  const now = Date.now();
+  const live = blocks.filter((b) => b.task && b.status !== 'completed');
+
+  const active = live.find((b) => {
+    const start = new Date(b.startTime).getTime();
+    const end = new Date(b.endTime).getTime();
+    return now >= start && now < end;
+  });
+  if (active?.task) return { task: active.task, isNow: true };
+
+  const upcoming = live
+    .filter((b) => new Date(b.startTime).getTime() > now)
+    .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())[0];
+  if (upcoming?.task) return { task: upcoming.task, isNow: false };
+
+  return null;
+}
+
 function buildRows(blocks: ScheduledBlock[], events: FixedEvent[]): TimelineRow[] {
   const rows: TimelineRow[] = [];
 
@@ -215,7 +240,8 @@ export default function TodayScreen() {
   }));
 
   const firstName = user?.displayName?.split(' ')[0] ?? 'there';
-  const currentTask: Task | null = scheduledBlocks[0]?.task ?? null;
+  const heroBlock = pickHeroBlock(scheduledBlocks);
+  const currentTask: Task | null = heroBlock?.task ?? null;
   const rows = useMemo(
     () => buildRows(scheduledBlocks, fixedEvents),
     [scheduledBlocks, fixedEvents],
@@ -278,7 +304,9 @@ export default function TodayScreen() {
           >
             <GlassCard intensity="thick" borderAccent style={styles.hero}>
               <View style={styles.heroContent}>
-                <Text style={[typography.micro, { color: colors.accent.blue }]}>NOW</Text>
+                <Text style={[typography.micro, { color: colors.accent.blue }]}>
+                  {heroBlock?.isNow ? 'NOW' : 'NEXT UP'}
+                </Text>
                 <Text style={styles.heroTitle}>{currentTask.title}</Text>
                 <Text style={styles.heroMeta}>
                   {currentTask.subject} · {currentTask.estimatedMinutes} min

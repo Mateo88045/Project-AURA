@@ -61,13 +61,20 @@ export function schedule(input: SchedulerInput): ScheduleResult {
   const scheduledChunks: ScheduledChunk[] = [];
   const overloadedTasks: Task[] = [];
 
+  const dayCap = maxPerDay ?? Infinity;
+
   for (const task of input.tasks) {
     let remaining = task.estimatedMinutes;
+    // Calendar day the task is due. Day keys are 'YYYY-MM-DD', which compares
+    // chronologically as strings, so we never place work after this day.
+    const dueDayKey = task.dueDate.slice(0, 10);
 
     for (const day of input.dayKeys) {
       if (remaining <= 0) break;
-      const dayCapacityLeft = (maxPerDay ?? Infinity) - (usedByDay[day] ?? 0);
-      if (dayCapacityLeft <= 0) continue;
+      // Never schedule a task after it is due — surface it as overloaded instead.
+      if (day > dueDayKey) continue;
+      // Bail on a day that has no budget left for even a minimum chunk.
+      if (dayCap - (usedByDay[day] ?? 0) < MIN_CHUNK_MIN) continue;
 
       // Sort slots longest first each iteration so picks stay fresh.
       const slots = slotsByDay[day]
@@ -76,13 +83,13 @@ export function schedule(input: SchedulerInput): ScheduleResult {
 
       for (const slot of slots) {
         if (remaining <= 0) break;
+        // Budget re-read every chunk so a single task can't blow past the
+        // per-day cap by stacking multiple chunks in one day.
+        const budgetLeft = dayCap - (usedByDay[day] ?? 0);
+        if (budgetLeft < MIN_CHUNK_MIN) break;
+
         const slotMin = slot.endMinute - slot.startMinute;
-        const chunkMin = Math.min(
-          slotMin,
-          remaining,
-          MAX_CHUNK_MIN,
-          dayCapacityLeft - (usedByDay[day] - (usedByDay[day] ?? 0)),
-        );
+        const chunkMin = Math.min(slotMin, remaining, MAX_CHUNK_MIN, budgetLeft);
         if (chunkMin < MIN_CHUNK_MIN) continue;
 
         const start = slot.startMinute;

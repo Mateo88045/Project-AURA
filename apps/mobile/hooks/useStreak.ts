@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { isGuestId } from '../lib/guest';
+import { toLocalDayIso } from '../lib/dates';
 
 // TODO: Supabase — derive from task_completions WHERE completed_at grouped by date
 // Rolling logic: if last completion was today or yesterday → streak continues, else resets.
@@ -20,14 +21,18 @@ interface StoredStreak {
   lastDate: string | null;
 }
 
+// Local-calendar keys — a "day" is the user's local day, not the UTC day.
+// `toISOString().slice(0,10)` is UTC: an evening study session in the US maps to
+// the next UTC date, so two different local days can collide on one UTC key and
+// silently break the streak.
 function todayISO(): string {
-  return new Date().toISOString().slice(0, 10);
+  return toLocalDayIso(new Date());
 }
 
 function yesterdayISO(): string {
   const d = new Date();
   d.setDate(d.getDate() - 1);
-  return d.toISOString().slice(0, 10);
+  return toLocalDayIso(d);
 }
 
 function storageKey(userId: string) {
@@ -72,7 +77,10 @@ export function useStreak(userId: string): StreakResult {
     const today = todayISO();
     const yesterday = yesterdayISO();
 
-    const current = await loadStreak(userId);
+    // Guests have no persisted profile — keep their streak session-only rather
+    // than writing a guest-keyed entry that exitGuestMode never clears.
+    const guest = isGuestId(userId);
+    const current = guest ? stored : await loadStreak(userId);
     let newCurrent: number;
 
     if (current.lastDate === today) {
@@ -88,7 +96,7 @@ export function useStreak(userId: string): StreakResult {
 
     const newLongest = Math.max(current.longest, newCurrent);
     const updated: StoredStreak = { current: newCurrent, longest: newLongest, lastDate: today };
-    await saveStreak(userId, updated);
+    if (!guest) await saveStreak(userId, updated);
     setStored(updated);
 
     const milestoneReached = MILESTONES.includes(newCurrent);
@@ -98,7 +106,7 @@ export function useStreak(userId: string): StreakResult {
       lastCompletedDate: today,
       milestoneReached,
     };
-  }, [userId]);
+  }, [userId, stored]);
 
   const streak: StreakData = {
     currentStreak: stored.current,

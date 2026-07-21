@@ -18,6 +18,7 @@ import { WeekTaskBar } from '../../components/ui/WeekTaskBar';
 import { CalmEmptyState } from '../../components/ui/CalmEmptyState';
 import { haptic } from '../../lib/haptics';
 import { useAuth } from '../../hooks/useAuth';
+import { toLocalDayIso } from '../../lib/dates';
 
 const STAGGER_MS = 40;
 // Beyond this many task bars a column shows a "+N" tally instead of stacking
@@ -28,9 +29,9 @@ function formatDayLabel(date: Date) {
   return date.toLocaleDateString(undefined, { weekday: 'short' }).toUpperCase();
 }
 
-function toDayIso(date: Date) {
-  return date.toISOString().slice(0, 10);
-}
+// Local-calendar day key. `Date.toISOString()` is UTC and shifts the whole week
+// grid onto the wrong day for anyone west of UTC in the evening.
+const toDayIso = toLocalDayIso;
 
 function formatWeekRange(days: Date[]): string {
   const fmt = (d: Date) =>

@@ -118,14 +118,12 @@ export default function PaywallScreen() {
 
         <Animated.View entering={FadeInDown.delay(120).duration(320)} style={styles.priceWrap}>
           <Text style={styles.priceLine}>
-            {isReadOnly ? 'Reactivate' : '14 days free, then'}
-            <Text style={styles.priceAmount}>
-              {isReadOnly ? '' : ' $—/mo'}
-            </Text>
+            {isReadOnly ? 'Reactivate anytime' : '14 days free, cancel anytime'}
           </Text>
           <Text style={styles.priceNote}>
-            {/* Price lands from RevenueCat offering once configured. */}
-            Pricing finalizes at App Store / Play Store config time
+            {/* Concrete price comes from the App Store / RevenueCat offering and
+                is shown in the native purchase sheet before the user confirms. */}
+            Subscription price is shown before you confirm.
           </Text>
         </Animated.View>
       </ScrollView>
@@ -225,10 +223,6 @@ function makeStyles(c: ThemeColors) {
     priceLine: {
       ...typography.headline,
       color: c.text.primary,
-    },
-    priceAmount: {
-      ...typography.headline,
-      color: c.accent.blue,
     },
     priceNote: {
       ...typography.callout,
