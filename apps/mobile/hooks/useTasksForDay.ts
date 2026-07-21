@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '@chronos/shared/supabase';
 import type { Task } from '@chronos/shared/types';
 import { isGuestId, loadGuestTasks, subscribeGuestTasks } from '../lib/guest';
+import { addDaysToDayIso, localDayStartUtc } from '../lib/localDate';
 import { getDemoTasksForDay } from '../lib/demoData';
 
 /** Same visibility rule the Supabase query applies, for guest-local tasks. */
@@ -75,11 +76,17 @@ export function useTasksForDay(userId: string, day: string): TasksForDayResult {
       }
 
       try {
+        // Bound to a single local day [day, nextDay). Without the upper bound
+        // this returned every task due on or after `day`, so every week column
+        // showed all future tasks; local-day instants keep the bucketing correct
+        // for users off UTC.
+        const nextDay = addDaysToDayIso(day, 1);
         const { data, error: queryError } = await supabase
           .from('tasks')
           .select('*')
           .eq('user_id', userId)
-          .gte('due_date', `${day}T00:00:00Z`)
+          .gte('due_date', localDayStartUtc(day))
+          .lt('due_date', localDayStartUtc(nextDay))
           .in('status', ['pending', 'scheduled', 'in_progress'])
           .order('due_date', { ascending: true });
 

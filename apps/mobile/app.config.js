@@ -19,6 +19,14 @@ export default {
       supportsTablet: false,
       bundleIdentifier: 'com.chronos.app',
       usesAppleSignIn: true,
+      // expo-notifications reads/writes its installation ID and server
+      // registration info in the keychain (kSecClassGenericPassword). Without a
+      // keychain-access-group entitlement, those calls fail with
+      // errSecMissingEntitlement (-34018) on the simulator, surfacing as
+      // "[expo-notifications] Error reading persisted server registration info".
+      entitlements: {
+        'keychain-access-groups': ['$(AppIdentifierPrefix)com.chronos.app'],
+      },
       infoPlist: {
         NSUserNotificationsUsageDescription:
           'Chronos sends reminders for your scheduled study blocks and daily assignment updates.',

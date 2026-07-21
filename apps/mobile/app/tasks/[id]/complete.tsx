@@ -40,6 +40,8 @@ import { useAuth } from '../../../hooks/useAuth';
 import { haptic } from '../../../lib/haptics';
 import type { UserFeedback } from '@chronos/shared/types';
 import { supabase } from '@chronos/shared/supabase';
+import { isGuestId } from '../../../lib/guest';
+import { isDemoTaskId } from '../../../lib/demoData';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -445,6 +447,7 @@ export default function TaskCompleteScreen() {
   const [actualMinutes, setActualMinutes] = useState<number>(elapsedMinutes ?? 0);
   const [feedback, setFeedback] = useState<UserFeedback | null>(null);
   const [saving, setSaving] = useState(false);
+  const [celebrate, setCelebrate] = useState(false);
   const [confettiPlaying, setConfettiPlaying] = useState(false);
   const [streakCount, setStreakCount] = useState(0);
   const [streakMilestone, setStreakMilestone] = useState(false);
@@ -498,11 +501,16 @@ export default function TaskCompleteScreen() {
     haptic.success();
     setTimeout(() => haptic.primaryCTA(), 280);
 
-    // Fire confetti simultaneously
+    // Fire the celebration (particle burst + confetti) now that the user has
+    // committed — not on screen entry.
+    setCelebrate(true);
     setConfettiPlaying(true);
     setTimeout(() => setConfettiPlaying(false), 2200);
 
-    if (task) {
+    // Guests and demo tasks have no real Supabase row — a guest/demo id sent to
+    // a uuid column throws. Keep the celebration + streak, skip the writes.
+    const isLocalOnly = task && (isGuestId(authUser?.id) || isDemoTaskId(task.id));
+    if (task && !isLocalOnly) {
       const { error: completionError } = await supabase
         .from('task_completions')
         .insert({
@@ -571,8 +579,8 @@ export default function TaskCompleteScreen() {
           </Pressable>
         </Animated.View>
 
-        {/* Success mark */}
-        <SuccessMark colors={colors} />
+        {/* Success mark — the particle burst waits until the user saves */}
+        <SuccessMark colors={colors} burst={celebrate} />
 
         {/* Title */}
         <Animated.View entering={FadeInDown.delay(180).duration(500)} style={styles.headerText}>

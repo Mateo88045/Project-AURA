@@ -61,30 +61,43 @@ export function schedule(input: SchedulerInput): ScheduleResult {
   const scheduledChunks: ScheduledChunk[] = [];
   const overloadedTasks: Task[] = [];
 
+  const dayCap = maxPerDay ?? Infinity;
+
   for (const task of input.tasks) {
     let remaining = task.estimatedMinutes;
+    // Calendar day the task is due. Day keys are 'YYYY-MM-DD', which compares
+    // chronologically as strings, so we never place work after this day.
+    const dueDayKey = task.dueDate.slice(0, 10);
 
     for (const day of input.dayKeys) {
       if (remaining <= 0) break;
-      if ((maxPerDay ?? Infinity) - usedByDay[day] <= 0) continue;
+      // Never schedule a task after it is due — surface it as overloaded instead.
+      if (day > dueDayKey) continue;
 
       // Sort slots longest first each iteration so picks stay fresh. A task
       // (or tail remainder) under the chunk floor is still placeable at its
-      // own size — otherwise 15-min tasks are permanently unschedulable.
+      // own size — otherwise 15-min tasks, or the last few minutes of a
+      // longer one, are permanently unschedulable.
       const effectiveMin = Math.min(MIN_CHUNK_MIN, remaining);
+      // Bail on a day that has no budget left for even that minimum chunk.
+      if (dayCap - (usedByDay[day] ?? 0) < effectiveMin) continue;
+
       const slots = slotsByDay[day]
         .filter((s) => s.endMinute - s.startMinute >= effectiveMin)
         .sort((a, b) => b.endMinute - b.startMinute - (a.endMinute - a.startMinute));
 
       for (const slot of slots) {
         if (remaining <= 0) break;
+        // Budget and chunk floor re-read every placement — a task may fill
+        // several slots in one day, each chunk eats into the same daily cap,
+        // and `remaining` shrinks as chunks land.
+        const budgetLeft = dayCap - (usedByDay[day] ?? 0);
+        const chunkFloor = Math.min(MIN_CHUNK_MIN, remaining);
+        if (budgetLeft < chunkFloor) break;
+
         const slotMin = slot.endMinute - slot.startMinute;
-        // Recompute remaining day capacity on every placement — a task may fill
-        // several slots in one day, and each chunk eats into the same daily cap.
-        const dayCapacityLeft = (maxPerDay ?? Infinity) - usedByDay[day];
-        if (dayCapacityLeft <= 0) break;
-        const chunkMin = Math.min(slotMin, remaining, MAX_CHUNK_MIN, dayCapacityLeft);
-        if (chunkMin < Math.min(MIN_CHUNK_MIN, remaining)) continue;
+        const chunkMin = Math.min(slotMin, remaining, MAX_CHUNK_MIN, budgetLeft);
+        if (chunkMin < chunkFloor) continue;
 
         const start = slot.startMinute;
         const end = start + chunkMin;

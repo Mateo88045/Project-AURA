@@ -81,6 +81,14 @@ function clockFromHHMM(hhmm: string): Clock {
   return { hh: `${h12}:${mStr.padStart(2, '0')}`, mer };
 }
 
+function formatTimeRange(startHHMM: string, endHHMM: string): string {
+  const start = clockFromHHMM(startHHMM);
+  const end = clockFromHHMM(endHHMM);
+  return start.mer === end.mer
+    ? `${start.hh} – ${end.hh} ${end.mer}`
+    : `${start.hh} ${start.mer} – ${end.hh} ${end.mer}`;
+}
+
 function getGreeting(): string {
   const h = new Date().getHours();
   if (h < 12) return 'Good morning,';
@@ -100,6 +108,8 @@ interface RiverRow {
   endMs: number;
   /** Shadow block awaiting the user's approval. */
   isDraft: boolean;
+  /** Meta line for fixed events (e.g. "8:00 – 9:00 AM") — duration is meaningless for them. */
+  timeRange?: string;
 }
 
 // HH:MM (today, local) → epoch ms
@@ -124,6 +134,7 @@ function buildRows(blocks: ScheduledBlock[], events: FixedEvent[]): RiverRow[] {
       difficulty: 1,
       endMs: msFromHHMM(event.endTime),
       isDraft: false,
+      timeRange: formatTimeRange(event.startTime, event.endTime),
     });
   }
 
@@ -448,6 +459,7 @@ export default function TodayScreen() {
                       difficulty={row.difficulty}
                       variant={row.variant}
                       isDraft={row.isDraft}
+                      timeRange={row.timeRange}
                     />
                   )}
                 </Animated.View>

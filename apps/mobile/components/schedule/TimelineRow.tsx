@@ -25,6 +25,8 @@ interface TimelineRowProps {
   variant: 'fixed' | 'scheduled';
   /** Shadow-draft block awaiting approval — hollow sky dot, dashed card. */
   isDraft?: boolean;
+  /** Meta line for fixed events (e.g. "8:00 – 9:00 AM") — duration is meaningless for them. */
+  timeRange?: string;
 }
 
 /**
@@ -43,6 +45,7 @@ export function TimelineRow({
   difficulty,
   variant,
   isDraft = false,
+  timeRange,
 }: TimelineRowProps) {
   const { colors } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
@@ -70,6 +73,7 @@ export function TimelineRow({
           difficulty={difficulty}
           variant={variant}
           isDraft={isDraft}
+          timeRange={timeRange}
           showDot={false}
         />
       </View>

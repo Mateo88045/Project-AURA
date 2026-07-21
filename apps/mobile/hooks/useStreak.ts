@@ -73,7 +73,10 @@ export function useStreak(userId: string): StreakResult {
     const today = todayISO();
     const yesterday = yesterdayISO();
 
-    const current = await loadStreak(userId);
+    // Guests have no persisted profile — keep their streak session-only rather
+    // than writing a guest-keyed entry that exitGuestMode never clears.
+    const guest = isGuestId(userId);
+    const current = guest ? stored : await loadStreak(userId);
     let newCurrent: number;
     let didIncrement: boolean;
 
@@ -93,7 +96,7 @@ export function useStreak(userId: string): StreakResult {
 
     const newLongest = Math.max(current.longest, newCurrent);
     const updated: StoredStreak = { current: newCurrent, longest: newLongest, lastDate: today };
-    await saveStreak(userId, updated);
+    if (!guest) await saveStreak(userId, updated);
     setStored(updated);
 
     // Only celebrate a milestone the day the count actually crosses it — a
@@ -105,7 +108,7 @@ export function useStreak(userId: string): StreakResult {
       lastCompletedDate: today,
       milestoneReached,
     };
-  }, [userId]);
+  }, [userId, stored]);
 
   const streak: StreakData = {
     currentStreak: stored.current,

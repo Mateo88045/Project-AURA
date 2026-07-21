@@ -83,7 +83,8 @@ export function useActiveTask(taskId: string, userId: string): ActiveTaskResult 
 
   // Elapsed timer — timestamp-derived so time spent backgrounded still counts.
   useEffect(() => {
-    if (isPaused || loading) return;
+    const running = !isPaused && !loading && !error && !!task;
+    if (!running) return;
 
     if (runStartedAtRef.current === null) {
       runStartedAtRef.current = Date.now();
@@ -98,7 +99,10 @@ export function useActiveTask(taskId: string, userId: string): ActiveTaskResult 
     refresh();
     const interval = setInterval(refresh, 1000);
     return () => clearInterval(interval);
-  }, [isPaused, loading]);
+    // `error`/`task` gate `running` above, so both belong here too — otherwise
+    // the timer effect won't re-evaluate when either flips (e.g. task load
+    // finishes after loading already went false in a prior render).
+  }, [isPaused, loading, error, task]);
 
   const start = useCallback(async () => {
     if (startedRef.current) return;
@@ -111,7 +115,9 @@ export function useActiveTask(taskId: string, userId: string): ActiveTaskResult 
       .eq('user_id', userId);
     if (updateError) {
       // Best-effort status sync — a failed write must not kill a running
-      // focus session. Allow a retry on the next start() call.
+      // focus session. Allow a retry on the next start() call. Non-fatal: don't
+      // surface this as a load error, which would replace the whole active
+      // screen over a task that loaded successfully.
       startedRef.current = false;
       console.warn('[ActiveTask] Failed to mark in_progress:', updateError.message);
     }

@@ -184,6 +184,7 @@ export default function TaskActiveScreen() {
         entering={FadeInDown.delay(STAGGER_MS * 5).duration(280)}
         style={styles.actions}
       >
+        {/* "Done Early" only reads true before the estimate is spent. */}
         <AuraButton
           label={progressRatio >= 1 ? 'Done' : 'Done Early'}
           size="lg"

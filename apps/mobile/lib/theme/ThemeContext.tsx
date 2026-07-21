@@ -7,7 +7,7 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import { AppState, type AppStateStatus } from 'react-native';
+import { Appearance, AppState, type AppStateStatus } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   darkColors,
@@ -127,6 +127,13 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
 
   const resolvedMode: ResolvedMode = mode === 'auto' ? autoResolved : mode;
   const palette = resolvedMode === 'light' ? lightColors : darkColors;
+
+  // Native surfaces (liquid glass, blur tints, system sheets) read the OS
+  // appearance, not our JS palette — pin it to the resolved theme so they
+  // can't diverge when the device is set to the opposite mode.
+  useEffect(() => {
+    Appearance.setColorScheme(resolvedMode);
+  }, [resolvedMode]);
 
   const value = useMemo<ThemeContextValue>(
     () => ({

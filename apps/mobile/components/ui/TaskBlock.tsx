@@ -33,6 +33,8 @@ interface TaskBlockProps {
   /** Shadow-draft block awaiting the user's approval — rendered as a proposal,
       not a commitment: dashed sky outline + DRAFT tag. */
   isDraft?: boolean;
+  /** Meta line for fixed events (e.g. "8:00 – 9:00 AM") — duration is meaningless for them. */
+  timeRange?: string;
   onPress?: () => void;
   /** Called when the user swipes right past the threshold. Scheduled tasks only. */
   onComplete?: () => void;
@@ -48,6 +50,7 @@ export function TaskBlock({
   difficulty,
   variant,
   isDraft = false,
+  timeRange,
   onPress,
   onComplete,
   showDot = true,
@@ -203,12 +206,16 @@ export function TaskBlock({
           >
             {title}
           </Text>
-          {isScheduled && (
+          {isScheduled ? (
             <Text style={[styles.meta, { color: colors.text.secondary }]}>
               {subject} · {estimatedMinutes}m ·{' '}
               <Text style={[styles.difficultyWord, { color: difficultyColor }]}>
                 {difficultyLabels[difficulty]}
               </Text>
+            </Text>
+          ) : (
+            <Text style={[styles.meta, { color: colors.text.secondary }]}>
+              {timeRange ?? subject}
             </Text>
           )}
         </View>

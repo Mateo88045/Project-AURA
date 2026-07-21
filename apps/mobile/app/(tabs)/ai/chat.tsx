@@ -48,6 +48,14 @@ const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 type Row = ChatMessagePayload & { id: string };
 
+// Starter prompts, shown while the thread is just Chronos's opening line.
+const SUGGESTIONS = [
+  "What's on my schedule today?",
+  'Move my essay to Thursday',
+  'Give me a free evening',
+  "What's due this week?",
+] as const;
+
 // ---------------------------------------------------------------------------
 // Typing indicator — three 6px violet dots, pulsing opacity with stagger
 // ---------------------------------------------------------------------------
@@ -530,12 +538,7 @@ export default function AIChatScreen() {
               {rows.length === 1 && !loading && !prompt && !conversationId ? (
                 <Animated.View entering={FadeInDown.delay(120).duration(300)} style={styles.emptyPrompts}>
                   <Text style={styles.emptyPromptsLabel}>Try asking…</Text>
-                  {[
-                    "What's on my schedule today?",
-                    'Move my essay to Thursday',
-                    'Give me a free evening',
-                    "What's due this week?",
-                  ].map((suggestion) => (
+                  {SUGGESTIONS.map((suggestion) => (
                     <Pressable
                       key={suggestion}
                       onPress={() => { haptic.selection(); void sendMessage(suggestion); }}

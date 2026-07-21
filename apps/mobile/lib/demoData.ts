@@ -19,18 +19,26 @@ function isoOffsetHours(hours: number): string {
   return new Date(now.getTime() + hours * 60 * 60 * 1000).toISOString();
 }
 
-// Anchors a block to a fixed local clock time today. Demo blocks used to be
-// generated relative to "now", which wrapped past midnight in the evening and
-// produced a 1 AM study block sorted to the top of the Today river.
-function isoAtLocalTime(hour: number, minute: number): string {
-  const d = new Date(now);
-  d.setHours(hour, minute, 0, 0);
-  return d.toISOString();
-}
+// Demo blocks sit in a fixed after-school window (local time) so guest mode
+// always reads as "homework scheduled around your life" — never a block at
+// 3 AM. Slot count matches DEMO_TASKS; the last slot ends 20:30.
+const DEMO_BLOCK_SLOTS = [
+  { hour: 15, minute: 30, durationMinutes: 90 },
+  { hour: 17, minute: 30, durationMinutes: 60 },
+  { hour: 19, minute: 45, durationMinutes: 45 },
+] as const;
 
-function todayIso(): string {
-  // Local calendar date — must match the day keys the screens build.
-  return toLocalDayIso(now);
+// Once the local evening is past the last slot's start, the demo schedule
+// rolls to tomorrow afternoon — Today shows a calm finished river, and the
+// Week tab carries tomorrow's plan.
+const DEMO_ROLLOVER_HOUR = 20;
+
+function demoScheduleDayIso(): string {
+  const demoDay = new Date(now);
+  if (demoDay.getHours() >= DEMO_ROLLOVER_HOUR) {
+    demoDay.setDate(demoDay.getDate() + 1);
+  }
+  return toLocalDayIso(demoDay);
 }
 
 export const DEMO_TASKS: Task[] = [
@@ -90,23 +98,25 @@ export function isDemoTaskId(taskId: string): boolean {
 }
 
 export function getDemoScheduledBlocksForDay(day: string): ScheduledBlock[] {
-  if (day !== todayIso()) return [];
+  if (day !== demoScheduleDayIso()) return [];
 
   const statuses: ScheduledBlock['status'][] = ['approved', 'approved', 'shadow'];
-  // Fixed after-school anchors: [hour, minute] local time.
-  const startTimes: [number, number][] = [[15, 30], [19, 0], [20, 30]];
-  const durations = [90, 60, 45];
 
   return DEMO_TASKS.map((task, i) => {
-    const [h, m] = startTimes[i];
-    const start = isoAtLocalTime(h, m);
+    const slot = DEMO_BLOCK_SLOTS[i];
+    // `${day}T00:00:00` (no Z) parses in the device's local zone, so the
+    // slots land at local wall-clock times and `day` stays consistent.
+    const start = new Date(`${day}T00:00:00`);
+    start.setHours(slot.hour, slot.minute, 0, 0);
+    const end = new Date(start.getTime() + slot.durationMinutes * 60 * 1000);
+
     return {
       id: `demo-block-${i + 1}`,
       userId: GUEST_USER_ID,
       taskId: task.id,
       task,
-      startTime: start,
-      endTime: new Date(new Date(start).getTime() + durations[i] * 60_000).toISOString(),
+      startTime: start.toISOString(),
+      endTime: end.toISOString(),
       status: statuses[i],
       day,
       createdAt: now.toISOString(),

@@ -34,3 +34,22 @@ export function localDateFromDayIso(dayIso: string): Date {
 export function localWeekday(dayIso: string): number {
   return localDateFromDayIso(dayIso).getDay();
 }
+
+/** The YYYY-MM-DD key `n` days after an arbitrary day key (n may be negative). */
+export function addDaysToDayIso(dayIso: string, n: number): string {
+  const d = localDateFromDayIso(dayIso);
+  d.setDate(d.getDate() + n);
+  return toLocalDayIso(d);
+}
+
+/**
+ * The UTC instant (ISO 8601) at which a local calendar day begins. Use this to
+ * bound `timestamptz` queries by the user's local day: `[localDayStartUtc(day),
+ * localDayStartUtc(nextDay))`. Comparing a stored instant against `${day}T00:00:00Z`
+ * silently buckets rows by the UTC day instead, which skews by one for anyone
+ * not on UTC.
+ */
+export function localDayStartUtc(dayIso: string): string {
+  const [y, m, d] = dayIso.split('-').map(Number);
+  return new Date(y, m - 1, d, 0, 0, 0, 0).toISOString();
+}
