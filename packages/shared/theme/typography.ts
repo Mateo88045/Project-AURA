@@ -3,6 +3,16 @@
 // site. Never hardcode a color here; it would leak one palette into the other.
 
 export const typography = {
+  // Dusk native scale — iOS text styles (Large Title, Title 2, Headline, Body,
+  // Subheadline, Footnote) with explicit line heights.
+  nLargeTitle: { fontSize: 34, fontWeight: '700' as const, letterSpacing: 0.2, lineHeight: 41 },
+  nTitle:      { fontSize: 22, fontWeight: '700' as const, letterSpacing: -0.2, lineHeight: 28 },
+  nHeadline:   { fontSize: 17, fontWeight: '600' as const, letterSpacing: -0.2, lineHeight: 22 },
+  nBody:       { fontSize: 17, fontWeight: '400' as const, letterSpacing: -0.2, lineHeight: 22 },
+  nSubhead:    { fontSize: 15, fontWeight: '400' as const, letterSpacing: -0.1, lineHeight: 20 },
+  nFootnote:   { fontSize: 13, fontWeight: '600' as const, letterSpacing: 0, lineHeight: 18 },
+  nSection:    { fontSize: 13, fontWeight: '600' as const, letterSpacing: 0.4, lineHeight: 18, textTransform: 'uppercase' as const },
+
   // Hero / splash headlines
   largeTitle: { fontSize: 40, fontWeight: '700' as const, letterSpacing: -1.5, lineHeight: 46 },
 

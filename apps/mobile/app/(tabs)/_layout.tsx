@@ -1,11 +1,11 @@
 import { Tabs } from 'expo-router';
-import { GlassTabBar } from '../../components/ui/GlassTabBar';
+import { PlainTabBar } from '../../components/ui/PlainTabBar';
 import { haptic } from '../../lib/haptics';
 
 export default function TabLayout() {
   return (
     <Tabs
-      tabBar={(props) => <GlassTabBar {...props} />}
+      tabBar={(props) => <PlainTabBar {...props} />}
       screenOptions={{
         headerShown: false,
       }}
@@ -17,7 +17,7 @@ export default function TabLayout() {
     >
       <Tabs.Screen name="index" options={{ title: 'Today' }} />
       <Tabs.Screen name="week" options={{ title: 'Week' }} />
-      <Tabs.Screen name="ai" options={{ title: 'Chronos' }} />
+      <Tabs.Screen name="ai" options={{ title: 'Ask' }} />
       <Tabs.Screen name="settings" options={{ title: 'Settings' }} />
       {/* Hide the chat sub-route from the tab bar — still routable */}
       <Tabs.Screen name="ai/chat" options={{ href: null }} />

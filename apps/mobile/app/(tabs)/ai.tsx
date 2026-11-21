@@ -388,7 +388,7 @@ export default function AIHubScreen() {
       <ScrollView
         contentContainerStyle={[
           styles.scrollContent,
-          { paddingTop: insets.top + 12, paddingBottom: insets.bottom + 140 },
+          { paddingTop: insets.top + 12, paddingBottom: 32 },
         ]}
         showsVerticalScrollIndicator={false}
         bounces={false}

@@ -1,55 +1,37 @@
 import { useMemo, useState } from 'react';
-import { View, ScrollView, Pressable, StyleSheet, Text, useWindowDimensions } from 'react-native';
+import { View, ScrollView, Pressable, StyleSheet, Text } from 'react-native';
 import { useRouter, type Href } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Animated, {
-  FadeIn,
-  SlideInDown,
-  useSharedValue,
-  useAnimatedStyle,
-  withSpring,
-  withSequence,
-  withTiming,
-  interpolateColor,
-} from 'react-native-reanimated';
-import { radius, spacing, typography } from '@chronos/shared/theme';
+import { difficultyLabels, typography } from '@chronos/shared/theme';
 import type { ThemeColors } from '@chronos/shared/theme';
 import type { BlockStatus } from '@chronos/shared/types';
-import { useTheme, type ResolvedMode } from '../../lib/theme';
+import { supabase } from '@chronos/shared/supabase';
+import { useTheme } from '../../lib/theme';
 import { useShadowSchedule } from '../../hooks/useShadowSchedule';
-import { GlassCard } from '../../components/ui/GlassCard';
-import { DifficultyBars } from '../../components/ui/DifficultyBars';
-import { AuraText } from '../../components/ui/AuraText';
+import { useTodaySchedule } from '../../hooks/useTodaySchedule';
+import { useAuth } from '../../hooks/useAuth';
+import { useRequirePro } from '../../lib/requirePro';
+import { haptic } from '../../lib/haptics';
+import { toLocalDayIso } from '../../lib/localDate';
+import { clock, dateFromHHMM, formatDue, minutesBetween } from '../../lib/dayFormat';
 import { AuraSymbol } from '../../components/ui/AuraSymbol';
 import { AuraSkeleton } from '../../components/ui/AuraSkeleton';
-import { AmbientOrbs } from '../../components/ui/AmbientOrbs';
-import { haptic } from '../../lib/haptics';
-import { useAuth } from '../../hooks/useAuth';
 import { useAuraToast } from '../../components/ui/AuraToast';
-import { supabase } from '@chronos/shared/supabase';
-import { useRequirePro } from '../../lib/requirePro';
-import { toLocalDayIso } from '../../lib/localDate';
-
-function formatTime(iso: string): string {
-  return new Date(iso).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
-}
-
-function scrimColor(mode: ResolvedMode): string {
-  return mode === 'light' ? 'rgba(15, 23, 42, 0.28)' : 'rgba(7, 9, 15, 0.6)';
-}
+import { DraftPlanRow } from '../../components/schedule/DraftPlanRow';
 
 export default function ShadowScheduleReviewScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { height: windowHeight } = useWindowDimensions();
-  const { colors, resolvedMode } = useTheme();
-  const styles = useMemo(() => makeStyles(colors, resolvedMode), [colors, resolvedMode]);
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
 
   const today = useMemo(() => new Date(), []);
   const dayIso = toLocalDayIso(today);
   const { user: authUser } = useAuth();
 
   const { shadowBlocks, loading, error } = useShadowSchedule(authUser?.id ?? '', dayIso);
+  // Fixed events give the draft its context (school, dinner); read-only here.
+  const { fixedEvents } = useTodaySchedule(authUser?.id ?? '', dayIso);
   const toast = useAuraToast();
   const requirePro = useRequirePro();
 
@@ -65,12 +47,15 @@ export default function ShadowScheduleReviewScreen() {
   );
   const pendingCount = displayBlocks.filter((b) => b.status === 'shadow').length;
   const anyBusy = bulkBusy || busyIds.size > 0;
-  // A task can span several blocks — count distinct tasks, not blocks, so the
-  // header doesn't claim "3 new tasks" for one essay chunked three ways.
-  const taskCount = useMemo(
-    () => new Set(shadowBlocks.map((b) => b.taskId ?? b.task?.id ?? b.id)).size,
-    [shadowBlocks],
-  );
+
+  // One time-sorted list: dim fixed rows interleaved with the draft blocks.
+  const rows = useMemo(() => {
+    const fixed = fixedEvents.map((e) => ({ key: `f-${e.id}`, start: dateFromHHMM(e.startTime, today), title: e.title, block: undefined }));
+    const drafts = displayBlocks.map((b) => ({ key: b.id, start: new Date(b.startTime), title: b.task?.title ?? 'Untitled', block: b }));
+    return [...fixed, ...drafts].sort((a, b) => a.start.getTime() - b.start.getTime());
+  }, [fixedEvents, displayBlocks, today]);
+  const kept = displayBlocks.filter((b) => b.status !== 'rejected');
+  const doneBy = kept.length ? new Date(Math.max(...kept.map((b) => new Date(b.endTime).getTime()))) : null;
 
   async function setBlockStatus(blockId: string, next: BlockStatus) {
     // Race guard — a bulk write in flight, or this row already mid-update, owns
@@ -109,18 +94,6 @@ export default function ShadowScheduleReviewScreen() {
     }
   }
 
-  // Approve button animations
-  const approveScale = useSharedValue(1);
-  const flashProgress = useSharedValue(0);
-
-  const approveAnimated = useAnimatedStyle(() => ({
-    transform: [{ scale: approveScale.value }],
-    backgroundColor: interpolateColor(
-      flashProgress.value,
-      [0, 1],
-      [colors.accent.blue, colors.accent.emerald],
-    ),
-  }));
 
   async function handleApprove() {
     // Race guard — if any per-row write is mid-flight, bail rather than have
@@ -132,14 +105,6 @@ export default function ShadowScheduleReviewScreen() {
     // is a lie.
     const targets = displayBlocks.filter((b) => b.status === 'shadow').map((b) => b.id);
 
-    approveScale.value = withSequence(
-      withSpring(1.02, { damping: 15, stiffness: 400 }),
-      withSpring(1, { damping: 15, stiffness: 400 }),
-    );
-    flashProgress.value = withSequence(
-      withTiming(1, { duration: 200 }),
-      withTiming(0, { duration: 200 }),
-    );
 
     if (targets.length === 0) {
       haptic.success();
@@ -170,414 +135,131 @@ export default function ShadowScheduleReviewScreen() {
     setTimeout(() => router.back(), 500);
   }
 
-  const friendlyDate = today.toLocaleDateString(undefined, {
-    weekday: 'long',
-    month: 'long',
-    day: 'numeric',
-  });
+
+  const subline = [
+    today.toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' }),
+    `${kept.length} ${kept.length === 1 ? 'block' : 'blocks'}`,
+    doneBy ? `done by ${clock(doneBy)}` : null,
+  ].filter(Boolean).join(' · ');
+  const approveLabel =
+    pendingCount === 0 ? 'Done' : pendingCount === shadowBlocks.length ? 'Approve plan' : `Approve ${pendingCount} left`;
 
   return (
-    <View style={styles.root}>
-      <AmbientOrbs />
-
-      {/* Scrim — tapping dismisses */}
-      <Animated.View
-        entering={FadeIn.duration(250)}
-        style={StyleSheet.absoluteFill}
-      >
-        <Pressable style={StyleSheet.absoluteFill} onPress={() => router.back()} />
-      </Animated.View>
-
-      {/* Sheet — bottom-anchored, hugs its content up to a max height */}
-      <Animated.View
-        entering={SlideInDown.springify().damping(22).stiffness(140).mass(1.1)}
-        style={styles.sheetWrap}
-      >
-        <GlassCard
-          intensity="thick"
-          borderAccent
-          style={{ ...styles.sheet, maxHeight: windowHeight - insets.top - spacing.xxl }}
+    <View style={[styles.root, { paddingTop: insets.top }]}>
+      <View style={styles.nav}>
+        <Pressable
+          onPress={() => { haptic.secondary(); router.back(); }}
+          style={styles.navBtn}
+          accessibilityRole="button"
+          accessibilityLabel="Back to Today"
         >
-          {/* Handle */}
-          <View style={styles.handleWrap}>
-            <View style={styles.handle} />
+          <AuraSymbol name="chevron.left" size={20} color={colors.accent.sky} />
+          <Text style={styles.navText}>Today</Text>
+        </Pressable>
+        <Pressable
+          onPress={() => {
+            haptic.secondary();
+            router.push(
+              ('/(tabs)/ai/chat?prompt=' +
+                encodeURIComponent("Help me adjust today's plan.") +
+                '&context=' +
+                encodeURIComponent('Editing shadow plan')) as Href,
+            );
+          }}
+          style={styles.navBtn}
+          accessibilityRole="button"
+          accessibilityLabel="Edit plan with Chronos"
+        >
+          <Text style={styles.navText}>Edit</Text>
+        </Pressable>
+      </View>
+
+      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+        <View style={styles.header}>
+          <Text style={styles.title} accessibilityRole="header">Draft plan</Text>
+          {!loading && shadowBlocks.length > 0 && <Text style={styles.subline}>{subline}</Text>}
+          <Text style={styles.explain}>
+            Chronos built this from your assignments. Nothing is locked in until you approve it.
+          </Text>
+        </View>
+
+        {loading && (
+          <View style={styles.list}>
+            <AuraSkeleton height={64} />
+            <AuraSkeleton height={64} />
           </View>
+        )}
 
-          {/* Header */}
-          <View style={styles.header}>
-            <Text style={styles.headerTitle}>
-              Chronos found {taskCount} new task{taskCount === 1 ? '' : 's'}
-            </Text>
-            <Text style={styles.headerDate}>{friendlyDate}</Text>
+        {!loading && error && <Text style={[styles.explain, styles.pad]}>Couldn&apos;t load the draft plan.</Text>}
+
+        {!loading && !error && shadowBlocks.length === 0 && (
+          <Text style={[styles.explain, styles.pad]}>No draft yet. Chronos drafts one the next time you check in.</Text>
+        )}
+
+        {!loading && !error && shadowBlocks.length > 0 && (
+          <View style={styles.list}>
+            {rows.map((r, i) => {
+              if (!r.block) {
+                return <DraftPlanRow key={r.key} first={i === 0} time={clock(r.start)} title={r.title} />;
+              }
+              const b = r.block;
+              const t = b.task;
+              const meta = [
+                `${minutesBetween(new Date(b.startTime), new Date(b.endTime))} min`,
+                t ? difficultyLabels[t.difficulty] : null,
+                formatDue(t?.dueDate, today),
+              ].filter(Boolean).join(' · ');
+              return (
+                <DraftPlanRow
+                  key={r.key}
+                  first={i === 0}
+                  time={clock(r.start)}
+                  title={r.title}
+                  meta={meta}
+                  status={b.status}
+                  disabled={bulkBusy || busyIds.has(b.id)}
+                  onKeep={() => requirePro('approve_block', () => setBlockStatus(b.id, b.status === 'approved' ? 'shadow' : 'approved'))}
+                  onSkip={() => requirePro('reject_block', () => setBlockStatus(b.id, 'rejected'))}
+                  onUndo={() => requirePro('undo_block', () => setBlockStatus(b.id, 'shadow'))}
+                />
+              );
+            })}
           </View>
+        )}
+      </ScrollView>
 
-          {/* Content */}
-          <ScrollView
-            style={styles.scroll}
-            contentContainerStyle={{ paddingBottom: spacing.lg }}
-            showsVerticalScrollIndicator={false}
-            bounces={false}
-          >
-            {loading && (
-              <View style={styles.loading}>
-                <AuraSkeleton height={60} />
-                <AuraSkeleton height={60} />
-              </View>
-            )}
-
-            {!loading && error && (
-              <View style={styles.center}>
-                <AuraText variant="body" color="hard">
-                  Couldn&apos;t load shadow plan.
-                </AuraText>
-              </View>
-            )}
-
-            {!loading && !error && shadowBlocks.length === 0 && (
-              <View style={styles.center}>
-                <Text style={styles.emptyTitle}>No shadow plan yet</Text>
-                <Text style={styles.emptyBody}>
-                  Chronos will draft a plan the next time you check in.
-                </Text>
-              </View>
-            )}
-
-            {!loading && !error && displayBlocks.length > 0 && (
-              <View>
-                {displayBlocks.map((block, i) => {
-                  const rowStatus = block.status;
-                  const rowBusy = busyIds.has(block.id);
-                  const disableRow = bulkBusy || rowBusy;
-                  const isRejected = rowStatus === 'rejected';
-                  const isApproved = rowStatus === 'approved';
-                  return (
-                    <Animated.View
-                      key={block.id}
-                      entering={FadeIn.delay(i * 40).duration(200)}
-                    >
-                      <View style={[styles.row, isRejected && styles.rowRejected]}>
-                        <View style={styles.timeCol}>
-                          <Text style={[styles.rowTime, isRejected && styles.textStrike]}>
-                            {formatTime(block.startTime)}
-                          </Text>
-                        </View>
-                        <View style={styles.titleCol}>
-                          <Text
-                            style={[styles.rowTitle, isRejected && styles.textStrike]}
-                            numberOfLines={1}
-                          >
-                            {block.task?.title ?? 'Untitled'}
-                          </Text>
-                          <View style={styles.metaRow}>
-                            <Text
-                              style={[styles.rowMeta, isRejected && styles.textStrike]}
-                              numberOfLines={1}
-                            >
-                              {block.task?.subject ?? ''} · {block.task?.estimatedMinutes ?? 0}m
-                            </Text>
-                            {block.task && !isRejected && (
-                              <DifficultyBars
-                                level={block.task.difficulty}
-                                size="compact"
-                                animated={false}
-                              />
-                            )}
-                          </View>
-                        </View>
-                        <View style={styles.actions}>
-                          {isRejected ? (
-                            <Pressable
-                              onPress={() =>
-                                requirePro('undo_block', () =>
-                                  setBlockStatus(block.id, 'shadow'),
-                                )
-                              }
-                              disabled={disableRow}
-                              style={[styles.undoBtn, disableRow && styles.btnDisabled]}
-                              accessibilityRole="button"
-                              accessibilityLabel="Undo reject"
-                            >
-                              <AuraSymbol
-                                name="arrow.left"
-                                size={12}
-                                color={colors.text.secondary}
-                              />
-                              <Text style={styles.undoText}>Undo</Text>
-                            </Pressable>
-                          ) : (
-                            <>
-                              <Pressable
-                                onPress={() =>
-                                  requirePro('approve_block', () =>
-                                    setBlockStatus(block.id, isApproved ? 'shadow' : 'approved'),
-                                  )
-                                }
-                                disabled={disableRow}
-                                style={[
-                                  styles.iconBtn,
-                                  isApproved && styles.iconBtnApproved,
-                                  disableRow && styles.btnDisabled,
-                                ]}
-                                accessibilityRole="button"
-                                accessibilityState={{ selected: isApproved }}
-                                accessibilityLabel={isApproved ? 'Unapprove block' : 'Approve block'}
-                              >
-                                <AuraSymbol
-                                  name="checkmark"
-                                  size={14}
-                                  color={isApproved ? colors.accent.emerald : colors.text.secondary}
-                                />
-                              </Pressable>
-                              <Pressable
-                                onPress={() =>
-                                  requirePro('reject_block', () =>
-                                    setBlockStatus(block.id, 'rejected'),
-                                  )
-                                }
-                                disabled={disableRow}
-                                style={[styles.iconBtn, disableRow && styles.btnDisabled]}
-                                accessibilityRole="button"
-                                accessibilityLabel="Reject block"
-                              >
-                                <AuraSymbol
-                                  name="xmark"
-                                  size={14}
-                                  color={colors.text.secondary}
-                                />
-                              </Pressable>
-                            </>
-                          )}
-                        </View>
-                      </View>
-                      {i < displayBlocks.length - 1 && <View style={styles.divider} />}
-                    </Animated.View>
-                  );
-                })}
-              </View>
-            )}
-          </ScrollView>
-
-          {/* Buttons */}
-          <View style={[styles.buttonRow, { paddingBottom: insets.bottom + spacing.md }]}>
-            <Pressable
-              onPress={() => {
-                haptic.secondary();
-                router.push(
-                  ('/(tabs)/ai/chat?prompt=' +
-                    encodeURIComponent("Help me adjust today's plan.") +
-                    '&context=' +
-                    encodeURIComponent('Editing shadow plan')) as Href,
-                );
-              }}
-              style={styles.editBtn}
-              accessibilityRole="button"
-              accessibilityLabel="Edit plan"
-            >
-              <Text style={styles.editBtnText}>Edit</Text>
-            </Pressable>
-
-            <Animated.View style={[styles.approveBtnWrap, approveAnimated]}>
-              <Pressable
-                onPress={() => requirePro('bulk_approve', handleApprove)}
-                style={styles.approveBtnInner}
-                disabled={loading || shadowBlocks.length === 0 || anyBusy}
-                accessibilityRole="button"
-                accessibilityLabel={pendingCount > 0 ? 'Approve remaining blocks' : 'Done'}
-              >
-                <Text style={styles.approveBtnText}>
-                  {pendingCount === 0
-                    ? 'Done'
-                    : pendingCount === shadowBlocks.length
-                      ? 'Approve all'
-                      : `Approve remaining (${pendingCount})`}
-                </Text>
-              </Pressable>
-            </Animated.View>
-          </View>
-        </GlassCard>
-      </Animated.View>
+      <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 16) }]}>
+        <Pressable
+          onPress={() => { haptic.primaryCTA(); requirePro('bulk_approve', handleApprove); }}
+          disabled={loading || shadowBlocks.length === 0 || anyBusy}
+          style={[styles.approve, (loading || shadowBlocks.length === 0 || anyBusy) && styles.approveDisabled]}
+          accessibilityRole="button"
+        >
+          <Text style={styles.approveText}>{approveLabel}</Text>
+        </Pressable>
+        <Text style={styles.hint}>Keep or skip a block, then approve the rest</Text>
+      </View>
     </View>
   );
 }
 
-function makeStyles(c: ThemeColors, mode: ResolvedMode) {
+function makeStyles(c: ThemeColors) {
   return StyleSheet.create({
-    root: {
-      flex: 1,
-      backgroundColor: scrimColor(mode),
-    },
-    sheetWrap: {
-      position: 'absolute',
-      left: 0,
-      right: 0,
-      bottom: 0,
-    },
-    sheet: {
-      borderBottomLeftRadius: 0,
-      borderBottomRightRadius: 0,
-      borderTopLeftRadius: radius.xl,
-      borderTopRightRadius: radius.xl,
-    },
-    handleWrap: {
-      alignItems: 'center',
-      paddingTop: spacing.sm,
-      paddingBottom: spacing.md,
-    },
-    handle: {
-      width: 36,
-      height: 4,
-      borderRadius: 2,
-      backgroundColor: c.border.glass,
-    },
-    header: {
-      paddingHorizontal: spacing.screenPadding,
-      paddingBottom: spacing.lg,
-    },
-    headerTitle: {
-      ...typography.title1,
-      color: c.text.primary,
-    },
-    headerDate: {
-      ...typography.callout,
-      marginTop: spacing.xs,
-      color: c.text.secondary,
-    },
-    scroll: {
-      flexGrow: 0,
-      flexShrink: 1,
-      paddingHorizontal: spacing.screenPadding,
-    },
-    loading: {
-      gap: spacing.md,
-    },
-    center: {
-      alignItems: 'center',
-      paddingVertical: spacing.xl,
-    },
-    emptyTitle: {
-      ...typography.title2,
-      color: c.text.primary,
-    },
-    emptyBody: {
-      ...typography.body,
-      marginTop: spacing.sm,
-      color: c.text.secondary,
-      textAlign: 'center',
-    },
-    row: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      paddingVertical: spacing.md,
-      gap: spacing.md,
-    },
-    timeCol: {
-      width: 64,
-    },
-    rowTime: {
-      ...typography.callout,
-      color: c.text.tertiary,
-      fontVariant: ['tabular-nums'],
-    },
-    titleCol: {
-      flex: 1,
-      gap: 2,
-    },
-    rowTitle: {
-      ...typography.headline,
-      color: c.text.primary,
-    },
-    metaRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: spacing.sm,
-    },
-    rowMeta: {
-      ...typography.callout,
-      color: c.text.secondary,
-      flexShrink: 1,
-    },
-    rowRejected: {
-      opacity: 0.45,
-    },
-    textStrike: {
-      textDecorationLine: 'line-through',
-    },
-    actions: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: spacing.xs,
-    },
-    iconBtn: {
-      width: 32,
-      height: 32,
-      borderRadius: 16,
-      borderWidth: 1,
-      borderColor: c.border.subtle,
-      backgroundColor: c.glass.light,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    iconBtnApproved: {
-      backgroundColor: c.glass.accent,
-      borderColor: c.border.accent,
-    },
-    btnDisabled: {
-      opacity: 0.5,
-    },
-    undoBtn: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: spacing.xs,
-      paddingHorizontal: spacing.sm,
-      height: 32,
-      // Chips use radius.sm — pills stay reserved for the nav layer.
-      borderRadius: radius.sm,
-      borderWidth: 1,
-      borderColor: c.border.subtle,
-      backgroundColor: c.glass.light,
-    },
-    undoText: {
-      ...typography.caption,
-      color: c.text.secondary,
-    },
-    divider: {
-      height: StyleSheet.hairlineWidth,
-      backgroundColor: c.border.subtle,
-    },
-    buttonRow: {
-      flexDirection: 'row',
-      gap: spacing.md,
-      paddingHorizontal: spacing.screenPadding,
-      paddingTop: spacing.md,
-    },
-    editBtn: {
-      height: 52,
-      paddingHorizontal: spacing.xl,
-      // Chronos buttons use radius.sm — matches AuraButton, never a pill.
-      borderRadius: radius.sm,
-      borderWidth: 1,
-      borderColor: c.border.glass,
-      backgroundColor: c.glass.light,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    editBtnText: {
-      ...typography.headline,
-      color: c.text.primary,
-    },
-    approveBtnWrap: {
-      flex: 1,
-      borderRadius: radius.sm,
-      overflow: 'hidden',
-    },
-    approveBtnInner: {
-      height: 52,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    approveBtnText: {
-      ...typography.headline,
-      color: c.text.inverse,
-    },
+    root: { flex: 1, backgroundColor: c.background.primary },
+    nav: { height: 44, paddingHorizontal: 8, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+    navBtn: { height: 44, minWidth: 44, paddingHorizontal: 8, flexDirection: 'row', alignItems: 'center', gap: 2 },
+    navText: { ...typography.nBody, color: c.accent.sky },
+    scroll: { paddingBottom: 24 },
+    header: { paddingHorizontal: 20 },
+    title: { ...typography.nLargeTitle, color: c.text.primary, marginTop: 2 },
+    subline: { ...typography.nSubhead, color: c.text.secondary, marginTop: 4, fontVariant: ['tabular-nums'] },
+    explain: { ...typography.nSubhead, lineHeight: 21, color: c.text.secondary, marginTop: 12 },
+    pad: { paddingHorizontal: 20 },
+    list: { marginTop: 20, marginHorizontal: 16, borderRadius: 14, backgroundColor: c.background.surface, overflow: 'hidden' },
+    footer: { paddingHorizontal: 16, paddingTop: 12 },
+    approve: { height: 54, borderRadius: 14, backgroundColor: c.accent.blue, alignItems: 'center', justifyContent: 'center' },
+    approveDisabled: { opacity: 0.5 },
+    approveText: { ...typography.nHeadline, color: c.text.primary },
+    hint: { ...typography.nFootnote, fontWeight: '400', color: c.text.secondary, textAlign: 'center', marginTop: 10 },
   });
 }

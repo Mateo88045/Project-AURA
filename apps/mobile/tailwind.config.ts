@@ -19,12 +19,13 @@ export default {
       colors: {
         // Backgrounds
         'bg-primary': '#0A1118',   // Deep Ocean
-        'bg-elevated': '#0F1820',
-        'bg-surface': '#13212B',
+        'bg-elevated': '#0D1620',
+        'bg-surface': '#111C26',
+        'bg-raised': '#1A2A36',
         // Glass tints (Mist / Steel based)
-        'glass-light': 'rgba(168, 218, 220, 0.06)',
-        'glass-medium': 'rgba(168, 218, 220, 0.10)',
-        'glass-accent': 'rgba(69, 123, 157, 0.14)',
+        'glass-light': 'rgba(168, 218, 220, 0.05)',
+        'glass-medium': 'rgba(168, 218, 220, 0.08)',
+        'glass-accent': 'rgba(69, 123, 157, 0.16)',
         // Accents — Steel & Mist, never violet
         'accent-blue': '#457B9D',     // Steel
         'accent-sky': '#A8DADC',      // Mist
@@ -33,9 +34,9 @@ export default {
         'accent-amber': '#F4A261',
         'accent-coral': '#E76F6F',
         // Text
-        'text-primary': '#F1FAEE',                    // Cream
-        'text-secondary': 'rgba(241, 250, 238, 0.65)',
-        'text-tertiary': 'rgba(241, 250, 238, 0.35)',
+        'text-primary': '#EEF3F2',
+        'text-secondary': '#8FA3AD',
+        'text-tertiary': '#6F848E',
         'text-inverse': '#0A1118',
       },
       borderRadius: {

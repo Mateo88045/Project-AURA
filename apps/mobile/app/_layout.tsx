@@ -117,7 +117,7 @@ function ThemedApp() {
           />
           <Stack.Screen
             name="schedule/review"
-            options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
+            options={{ animation: 'slide_from_right' }}
           />
           <Stack.Screen
             name="briefing"

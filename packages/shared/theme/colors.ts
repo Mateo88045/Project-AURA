@@ -11,6 +11,7 @@ export interface ThemeColors {
     primary: string;
     elevated: string;
     surface: string;
+    raised: string;
   };
   glass: {
     light: string;
@@ -46,45 +47,46 @@ export interface ThemeColors {
 
 export const darkColors: ThemeColors = {
   background: {
-    primary:  '#07090F',   // Near-black with blue undertone. The canvas.
-    elevated: '#0D1117',   // Lifted surfaces — modals, sheets
-    surface:  '#111827',   // Cards that sit above the background
+    primary:  '#0A1118',   // Dusk night. The canvas.
+    elevated: '#0D1620',   // Tab bar, sheets
+    surface:  '#111C26',   // Cards and inset lists
+    raised:   '#1A2A36',   // Pressed rows, secondary buttons
   },
 
   glass: {
-    light:  'rgba(255, 255, 255, 0.06)',
-    medium: 'rgba(100, 149, 237, 0.08)',
-    accent: 'rgba(91, 138, 240, 0.10)',
+    light:  'rgba(168, 218, 220, 0.05)',
+    medium: 'rgba(168, 218, 220, 0.08)',
+    accent: 'rgba(69, 123, 157, 0.16)',
   },
 
   accent: {
-    blue:    '#5B8AF0',    // Primary CTA, active states, AI blocks
-    sky:     '#7ECDE8',    // Secondary accent, river line
-    violet:  '#A78BFA',    // AI-scheduled tasks, copilot bubbles
-    emerald: '#34D399',    // On track, easy difficulty, approved
-    amber:   '#F59E0B',    // Moderate difficulty, warnings
-    coral:   '#F87171',    // Hard difficulty, deadline urgency
+    blue:    '#457B9D',    // Steel. Primary CTA, user bubbles
+    sky:     '#A8DADC',    // Mist. Active tint, rail
+    violet:  '#A8DADC',    // Mist (no purple in Dusk)
+    emerald: '#7ECFA0',
+    amber:   '#F4A261',
+    coral:   '#E76F6F',
   },
 
   text: {
-    primary:   '#F1F5F9',  // Main readable text
-    secondary: '#94A3B8',  // Labels, timestamps, secondary info
-    tertiary:  '#475569',  // Placeholders, disabled, ghost text
-    inverse:   '#07090F',  // Text on light/accent backgrounds
+    primary:   '#EEF3F2',
+    secondary: '#8FA3AD',
+    tertiary:  '#6F848E',
+    inverse:   '#0A1118',
   },
 
   border: {
-    subtle: 'rgba(255, 255, 255, 0.06)',
-    glass:  'rgba(255, 255, 255, 0.12)',
-    accent: 'rgba(91, 138, 240, 0.3)',
+    subtle: 'rgba(168, 218, 220, 0.08)',
+    glass:  'rgba(168, 218, 220, 0.14)',
+    accent: 'rgba(168, 218, 220, 0.30)',
   },
 
   difficulty: {
-    1: '#34D399',
-    2: '#6EE7B7',
-    3: '#F59E0B',
-    4: '#FB923C',
-    5: '#F87171',
+    1: '#7ECFA0',
+    2: '#A8DADC',
+    3: '#F4A261',
+    4: '#EE8A68',
+    5: '#E76F6F',
   },
 };
 
@@ -100,6 +102,7 @@ export const lightColors: ThemeColors = {
     primary:  '#F8FAFC',   // Slate-50 — soft paper
     elevated: '#FFFFFF',   // Pure white for modals, sheets
     surface:  '#F1F5F9',   // Slate-100 — cards
+    raised:   '#E2E8F0',   // Slate-200 — pressed rows
   },
 
   glass: {

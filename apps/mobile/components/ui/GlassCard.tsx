@@ -69,6 +69,8 @@ function useReduceTransparency() {
 // 'thick' → regular + darker BlurView fallback / tint
 // ---------------------------------------------------------------------------
 
+const DUSK_SOLID = true;
+
 type Intensity = 'light' | 'regular' | 'thick';
 
 function toGlassStyle(intensity: Intensity): 'clear' | 'regular' {
@@ -98,8 +100,9 @@ export function GlassCard({
   const borderStyle = borderAccent ? styles.borderAccent : styles.borderSubtle;
   const blurTint: 'dark' | 'light' = resolvedMode === 'light' ? 'light' : 'dark';
 
-  // Accessibility: solid background when reduce transparency is on
-  if (reduceTransparency) {
+  // Dusk native: every card is a solid surface. Blur/glass stays wired for
+  // the other directions but is off on this branch.
+  if (DUSK_SOLID || reduceTransparency) {
     return (
       <View style={[styles.base, styles.solid, borderStyle, style]}>
         {children}
@@ -138,10 +141,10 @@ export function GlassCard({
 
 function makeStyles(c: ThemeColors) {
   return StyleSheet.create({
-    base: { borderRadius: radius.lg, overflow: 'hidden' },
+    base: { borderRadius: radius.md, overflow: 'hidden' },
     borderSubtle: { borderWidth: 1, borderColor: c.border.subtle },
     borderAccent: { borderWidth: 1, borderColor: c.border.glass },
     fallback: { backgroundColor: c.background.elevated + 'B3' }, // ~70% alpha
-    solid: { backgroundColor: c.background.elevated },
+    solid: { backgroundColor: c.background.surface },
   });
 }

@@ -20,7 +20,14 @@ import { useTheme } from '../../lib/theme';
 // the foreground. Per the spec: orbs are *atmosphere*, not focal points.
 // ---------------------------------------------------------------------------
 
+// Dusk native: no ambient orbs. Call sites stay intact.
+const ORBS_ENABLED = false;
+
 export function AmbientOrbs() {
+  return ORBS_ENABLED ? <Orbs /> : null;
+}
+
+function Orbs() {
   const { colors, resolvedMode } = useTheme();
   // Mist orb stays subtle; Steel orb gets a hair more presence on cream paper.
   const mistAlpha  = resolvedMode === 'light' ? '14' : '12';

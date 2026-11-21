@@ -31,8 +31,6 @@ import { Springs } from '@chronos/shared/constants/motion';
 import { radius, spacing, typography } from '@chronos/shared/theme';
 import type { ThemeColors } from '@chronos/shared/theme';
 import { useTheme } from '../../../lib/theme';
-import { AmbientOrbs } from '../../../components/ui/AmbientOrbs';
-import { GlassCard } from '../../../components/ui/GlassCard';
 import { AuraSymbol } from '../../../components/ui/AuraSymbol';
 import { AuraAvatar } from '../../../components/ui/AuraAvatar';
 import { haptic } from '../../../lib/haptics';
@@ -95,14 +93,11 @@ function TypingIndicator({
 }) {
   return (
     <Animated.View entering={FadeIn.duration(200)} style={typingStyles.bubble}>
-      <AuraAvatar name="Chronos" size={28} />
-      <GlassCard intensity="light" style={typingStyles.card}>
-        <View style={typingStyles.dotsRow}>
-          <TypingDot index={0} typingStyles={typingStyles} />
-          <TypingDot index={1} typingStyles={typingStyles} />
-          <TypingDot index={2} typingStyles={typingStyles} />
-        </View>
-      </GlassCard>
+      <View style={typingStyles.dotsRow}>
+        <TypingDot index={0} typingStyles={typingStyles} />
+        <TypingDot index={1} typingStyles={typingStyles} />
+        <TypingDot index={2} typingStyles={typingStyles} />
+      </View>
     </Animated.View>
   );
 }
@@ -112,13 +107,10 @@ function makeTypingStyles(c: ThemeColors) {
     bubble: {
       flexDirection: 'row',
       alignItems: 'flex-end',
-      gap: 8,
       marginBottom: spacing.md,
+      marginHorizontal: 4,
+      paddingVertical: 8,
       alignSelf: 'flex-start',
-    },
-    card: {
-      paddingHorizontal: 14,
-      paddingVertical: 12,
     },
     dotsRow: {
       flexDirection: 'row',
@@ -142,12 +134,11 @@ function makeTypingStyles(c: ThemeColors) {
 
 interface BubbleProps {
   row: Row;
-  showAvatar: boolean;
   index: number;
   bubbleStyles: ReturnType<typeof makeBubbleStyles>;
 }
 
-function Bubble({ row, showAvatar, index, bubbleStyles }: BubbleProps) {
+function Bubble({ row, index, bubbleStyles }: BubbleProps) {
   const isUser = row.role === 'user';
 
   // User messages slide up from below; assistant messages slide down with spring
@@ -171,20 +162,12 @@ function Bubble({ row, showAvatar, index, bubbleStyles }: BubbleProps) {
         isUser ? bubbleStyles.wrapUser : bubbleStyles.wrapChronos,
       ]}
     >
-      {!isUser && (
-        <View style={bubbleStyles.avatarSlot}>
-          {showAvatar ? <AuraAvatar name="Chronos" size={28} /> : null}
-        </View>
-      )}
-
       {isUser ? (
         <View style={bubbleStyles.userBubble}>
           <Text style={bubbleStyles.userText}>{row.content}</Text>
         </View>
       ) : (
-        <GlassCard intensity="light" style={bubbleStyles.auraBubble}>
-          <Text style={bubbleStyles.auraText}>{row.content}</Text>
-        </GlassCard>
+        <Text style={bubbleStyles.auraText}>{row.content}</Text>
       )}
     </Animated.View>
   );
@@ -196,7 +179,7 @@ function makeBubbleStyles(c: ThemeColors) {
       flexDirection: 'row',
       alignItems: 'flex-end',
       gap: 8,
-      marginBottom: 8,
+      marginBottom: 10,
       maxWidth: '86%',
     },
     wrapUser: {
@@ -205,29 +188,24 @@ function makeBubbleStyles(c: ThemeColors) {
     wrapChronos: {
       alignSelf: 'flex-start',
     },
-    avatarSlot: {
-      width: 28,
-      height: 28,
-    },
     userBubble: {
       backgroundColor: c.accent.blue,
-      borderRadius: radius.xl,
-      borderBottomRightRadius: 6,
-      paddingHorizontal: 16,
-      paddingVertical: 11,
+      borderRadius: 18,
+      borderBottomRightRadius: 4,
+      paddingHorizontal: 14,
+      paddingVertical: 10,
     },
     userText: {
-      ...typography.body,
-      color: c.text.inverse,
-    },
-    auraBubble: {
-      paddingHorizontal: 16,
-      paddingVertical: 11,
-      borderBottomLeftRadius: 6,
-    },
-    auraText: {
-      ...typography.body,
+      ...typography.nBody,
       color: c.text.primary,
+    },
+    // Assistant replies are plain text on the canvas — no bubble.
+    auraText: {
+      ...typography.nBody,
+      lineHeight: 24,
+      color: c.text.primary,
+      marginHorizontal: 4,
+      marginVertical: 6,
     },
   });
 }
@@ -462,7 +440,6 @@ export default function AIChatScreen() {
 
   return (
     <View style={styles.root}>
-      <AmbientOrbs />
       <KeyboardAvoidingView
         style={styles.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -514,24 +491,12 @@ export default function AIChatScreen() {
           scrollEventThrottle={16}
           ListHeaderComponent={
             <Animated.View entering={FadeIn.delay(80).duration(280)} style={styles.contextPill}>
-              <GlassCard intensity="light" style={styles.contextPillCard}>
-                <AuraSymbol name="waveform" size={13} color={colors.text.tertiary} />
-                <Text style={styles.contextPillText}>{sessionContext}</Text>
-              </GlassCard>
+              <Text style={styles.contextPillText}>{sessionContext}</Text>
             </Animated.View>
           }
-          renderItem={({ item, index }) => {
-            const prev = rows[index - 1];
-            const isFirstOfGroup = !prev || prev.role !== item.role;
-            return (
-              <Bubble
-                row={item}
-                showAvatar={isFirstOfGroup}
-                index={index}
-                bubbleStyles={bubbleStyles}
-              />
-            );
-          }}
+          renderItem={({ item, index }) => (
+            <Bubble row={item} index={index} bubbleStyles={bubbleStyles} />
+          )}
           ListFooterComponent={
             <>
               {/* Fresh conversation — offer starting points under the welcome bubble */}
@@ -612,7 +577,7 @@ export default function AIChatScreen() {
               <AuraSymbol
                 name="chevron.down"
                 size={14}
-                color={colors.text.inverse}
+                color={colors.text.primary}
                 weight="bold"
               />
             </AnimatedPressable>
@@ -626,7 +591,7 @@ export default function AIChatScreen() {
             { paddingBottom: Math.max(insets.bottom, 12) },
           ]}
         >
-          <GlassCard intensity="thick" borderAccent style={styles.inputBar}>
+          <View style={styles.inputBar}>
             <Pressable
               hitSlop={10}
               onPress={() => {
@@ -665,7 +630,7 @@ export default function AIChatScreen() {
                 <AuraSymbol
                   name="arrow.up"
                   size={16}
-                  color={colors.text.inverse}
+                  color={colors.text.primary}
                   weight="bold"
                 />
               </AnimatedPressable>
@@ -682,7 +647,7 @@ export default function AIChatScreen() {
                 />
               </View>
             )}
-          </GlassCard>
+          </View>
         </View>
       </KeyboardAvoidingView>
     </View>
@@ -735,7 +700,7 @@ function makeStyles(c: ThemeColors) {
 
     // Messages list
     list: {
-      paddingHorizontal: spacing.screenPadding,
+      paddingHorizontal: 16,
       paddingTop: spacing.md,
       paddingBottom: spacing.md,
       flexGrow: 1,
@@ -805,6 +770,10 @@ function makeStyles(c: ThemeColors) {
       paddingHorizontal: 10,
       paddingVertical: 8,
       minHeight: 52,
+      borderRadius: 26,
+      backgroundColor: c.background.surface,
+      borderWidth: 1,
+      borderColor: c.border.subtle,
     },
     inputIconBtn: {
       width: 36,
@@ -830,22 +799,13 @@ function makeStyles(c: ThemeColors) {
       justifyContent: 'center',
     },
     sendBtnDisabled: {
-      backgroundColor: c.glass.light,
+      backgroundColor: c.background.raised,
     },
 
     // Context pill (list header)
     contextPill: {
       alignItems: 'center',
       marginBottom: spacing.md,
-    },
-    contextPillCard: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 6,
-      paddingHorizontal: spacing.md,
-      paddingVertical: spacing.xs,
-      // Anti-slop: pills are reserved for the nav layer — chips use radius.sm.
-      borderRadius: radius.sm,
     },
     contextPillText: {
       ...typography.caption,
@@ -865,17 +825,16 @@ function makeStyles(c: ThemeColors) {
       marginBottom: spacing.xs,
     },
     suggestionChip: {
-      paddingHorizontal: spacing.md,
-      paddingVertical: spacing.sm,
-      borderRadius: radius.sm,
-      backgroundColor: c.glass.light,
-      borderWidth: 1,
-      borderColor: c.border.subtle,
+      paddingHorizontal: 14,
+      minHeight: 44,
+      justifyContent: 'center',
+      borderRadius: 12,
+      backgroundColor: c.background.surface,
       alignSelf: 'flex-start',
     },
     suggestionChipText: {
-      ...typography.callout,
-      color: c.text.secondary,
+      ...typography.nSubhead,
+      color: c.text.primary,
     },
   });
 }
