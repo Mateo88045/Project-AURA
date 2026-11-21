@@ -70,8 +70,8 @@ export default function TodayScreen() {
     const doneBy = homework.length ? homework[homework.length - 1].end : null;
     const minutesLeft = left.reduce((m, i) => m + minutesBetween(i.start > now ? i.start : now, i.end), 0);
 
-    const later: LaterRow[] = items
-      .filter((i) => i.end > now && i !== hero)
+    const upcoming = items.filter((i) => i.end > now && i !== hero);
+    const later: LaterRow[] = upcoming
       .map((i) => {
         const t = i.block?.task;
         return {
@@ -83,7 +83,11 @@ export default function TodayScreen() {
           meta: t ? [`${minutesBetween(i.start, i.end)} min`, difficultyLabels[t.difficulty], formatDue(t.dueDate, now)].filter(Boolean).join(' · ') : undefined,
         };
       });
-    if (doneBy && doneBy > now) later.push({ key: 'free', time: clock(doneBy), title: 'Free for the night', kind: 'free' });
+    // Free row sits where the plan ends, so drafts after it still read in time order.
+    if (doneBy && doneBy > now) {
+      const at = upcoming.filter((i) => i.start < doneBy).length;
+      later.splice(at, 0, { key: 'free', time: clock(doneBy), title: 'Free for the night', kind: 'free' });
+    }
 
     return {
       now, hero, doneBy, later, left: left.length, minutesLeft,
