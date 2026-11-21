@@ -419,7 +419,7 @@ function makeStyles(c: ThemeColors) {
     // Review
     reviewImage: { width: '100%', height: 160, borderRadius: radius.lg, marginBottom: spacing.md },
     noticeRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, marginBottom: spacing.md },
-    noticeText: { ...typography.callout, color: c.accent.amber, flex: 1 },
+    noticeText: { ...typography.callout, color: c.text.warn, flex: 1 },
     noticeTextOk: { ...typography.callout, color: c.text.secondary, flex: 1 },
     formCard: { borderRadius: radius.xl, paddingHorizontal: spacing.lg, paddingVertical: spacing.xs },
     field: { paddingVertical: spacing.md },

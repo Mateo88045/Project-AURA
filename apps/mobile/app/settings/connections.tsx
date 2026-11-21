@@ -611,7 +611,7 @@ function makeStyles(c: ThemeColors) {
     },
     eyebrow: {
       ...typography.caption,
-      color: c.accent.sky,
+      color: c.accent.steelDeep,
       marginBottom: 6,
     },
     title: {

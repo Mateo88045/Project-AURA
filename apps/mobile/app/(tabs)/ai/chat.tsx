@@ -131,7 +131,7 @@ function makeTypingStyles(c: ThemeColors) {
       borderRadius: 3,
       // Mist — the same glow used on the river. The pulsing copilot dots
       // share Chronos's signature secondary hue.
-      backgroundColor: c.accent.sky,
+      backgroundColor: c.accent.steel,
     },
   });
 }

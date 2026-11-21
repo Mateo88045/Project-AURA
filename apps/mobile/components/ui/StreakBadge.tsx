@@ -52,7 +52,7 @@ export function StreakBadge({ streak, visible, isMilestone = false }: StreakBadg
       <GlassCard intensity="thick" borderAccent style={styles.card}>
         <Text style={styles.flame}>{isMilestone ? '🏆' : '🔥'}</Text>
         <View style={styles.textCol}>
-          <Text style={[styles.count, { color: colors.accent.amber }]}>
+          <Text style={[styles.count, { color: colors.text.warn }]}>
             {streak} day streak
           </Text>
           {isMilestone && (

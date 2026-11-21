@@ -70,7 +70,7 @@ const ThemeContext = createContext<ThemeContextValue | null>(null);
 // ---------------------------------------------------------------------------
 
 const THEME_STORAGE_KEY = 'chronos:theme_mode';
-let cachedMode: ThemeMode = 'dark';
+let cachedMode: ThemeMode = 'light';
 
 // ---------------------------------------------------------------------------
 // Provider

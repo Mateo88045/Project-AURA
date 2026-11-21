@@ -13,6 +13,11 @@ import { EntitlementProvider } from '../lib/entitlement';
 import { useAuth } from '../hooks/useAuth';
 import { useOnboardingGate } from '../hooks/useOnboardingGate';
 import { ErrorBoundary } from '../components/ui/ErrorBoundary';
+import {
+  useFonts,
+  BricolageGrotesque_500Medium,
+  BricolageGrotesque_700Bold,
+} from '@expo-google-fonts/bricolage-grotesque';
 
 const sentryDsn = process.env.EXPO_PUBLIC_SENTRY_DSN;
 
@@ -41,6 +46,13 @@ Notifications.setNotificationHandler({
 });
 
 function RootLayout() {
+  const [fontsLoaded, fontError] = useFonts({
+    BricolageGrotesque_500Medium,
+    BricolageGrotesque_700Bold,
+  });
+  // Render once fonts load, or fall back to the system face on error.
+  if (!fontsLoaded && !fontError) return null;
+
   return (
     <GestureHandlerRootView style={styles.flex}>
       <SafeAreaProvider>

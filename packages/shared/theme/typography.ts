@@ -30,3 +30,10 @@ export const typography = {
   // Tiny metadata labels
   micro: { fontSize: 10, fontWeight: '600' as const, letterSpacing: 1.2, textTransform: 'uppercase' as const },
 } as const;
+
+// Display face — Bricolage Grotesque, loaded in app/_layout.tsx. Use only for
+// big numbers and headlines; pair with tabular nums for clocks and counts.
+export const fontFamily = {
+  display: 'BricolageGrotesque_700Bold',
+  displayMedium: 'BricolageGrotesque_500Medium',
+} as const;

@@ -477,7 +477,7 @@ function makeStyles(c: ThemeColors) {
     // Title
     subject: {
       ...typography.caption,
-      color: c.accent.sky,
+      color: c.accent.steelDeep,
       marginBottom: 8,
     },
     title: {

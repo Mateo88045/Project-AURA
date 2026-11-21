@@ -91,9 +91,9 @@ type TintKey = 'steel' | 'mist' | 'easy' | 'moderate' | 'hard';
 function makeTintMap(c: ThemeColors): Record<TintKey, { bg: string; fg: string }> {
   return {
     steel:    { bg: c.glass.accent,         fg: c.accent.blue },
-    mist:     { bg: c.accent.sky + '24',    fg: c.accent.sky },
+    mist:     { bg: c.accent.sky + '24',    fg: c.accent.steelDeep },
     easy:     { bg: c.accent.emerald + '24',fg: c.accent.emerald },
-    moderate: { bg: c.accent.amber + '24',  fg: c.accent.amber },
+    moderate: { bg: c.accent.amber + '24',  fg: c.text.warn },
     hard:     { bg: c.accent.coral + '24',  fg: c.accent.coral },
   };
 }

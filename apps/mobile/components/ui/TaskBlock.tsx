@@ -221,7 +221,7 @@ export function TaskBlock({
         </View>
         {isDraft && (
           <View style={[styles.draftTag, { borderColor: colors.accent.sky + '66' }]}>
-            <Text style={[styles.draftTagText, { color: colors.accent.sky }]}>DRAFT</Text>
+            <Text style={[styles.draftTagText, { color: colors.accent.steelDeep }]}>DRAFT</Text>
           </View>
         )}
       </AnimatedPressable>

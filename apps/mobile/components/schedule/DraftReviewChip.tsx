@@ -36,13 +36,13 @@ export function DraftReviewChip({ count, onPress }: DraftReviewChipProps) {
       accessibilityLabel={`Review ${count} draft ${count === 1 ? 'block' : 'blocks'} Chronos proposed`}
     >
       <View style={styles.iconWrap}>
-        <AuraSymbol name="sparkles" size={13} color={colors.accent.sky} />
+        <AuraSymbol name="sparkles" size={13} color={colors.accent.steelDeep} />
       </View>
       <Text style={styles.label} numberOfLines={1}>
         {count === 1 ? 'Chronos drafted 1 block' : `Chronos drafted ${count} blocks`}
       </Text>
       <Text style={styles.action}>Review</Text>
-      <AuraSymbol name="chevron.right" size={11} color={colors.accent.sky} />
+      <AuraSymbol name="chevron.right" size={11} color={colors.accent.steelDeep} />
     </Pressable>
   );
 }
@@ -75,7 +75,7 @@ function makeStyles(c: ThemeColors) {
     action: {
       ...typography.callout,
       fontWeight: '600' as const,
-      color: c.accent.sky,
+      color: c.accent.steelDeep,
     },
   });
 }

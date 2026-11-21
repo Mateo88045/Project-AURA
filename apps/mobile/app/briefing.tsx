@@ -448,7 +448,7 @@ function makeStyles(c: ThemeColors) {
     // Hero
     eyebrow: {
       ...typography.caption,
-      color: c.accent.sky,
+      color: c.accent.steelDeep,
       marginBottom: 6,
     },
     title: {
@@ -533,7 +533,7 @@ function makeStyles(c: ThemeColors) {
     },
     upcomingDue: {
       ...typography.caption,
-      color: c.accent.sky,
+      color: c.accent.steelDeep,
     },
     upcomingDivider: {
       height: StyleSheet.hairlineWidth,

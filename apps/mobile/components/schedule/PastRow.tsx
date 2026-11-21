@@ -125,7 +125,7 @@ function makeStyles(c: ThemeColors) {
       fontWeight: '600' as const,
       letterSpacing: 1.2,
       textTransform: 'uppercase' as const,
-      color: c.accent.sky,
+      color: c.accent.steelDeep,
     },
   });
 }

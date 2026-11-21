@@ -1,11 +1,11 @@
 import { Tabs } from 'expo-router';
-import { GlassTabBar } from '../../components/ui/GlassTabBar';
+import { PlainTabBar } from '../../components/ui/PlainTabBar';
 import { haptic } from '../../lib/haptics';
 
 export default function TabLayout() {
   return (
     <Tabs
-      tabBar={(props) => <GlassTabBar {...props} />}
+      tabBar={(props) => <PlainTabBar {...props} />}
       screenOptions={{
         headerShown: false,
       }}

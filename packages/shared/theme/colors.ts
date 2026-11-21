@@ -18,130 +18,167 @@ export interface ThemeColors {
     accent: string;
   };
   accent: {
-    blue: string;
-    sky: string;
-    violet: string;
+    blue: string;      // primary action (Dusk: steel)
+    sky: string;       // secondary accent (Dusk: mist)
+    violet: string;    // legacy key, mapped to mist — no violet in Dusk
     emerald: string;
     amber: string;
     coral: string;
+    steel: string;
+    steelDeep: string; // active tab, strong steel text
+    mist: string;
   };
   text: {
     primary: string;
     secondary: string;
     tertiary: string;
     inverse: string;
+    warn: string;      // amber that passes contrast as text
+    onAccent: string;  // text on steel fills
   };
   border: {
     subtle: string;
     glass: string;
     accent: string;
   };
+  timeline: {
+    homework: string;     // homework block fill
+    homeworkText: string;
+    hatch: string;        // stripe color for fixed events
+    hatchBorder: string;
+    nowLine: string;
+    hairline: string;
+  };
   difficulty: Record<1 | 2 | 3 | 4 | 5, string>;
 }
 
 // ---------------------------------------------------------------------------
-// DARK — near-black canvas, vibrant accent colors.
-// These are the ORIGINAL values — do not replace with Mist/Steel desaturated.
+// DUSK DARK — deep ink canvas, steel + mist accents.
 // ---------------------------------------------------------------------------
 
 export const darkColors: ThemeColors = {
   background: {
-    primary:  '#07090F',   // Near-black with blue undertone. The canvas.
-    elevated: '#0D1117',   // Lifted surfaces — modals, sheets
-    surface:  '#111827',   // Cards that sit above the background
+    primary:  '#0A1118',
+    elevated: '#111B24',
+    surface:  '#16232E',
   },
 
   glass: {
-    light:  'rgba(255, 255, 255, 0.06)',
-    medium: 'rgba(100, 149, 237, 0.08)',
-    accent: 'rgba(91, 138, 240, 0.10)',
+    light:  'rgba(238, 243, 242, 0.06)',
+    medium: 'rgba(168, 218, 220, 0.08)',
+    accent: 'rgba(111, 163, 199, 0.14)',
   },
 
   accent: {
-    blue:    '#5B8AF0',    // Primary CTA, active states, AI blocks
-    sky:     '#7ECDE8',    // Secondary accent, river line
-    violet:  '#A78BFA',    // AI-scheduled tasks, copilot bubbles
-    emerald: '#34D399',    // On track, easy difficulty, approved
-    amber:   '#F59E0B',    // Moderate difficulty, warnings
-    coral:   '#F87171',    // Hard difficulty, deadline urgency
+    blue:      '#6FA3C7',
+    sky:       '#A8DADC',
+    violet:    '#A8DADC',
+    emerald:   '#4CC38A',
+    amber:     '#F4A261',
+    coral:     '#E76F6F',
+    steel:     '#6FA3C7',
+    steelDeep: '#8FBCDB',
+    mist:      '#A8DADC',
   },
 
   text: {
-    primary:   '#F1F5F9',  // Main readable text
-    secondary: '#94A3B8',  // Labels, timestamps, secondary info
-    tertiary:  '#475569',  // Placeholders, disabled, ghost text
-    inverse:   '#07090F',  // Text on light/accent backgrounds
+    primary:   '#EEF3F2',
+    secondary: '#9DB0BA',
+    tertiary:  '#7A8E9A',
+    inverse:   '#0A1118',
+    warn:      '#F4A261',
+    onAccent:  '#0A1118',
   },
 
   border: {
-    subtle: 'rgba(255, 255, 255, 0.06)',
-    glass:  'rgba(255, 255, 255, 0.12)',
-    accent: 'rgba(91, 138, 240, 0.3)',
+    subtle: 'rgba(238, 243, 242, 0.07)',
+    glass:  'rgba(238, 243, 242, 0.12)',
+    accent: 'rgba(111, 163, 199, 0.35)',
+  },
+
+  timeline: {
+    homework:     'rgba(168, 218, 220, 0.22)',
+    homeworkText: '#D6EEEF',
+    hatch:        'rgba(238, 243, 242, 0.10)',
+    hatchBorder:  'rgba(238, 243, 242, 0.22)',
+    nowLine:      '#E76F6F',
+    hairline:     'rgba(238, 243, 242, 0.07)',
   },
 
   difficulty: {
-    1: '#34D399',
-    2: '#6EE7B7',
-    3: '#F59E0B',
-    4: '#FB923C',
-    5: '#F87171',
+    1: '#4CC38A',
+    2: '#A8DADC',
+    3: '#F4A261',
+    4: '#EE8A5F',
+    5: '#E76F6F',
   },
 };
 
 // ---------------------------------------------------------------------------
-// LIGHT — slate-tinted paper, same accent hues deepened for contrast.
-//
-// Accent colors are saturated slightly darker so they read clearly on the
-// light background without feeling washed out.
+// DUSK LIGHT — honeydew paper, ink text, steel actions, mist blocks.
 // ---------------------------------------------------------------------------
 
 export const lightColors: ThemeColors = {
   background: {
-    primary:  '#F8FAFC',   // Slate-50 — soft paper
-    elevated: '#FFFFFF',   // Pure white for modals, sheets
-    surface:  '#F1F5F9',   // Slate-100 — cards
+    primary:  '#F1FAEE',
+    elevated: '#FAFDF8',
+    surface:  '#FFFFFF',
   },
 
   glass: {
-    light:  'rgba(15, 23, 42, 0.04)',
-    medium: 'rgba(91, 138, 240, 0.06)',
-    accent: 'rgba(91, 138, 240, 0.10)',
+    light:  'rgba(16, 32, 43, 0.04)',
+    medium: 'rgba(69, 123, 157, 0.06)',
+    accent: 'rgba(69, 123, 157, 0.10)',
   },
 
   accent: {
-    blue:    '#4A7CF5',    // Deepened blue for contrast on light
-    sky:     '#38BDF8',    // Vivid sky
-    violet:  '#8B5CF6',    // Deepened violet
-    emerald: '#22C55E',    // Deeper emerald
-    amber:   '#D97706',    // Burnt amber
-    coral:   '#EF4444',    // Stronger coral
+    blue:      '#457B9D',
+    sky:       '#A8DADC',
+    violet:    '#A8DADC',
+    emerald:   '#3BA06E',
+    amber:     '#F4A261',
+    coral:     '#D05050',
+    steel:     '#457B9D',
+    steelDeep: '#2F5F7D',
+    mist:      '#A8DADC',
   },
 
   text: {
-    primary:   '#0F172A',  // Slate-900 — ink
-    secondary: '#64748B',  // Slate-500
-    tertiary:  '#94A3B8',  // Slate-400
-    inverse:   '#F8FAFC',  // Text on dark/accent backgrounds
+    primary:   '#10202B',
+    secondary: '#4F6370',
+    tertiary:  '#627582',
+    inverse:   '#FAFDF8',
+    warn:      '#B4561A',
+    onAccent:  '#FFFFFF',
   },
 
   border: {
-    subtle: 'rgba(15, 23, 42, 0.06)',
-    glass:  'rgba(15, 23, 42, 0.10)',
-    accent: 'rgba(91, 138, 240, 0.2)',
+    subtle: 'rgba(16, 32, 43, 0.07)',
+    glass:  'rgba(16, 32, 43, 0.12)',
+    accent: 'rgba(69, 123, 157, 0.28)',
+  },
+
+  timeline: {
+    homework:     '#A8DADC',
+    homeworkText: '#10202B',
+    hatch:        'rgba(16, 32, 43, 0.10)',
+    hatchBorder:  'rgba(16, 32, 43, 0.22)',
+    nowLine:      '#E76F6F',
+    hairline:     'rgba(16, 32, 43, 0.07)',
   },
 
   difficulty: {
-    1: '#22C55E',
-    2: '#4ADE80',
-    3: '#D97706',
-    4: '#EA580C',
-    5: '#EF4444',
+    1: '#3BA06E',
+    2: '#6FB7A0',
+    3: '#F4A261',
+    4: '#E5844F',
+    5: '#D05050',
   },
 };
 
 // ---------------------------------------------------------------------------
-// Default export — dark palette for existing `import { colors }` sites.
+// Default export — light palette for existing `import { colors }` sites.
 // New code should use useTheme().colors which responds to mode switching.
 // ---------------------------------------------------------------------------
 
-export const colors = darkColors;
+export const colors = lightColors;

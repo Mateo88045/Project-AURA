@@ -24,7 +24,7 @@ export function StreakChip({ streak }: StreakChipProps) {
       <Text style={styles.flame} allowFontScaling={false}>
         {'\u{1F525}'}
       </Text>
-      <Text style={[styles.label, { color: colors.accent.amber }]}>
+      <Text style={[styles.label, { color: colors.text.warn }]}>
         {streak}-day streak
       </Text>
     </View>

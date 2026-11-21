@@ -2,31 +2,27 @@ import { useEffect, useMemo } from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Animated, {
-  FadeIn,
-  FadeInDown,
-  useAnimatedStyle,
-  useSharedValue,
-  withTiming,
-} from 'react-native-reanimated';
-import { spacing, typography, radius } from '@chronos/shared/theme';
+import { fontFamily, spacing, radius } from '@chronos/shared/theme';
 import type { ThemeColors } from '@chronos/shared/theme';
 import { useTheme } from '../../../lib/theme';
-import { AmbientOrbs } from '../../../components/ui/AmbientOrbs';
 import { AuraButton } from '../../../components/ui/AuraButton';
 import { AuraSymbol } from '../../../components/ui/AuraSymbol';
-import { DifficultyBars } from '../../../components/ui/DifficultyBars';
 import { AuraSkeleton } from '../../../components/ui/AuraSkeleton';
 import { AuraText } from '../../../components/ui/AuraText';
+import { TickStrip } from '../../../components/focus/TickStrip';
 import { useActiveTask } from '../../../hooks/useActiveTask';
-import { haptic } from '../../../lib/haptics';
+import { useTodaySchedule } from '../../../hooks/useTodaySchedule';
 import { useAuth } from '../../../hooks/useAuth';
-const STAGGER_MS = 40;
+import { haptic } from '../../../lib/haptics';
+import { toLocalDayIso } from '../../../lib/localDate';
 
-function formatElapsed(seconds: number): string {
-  const m = Math.floor(seconds / 60);
-  const s = seconds % 60;
-  return `${m}:${String(s).padStart(2, '0')}`;
+function mmss(totalSeconds: number): string {
+  const s = Math.max(0, Math.floor(totalSeconds));
+  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+}
+
+function clock(d: Date): string {
+  return d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
 }
 
 export default function TaskActiveScreen() {
@@ -38,42 +34,30 @@ export default function TaskActiveScreen() {
 
   const taskId = Array.isArray(id) ? id[0] : id ?? '';
   const { user: authUser } = useAuth();
+  const userId = authUser?.id ?? '';
   const { task, elapsedSeconds, isPaused, loading, error, pause, resume, start } =
-    useActiveTask(taskId, authUser?.id ?? '');
+    useActiveTask(taskId, userId);
+  const { scheduledBlocks } = useTodaySchedule(userId, toLocalDayIso(new Date()));
 
-  const estimatedSeconds = (task?.estimatedMinutes ?? 60) * 60;
-  const progressRatio = Math.min(elapsedSeconds / Math.max(estimatedSeconds, 1), 1);
-
-  // Mark task in_progress once it has loaded successfully.
   useEffect(() => {
-    if (!loading && !error && task) {
-      void start();
-    }
+    if (!loading && !error && task) void start();
   }, [loading, error, task, start]);
 
-  // Progress bar — drive shared value from React state via effect, then read in worklet.
-  const progressWidth = useSharedValue(0);
-  useEffect(() => {
-    const pct = Math.min((elapsedSeconds / Math.max(estimatedSeconds, 1)) * 100, 100);
-    progressWidth.value = withTiming(pct, { duration: 800 });
-  }, [elapsedSeconds, estimatedSeconds, progressWidth]);
+  const estimateMin = task?.estimatedMinutes ?? 60;
+  const remaining = estimateMin * 60 - elapsedSeconds;
+  const over = remaining < 0;
+  const endsAt = clock(new Date(Date.now() + Math.max(remaining, 0) * 1000));
 
-  const progressBarStyle = useAnimatedStyle(() => ({
-    width: `${progressWidth.value}%` as `${number}%`,
-  }));
-
-  // Color tier — depends on React state, applied as a regular style.
-  const tierColor =
-    progressRatio < 0.7
-      ? colors.accent.emerald
-      : progressRatio < 0.9
-      ? colors.accent.amber
-      : colors.accent.coral;
+  const upNext = useMemo(() => {
+    const nowMs = Date.now();
+    return scheduledBlocks
+      .filter((b) => b.task && b.task.id !== taskId && b.status !== 'shadow' && b.status !== 'rejected')
+      .filter((b) => new Date(b.startTime).getTime() > nowMs)
+      .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())[0];
+  }, [scheduledBlocks, taskId]);
 
   function handleDone() {
     haptic.primaryCTA();
-    // Hand the timed minutes to the completion screen so "how long did it
-    // take" starts from reality instead of the estimate.
     const timedMinutes = Math.max(1, Math.round(elapsedSeconds / 60));
     router.push(`/tasks/${taskId}/complete?elapsed=${timedMinutes}` as Href);
   }
@@ -86,12 +70,11 @@ export default function TaskActiveScreen() {
 
   if (loading) {
     return (
-      <View style={[styles.root, { paddingTop: insets.top + 24 }]}>
-        <AmbientOrbs />
+      <View style={[styles.plain, { paddingTop: insets.top + 24 }]}>
         <View style={styles.loadingWrap}>
           <AuraSkeleton height={20} />
-          <AuraSkeleton height={60}  />
-          <AuraSkeleton height={8}  />
+          <AuraSkeleton height={80} />
+          <AuraSkeleton height={28} />
         </View>
       </View>
     );
@@ -99,221 +82,104 @@ export default function TaskActiveScreen() {
 
   if (error || !task) {
     return (
-      <View style={[styles.root, { paddingTop: insets.top + 24 }]}>
-        <AmbientOrbs />
-        <View style={styles.errorWrap}>
+      <View style={[styles.plain, { paddingTop: insets.top + 24 }]}>
+        <View style={styles.loadingWrap}>
           <AuraText variant="title2">Couldn&apos;t load this task.</AuraText>
-          <AuraText variant="body" color="secondary" style={styles.errorBody}>
-            It may have been removed, or the connection dropped. Head back and
-            try again.
+          <AuraText variant="body" color="secondary">
+            It may have been removed, or the connection dropped. Head back and try again.
           </AuraText>
-          <View style={styles.errorButton}>
-            <AuraButton
-              label="Go back"
-              variant="outline"
-              onPress={() => router.back()}
-              fullWidth
-            />
-          </View>
+          <AuraButton label="Go back" variant="outline" onPress={() => router.back()} fullWidth />
         </View>
       </View>
     );
   }
 
   return (
-    <View style={[styles.root, { paddingBottom: insets.bottom + spacing.xl }]}>
-      <AmbientOrbs />
-
-      {/* Header */}
-      <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
-        <Animated.View entering={FadeIn.duration(220)} style={styles.headerRow}>
-          <Pressable
-            onPress={() => { haptic.selection(); router.back(); }}
-            style={styles.backBtn}
-            accessibilityRole="button"
-            accessibilityLabel="Go back"
-          >
-            <AuraSymbol name="chevron.left" size={20} color={colors.text.secondary} />
-          </Pressable>
-          <Animated.View entering={FadeInDown.delay(STAGGER_MS).duration(280)} style={styles.flex}>
-            <Text style={styles.subject}>{task?.subject ?? ''}</Text>
-            <Text style={styles.taskTitle} numberOfLines={2}>
-              {task?.title ?? ''}
-            </Text>
-            {task && (
-              <View style={styles.difficultyWrap}>
-                <DifficultyBars level={task.difficulty} animated={false} />
-              </View>
-            )}
-          </Animated.View>
-        </Animated.View>
+    <View style={[styles.root, { paddingTop: insets.top + 8, paddingBottom: insets.bottom + spacing.lg }]}>
+      <View style={styles.topRow}>
+        <Text style={styles.label}>{isPaused ? 'Paused' : 'Focus'}</Text>
+        <Pressable
+          onPress={() => { haptic.selection(); router.back(); }}
+          style={styles.closeBtn}
+          accessibilityRole="button"
+          accessibilityLabel="Close focus"
+        >
+          <AuraSymbol name="xmark" size={20} color={colors.text.onAccent} />
+        </Pressable>
       </View>
 
-      {/* Timer section */}
-      <Animated.View
-        entering={FadeInDown.delay(STAGGER_MS * 3).duration(320)}
-        style={styles.timerSection}
-      >
-        <Text style={[styles.timerValue, { color: tierColor }]}>
-          {formatElapsed(elapsedSeconds)}
-        </Text>
-        {isPaused && <Text style={styles.pausedLabel}>PAUSED</Text>}
-        <Text style={styles.estLabel}>
-          Est. {task?.estimatedMinutes ?? 0}m
-        </Text>
-      </Animated.View>
+      <View style={styles.body}>
+        <Text style={styles.subject}>{task.subject}</Text>
+        <Text style={styles.title} numberOfLines={3}>{task.title}</Text>
 
-      {/* Progress bar */}
-      <Animated.View
-        entering={FadeIn.delay(STAGGER_MS * 4).duration(280)}
-        style={styles.progressSection}
-      >
-        <View style={styles.progressTrack}>
-          <Animated.View
-            style={[styles.progressFill, { backgroundColor: tierColor }, progressBarStyle]}
-          />
-        </View>
-        <View style={styles.progressLabels}>
-          <Text style={styles.progressLabelLeft}>0</Text>
-          <Text style={styles.progressLabelRight}>{task?.estimatedMinutes ?? 0}m</Text>
-        </View>
-      </Animated.View>
+        <Text style={styles.countdown} accessibilityLiveRegion="polite" adjustsFontSizeToFit numberOfLines={1}>
+          {over ? `+${mmss(-remaining)}` : mmss(remaining)}
+        </Text>
+        <Text style={styles.sub}>
+          {over ? `over the ${estimateMin} min estimate` : `left of ${estimateMin} min · ends at ${endsAt}`}
+        </Text>
 
-      {/* Action buttons */}
-      <Animated.View
-        entering={FadeInDown.delay(STAGGER_MS * 5).duration(280)}
-        style={styles.actions}
-      >
-        {/* "Done Early" only reads true before the estimate is spent. */}
-        <AuraButton
-          label={progressRatio >= 1 ? 'Done' : 'Done Early'}
-          size="lg"
-          fullWidth
-          onPress={handleDone}
-        />
-        <View style={styles.actionGap} />
-        <AuraButton
-          label={isPaused ? 'Resume' : 'Pause'}
-          variant="outline"
-          size="md"
-          fullWidth
+        <View style={styles.ticks}>
+          <TickStrip totalMin={estimateMin} doneMin={elapsedSeconds / 60} />
+        </View>
+      </View>
+
+      {upNext?.task && (
+        <Text style={styles.upNext} numberOfLines={1}>
+          Up next · {upNext.task.title} at {clock(new Date(upNext.startTime))}
+        </Text>
+      )}
+
+      <View style={styles.actions}>
+        <Pressable
           onPress={handleTogglePause}
-        />
-      </Animated.View>
+          style={({ pressed }) => [styles.btn, styles.btnOutline, pressed && styles.pressed]}
+          accessibilityRole="button"
+        >
+          <Text style={styles.btnOutlineText}>{isPaused ? 'Resume' : 'Pause'}</Text>
+        </Pressable>
+        <Pressable
+          onPress={handleDone}
+          style={({ pressed }) => [styles.btn, styles.btnSolid, pressed && styles.pressed]}
+          accessibilityRole="button"
+        >
+          <Text style={styles.btnSolidText}>I&apos;m done</Text>
+        </Pressable>
+      </View>
     </View>
   );
 }
 
 function makeStyles(c: ThemeColors) {
+  const ink = c.text.onAccent;
   return StyleSheet.create({
-    root: {
-      flex: 1,
-      backgroundColor: c.background.primary,
-      paddingHorizontal: spacing.screenPadding,
+    root: { flex: 1, backgroundColor: c.accent.steel, paddingHorizontal: spacing.xl },
+    plain: { flex: 1, backgroundColor: c.background.primary, paddingHorizontal: spacing.screenPadding },
+    loadingWrap: { gap: spacing.md, marginTop: spacing.xl },
+    topRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+    label: { fontSize: 13, fontWeight: '700', letterSpacing: 1.2, textTransform: 'uppercase', color: ink, opacity: 0.8 },
+    closeBtn: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center', marginRight: -10 },
+    body: { flex: 1, justifyContent: 'center' },
+    subject: { fontSize: 14, fontWeight: '600', color: ink, opacity: 0.75, marginBottom: 6 },
+    title: { fontFamily: fontFamily.display, fontSize: 30, lineHeight: 34, letterSpacing: -0.6, color: ink },
+    countdown: {
+      fontFamily: fontFamily.display,
+      fontSize: 104,
+      lineHeight: 112,
+      letterSpacing: -4,
+      color: ink,
+      fontVariant: ['tabular-nums'],
+      marginTop: spacing.xxl,
     },
-    flex: { flex: 1 },
-    header: {
-      paddingBottom: spacing.lg,
-    },
-    headerRow: {
-      flexDirection: 'row',
-      alignItems: 'flex-start',
-      gap: spacing.md,
-    },
-    backBtn: {
-      width: 36,
-      height: 36,
-      borderRadius: 18,
-      backgroundColor: c.glass.light,
-      alignItems: 'center',
-      justifyContent: 'center',
-      marginTop: 4,
-    },
-    subject: {
-      ...typography.caption,
-      color: c.accent.blue,
-      letterSpacing: 1.5,
-      marginBottom: spacing.xs,
-    },
-    taskTitle: {
-      ...typography.displayMedium,
-      color: c.text.primary,
-    },
-    difficultyWrap: {
-      marginTop: spacing.sm,
-    },
-    timerSection: {
-      alignItems: 'center',
-      paddingVertical: spacing.xxl + 16,
-    },
-    timerValue: {
-      fontSize: 72,
-      fontWeight: '300' as const,
-      letterSpacing: -2,
-      lineHeight: 80,
-    },
-    pausedLabel: {
-      ...typography.micro,
-      color: c.text.tertiary,
-      letterSpacing: 2.5,
-      marginTop: spacing.sm,
-    },
-    estLabel: {
-      ...typography.callout,
-      color: c.text.tertiary,
-      marginTop: spacing.sm,
-    },
-    progressSection: {
-      marginBottom: spacing.xxl + 16,
-    },
-    progressTrack: {
-      height: 4,
-      borderRadius: radius.sm,
-      backgroundColor: c.border.subtle,
-      overflow: 'hidden',
-    },
-    progressFill: {
-      height: '100%',
-      borderRadius: radius.sm,
-    },
-    progressLabels: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      marginTop: spacing.xs,
-    },
-    progressLabelLeft: {
-      ...typography.micro,
-      color: c.text.tertiary,
-    },
-    progressLabelRight: {
-      ...typography.micro,
-      color: c.text.tertiary,
-    },
-    actions: {
-      marginTop: 'auto',
-    },
-    actionGap: {
-      height: spacing.sm,
-    },
-    // The root already applies the horizontal screen padding — these only
-    // add vertical rhythm, otherwise the inset doubles to 56px.
-    loadingWrap: {
-      flex: 1,
-      paddingVertical: spacing.screenPadding,
-      gap: spacing.md,
-    },
-    errorWrap: {
-      flex: 1,
-      alignItems: 'center',
-      justifyContent: 'center',
-      gap: spacing.md,
-    },
-    errorBody: {
-      textAlign: 'center',
-    },
-    errorButton: {
-      marginTop: spacing.lg,
-      width: '100%',
-    },
+    sub: { fontSize: 16, fontWeight: '500', color: ink, opacity: 0.8, fontVariant: ['tabular-nums'] },
+    ticks: { marginTop: spacing.xl },
+    upNext: { fontSize: 14, fontWeight: '500', color: ink, opacity: 0.75, marginBottom: spacing.md },
+    actions: { flexDirection: 'row', gap: spacing.md },
+    btn: { flex: 1, minHeight: 56, borderRadius: radius.full, alignItems: 'center', justifyContent: 'center' },
+    btnOutline: { borderWidth: 1.5, borderColor: ink },
+    btnOutlineText: { fontSize: 17, fontWeight: '600', color: ink },
+    btnSolid: { backgroundColor: ink },
+    btnSolidText: { fontSize: 17, fontWeight: '700', color: c.accent.steelDeep },
+    pressed: { opacity: 0.85, transform: [{ scale: 0.98 }] },
   });
 }

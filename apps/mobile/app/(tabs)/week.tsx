@@ -1,135 +1,28 @@
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState } from 'react';
 import { View, ScrollView, Pressable, StyleSheet, Text } from 'react-native';
 import { useRouter, type Href } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Animated, { FadeIn } from 'react-native-reanimated';
-import { radius, spacing, typography } from '@chronos/shared/theme';
+import { fontFamily, radius, spacing } from '@chronos/shared/theme';
 import type { ThemeColors } from '@chronos/shared/theme';
 import { useTheme } from '../../lib/theme';
-import { useTasksForDay } from '../../hooks/useTasksForDay';
-import { useTaskCountsForWeek } from '../../hooks/useTaskCountsForWeek';
+import { useAuth } from '../../hooks/useAuth';
+import { useWeekLoad } from '../../hooks/useWeekLoad';
 import { Screen } from '../../components/ui/Screen';
 import { AuraText } from '../../components/ui/AuraText';
-import { AuraSkeleton } from '../../components/ui/AuraSkeleton';
 import { AuraButton } from '../../components/ui/AuraButton';
+import { AuraSkeleton } from '../../components/ui/AuraSkeleton';
 import { AuraSymbol } from '../../components/ui/AuraSymbol';
-import { TaskBlock } from '../../components/ui/TaskBlock';
-import { WeekTaskBar } from '../../components/ui/WeekTaskBar';
 import { CalmEmptyState } from '../../components/ui/CalmEmptyState';
+import { WeekBars } from '../../components/week/WeekBars';
+import { DueList } from '../../components/week/DueList';
+import { weekOf } from '../../components/schedule/blockTime';
 import { haptic } from '../../lib/haptics';
 import { toLocalDayIso } from '../../lib/localDate';
-import { useAuth } from '../../hooks/useAuth';
 
-const STAGGER_MS = 40;
-// Beyond this many task bars a column shows a "+N" tally instead of stacking
-// forever — keeps the week grid above the fold.
-const MAX_BARS = 4;
-
-function formatDayLabel(date: Date) {
-  return date.toLocaleDateString(undefined, { weekday: 'short' }).toUpperCase();
-}
-
-function toDayIso(date: Date) {
-  return toLocalDayIso(date);
-}
-
-function formatWeekRange(days: Date[]): string {
-  const fmt = (d: Date) =>
-    d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-  return `${fmt(days[0])} – ${fmt(days[6])}`;
-}
-
-function formatFullDay(date: Date): string {
-  return date.toLocaleDateString(undefined, {
-    weekday: 'long',
-    month: 'short',
-    day: 'numeric',
-  });
-}
-
-// "3 tasks · 3h 15m" — the focused day's load at a glance.
-function summarizeDayLoad(minutesList: number[]): string {
-  const total = minutesList.reduce((sum, m) => sum + m, 0);
-  const hours = Math.floor(total / 60);
-  const mins = total % 60;
-  const duration = hours > 0 ? (mins > 0 ? `${hours}h ${mins}m` : `${hours}h`) : `${mins}m`;
-  const count = minutesList.length === 1 ? '1 task' : `${minutesList.length} tasks`;
-  return `${count} · ${duration}`;
-}
-
-interface WeekDayColumnProps {
-  userId: string;
-  date: Date;
-  dayIso: string;
-  isToday: boolean;
-  isSelected: boolean;
-  onSelect: () => void;
-  styles: ReturnType<typeof makeStyles>;
-  colors: ThemeColors;
-}
-
-// One day in the week grid: its date header plus a compressed vertical stack of
-// task bars. Self-fetches via the existing per-day hook so all seven days load
-// their density in parallel without a new hook contract.
-function WeekDayColumn({
-  userId,
-  date,
-  dayIso,
-  isToday,
-  isSelected,
-  onSelect,
-  styles,
-  colors,
-}: WeekDayColumnProps) {
-  const { tasks, loading } = useTasksForDay(userId, dayIso);
-  const shownTasks = tasks.slice(0, MAX_BARS);
-  const overflow = tasks.length - shownTasks.length;
-
-  return (
-    <Pressable
-      onPress={onSelect}
-      style={[styles.dayCol, isSelected && styles.dayColSelected]}
-      accessibilityRole="button"
-      accessibilityState={{ selected: isSelected }}
-      accessibilityLabel={`${formatDayLabel(date)} ${date.getDate()}, ${
-        tasks.length === 1 ? '1 task' : `${tasks.length} tasks`
-      }`}
-    >
-      <Text style={styles.dayLabel}>{formatDayLabel(date)}</Text>
-      <View style={[styles.dayNum, isToday && styles.dayNumToday]}>
-        <Text
-          style={[
-            styles.dayNumText,
-            { color: isToday ? colors.text.inverse : colors.text.primary },
-          ]}
-        >
-          {date.getDate()}
-        </Text>
-      </View>
-
-      <View style={styles.barsStack}>
-        {loading ? (
-          <>
-            <AuraSkeleton height={22} style={styles.barSkeleton} />
-            <AuraSkeleton height={16} style={styles.barSkeleton} />
-          </>
-        ) : tasks.length === 0 ? (
-          <View style={styles.restDash} />
-        ) : (
-          <>
-            {shownTasks.map((task) => (
-              <WeekTaskBar
-                key={task.id}
-                difficulty={task.difficulty}
-                estimatedMinutes={task.estimatedMinutes}
-              />
-            ))}
-            {overflow > 0 && <Text style={styles.overflowText}>+{overflow}</Text>}
-          </>
-        )}
-      </View>
-    </Pressable>
-  );
+function totalLabel(min: number): { big: string; unit: string } {
+  const h = Math.floor(min / 60);
+  const m = min % 60;
+  return h === 0 ? { big: `${m}`, unit: 'min' } : { big: `${h}:${String(m).padStart(2, '0')}`, unit: 'h' };
 }
 
 export default function WeekScreen() {
@@ -137,190 +30,104 @@ export default function WeekScreen() {
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
-  const today = useMemo(() => new Date(), []);
-  const { user: authUser } = useAuth();
-  const userId = authUser?.id ?? '';
+  const { user } = useAuth();
+  const [offset, setOffset] = useState(0);
+  const [selectedIso, setSelectedIso] = useState<string | null>(null);
 
-  // Week navigation offset (0 = current week, -1 = last week, 1 = next week)
-  const [weekOffset, setWeekOffset] = useState(0);
+  const todayIso = toLocalDayIso(new Date());
+  const days = useMemo(() => {
+    const d = new Date();
+    d.setDate(d.getDate() + offset * 7);
+    return weekOf(d);
+  }, [offset]);
+  const { load, loading, error, refetch } = useWeekLoad(user?.id ?? '', days);
 
-  const weekDays = useMemo(() => {
-    const base = new Date(today);
-    base.setDate(today.getDate() + weekOffset * 7);
-    const start = new Date(base);
-    start.setDate(base.getDate() - base.getDay());
-    return Array.from({ length: 7 }).map((_, i) => {
-      const d = new Date(start);
-      d.setDate(start.getDate() + i);
-      return d;
-    });
-  }, [today, weekOffset]);
-
-  const weekDayIsos = useMemo(() => weekDays.map(toDayIso), [weekDays]);
-  const weekRangeLabel = useMemo(() => formatWeekRange(weekDays), [weekDays]);
-
-  // Focused day — the grid always shows all seven, tapping one expands it below.
-  const [selectedDayIso, setSelectedDayIso] = useState(toDayIso(today));
-
-  useEffect(() => {
-    setSelectedDayIso(weekOffset === 0 ? toDayIso(today) : weekDayIsos[0]);
-  }, [weekOffset, today, weekDayIsos]);
-
-  const { counts } = useTaskCountsForWeek(userId, weekDayIsos);
-  const weekTotal = useMemo(
-    () => Object.values(counts).reduce((sum, n) => sum + n, 0),
-    [counts],
+  const total = load.reduce((s, d) => s + d.minutes, 0);
+  // Heaviest day: ties go to the earliest from today onward.
+  const heaviest = useMemo(() => {
+    const ahead = load.filter((d) => d.iso >= todayIso);
+    const pool = ahead.some((d) => d.minutes > 0) ? ahead : load;
+    return pool.reduce<(typeof load)[number] | null>(
+      (best, d) => (d.minutes > 0 && (!best || d.minutes > best.minutes) ? d : best),
+      null,
+    );
+  }, [load, todayIso]);
+  const heavyName = heaviest?.date.toLocaleDateString(undefined, { weekday: 'long' });
+  const due = (selectedIso ? load.filter((d) => d.iso === selectedIso) : load).flatMap((d) =>
+    d.tasks.map((task) => ({ task, dayLabel: d.date.toLocaleDateString(undefined, { weekday: 'short' }) })),
   );
+  const { big, unit } = totalLabel(total);
+  const weekLabel = days[0].toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 
-  const {
-    tasks: selectedTasks,
-    loading: selectedLoading,
-    error: selectedError,
-    refetch,
-  } = useTasksForDay(userId, selectedDayIso);
-  const selectedDate = useMemo(
-    () => new Date(`${selectedDayIso}T12:00:00`),
-    [selectedDayIso],
-  );
-
-  function goToPrevWeek() {
-    haptic.selection();
-    setWeekOffset((prev) => prev - 1);
-  }
-
-  function goToNextWeek() {
-    haptic.selection();
-    setWeekOffset((prev) => prev + 1);
-  }
+  const shiftWeek = (by: number) => { haptic.selection(); setSelectedIso(null); setOffset((o) => o + by); };
 
   return (
-    <Screen>
-      {/* Header */}
+    <Screen orbs={false}>
       <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
-        <Animated.View entering={FadeIn.duration(280)}>
-          <Text style={styles.eyebrow}>WEEK</Text>
-        </Animated.View>
-        <Animated.View entering={FadeIn.delay(STAGGER_MS).duration(280)}>
-          <View style={styles.titleRow}>
-            <Pressable
-              onPress={goToPrevWeek}
-              hitSlop={12}
-              style={styles.navArrow}
-              accessibilityRole="button"
-              accessibilityLabel="Previous week"
-            >
-              <AuraSymbol name="chevron.left" size={16} color={colors.text.secondary} />
-            </Pressable>
-            <Text style={styles.title}>{weekRangeLabel}</Text>
-            <Pressable
-              onPress={goToNextWeek}
-              hitSlop={12}
-              style={styles.navArrow}
-              accessibilityRole="button"
-              accessibilityLabel="Next week"
-            >
-              <AuraSymbol name="chevron.right" size={16} color={colors.text.secondary} />
-            </Pressable>
-          </View>
-        </Animated.View>
-        <Animated.View entering={FadeIn.delay(STAGGER_MS * 2).duration(280)}>
-          <Text style={styles.subtitle}>
-            {weekTotal > 0
-              ? `${weekTotal === 1 ? '1 task' : `${weekTotal} tasks`} across your week`
-              : 'A clear week ahead'}
-          </Text>
-        </Animated.View>
+        <Text style={styles.eyebrow}>Week of {weekLabel}</Text>
+        <View style={styles.nav}>
+          <Pressable onPress={() => shiftWeek(-1)} style={styles.navBtn} accessibilityRole="button" accessibilityLabel="Previous week">
+            <AuraSymbol name="chevron.left" size={18} color={colors.text.secondary} />
+          </Pressable>
+          <Pressable onPress={() => shiftWeek(1)} style={styles.navBtn} accessibilityRole="button" accessibilityLabel="Next week">
+            <AuraSymbol name="chevron.right" size={18} color={colors.text.secondary} />
+          </Pressable>
+        </View>
       </View>
 
-      {/* Week-at-a-glance grid — every day's load, side by side */}
-      <Animated.View
-        entering={FadeIn.delay(STAGGER_MS * 3).duration(280)}
-        style={styles.weekGrid}
-      >
-        {weekDays.map((day) => {
-          const dayIso = toDayIso(day);
-          return (
-            <WeekDayColumn
-              key={dayIso}
-              userId={userId}
-              date={day}
-              dayIso={dayIso}
-              isToday={dayIso === toDayIso(today)}
-              isSelected={dayIso === selectedDayIso}
-              onSelect={() => {
-                haptic.selection();
-                setSelectedDayIso(dayIso);
-              }}
-              styles={styles}
-              colors={colors}
-            />
-          );
-        })}
-      </Animated.View>
-
-      {/* Focused day */}
-      <View style={styles.detailHeader}>
-        <Text style={styles.detailTitle}>{formatFullDay(selectedDate)}</Text>
-        {!selectedLoading && !selectedError && selectedTasks.length > 0 && (
-          <Text style={styles.detailSummary}>{summarizeDayLoad(selectedTasks.map((t) => t.estimatedMinutes))}</Text>
-        )}
-      </View>
-
-      <ScrollView
-        style={styles.scroll}
-        contentContainerStyle={{ paddingBottom: 160 }}
-        showsVerticalScrollIndicator={false}
-        bounces={false}
-      >
-        {selectedLoading && (
-          <View style={styles.detailLoading}>
-            <AuraSkeleton height={64} style={styles.detailSkeleton} />
-            <AuraSkeleton height={64} style={styles.detailSkeleton} />
+      <ScrollView contentContainerStyle={{ paddingBottom: spacing.xxl }} showsVerticalScrollIndicator={false}>
+        {loading ? (
+          <View style={styles.gap}>
+            <AuraSkeleton height={64} width={200} />
+            <AuraSkeleton height={18} width={240} />
+            <AuraSkeleton height={300} />
           </View>
-        )}
-
-        {!selectedLoading && selectedError && (
+        ) : error ? (
           <View style={styles.center}>
-            <AuraText variant="body" color="hard" style={styles.errorText}>
-              Couldn&apos;t load tasks for this day.
-            </AuraText>
+            <AuraText variant="body" color="secondary">Couldn&apos;t load this week.</AuraText>
             <AuraButton label="Try again" variant="outline" onPress={refetch} />
           </View>
-        )}
+        ) : total === 0 ? (
+          <CalmEmptyState title="A light week" body="Nothing is due this week. Enjoy the room." icon="calendar" />
+        ) : (
+          <>
+            <Text style={styles.total} accessibilityLabel={`${Math.round(total / 6) / 10} hours of homework due`}>
+              {big}<Text style={styles.totalUnit}> {unit}</Text>
+            </Text>
+            <Text style={styles.sentence}>
+              of homework due this week.{heavyName ? ` ${heavyName} is the heaviest.` : ''}
+            </Text>
 
-        {!selectedLoading && !selectedError && selectedTasks.length === 0 && (
-          <View style={styles.detailEmpty}>
-            <CalmEmptyState
-              icon="sun.max.fill"
-              title="A clear day"
-              body={`Nothing scheduled for ${selectedDate.toLocaleDateString(undefined, {
-                weekday: 'long',
-              })}. Enjoy the open water.`}
+            <WeekBars
+              load={load}
+              heaviestIso={heaviest?.iso ?? null}
+              selectedIso={selectedIso}
+              todayIso={todayIso}
+              onSelect={(iso) => setSelectedIso((cur) => (cur === iso ? null : iso))}
             />
-          </View>
-        )}
 
-        {!selectedLoading && !selectedError && selectedTasks.length > 0 && (
-          <View style={styles.taskList}>
-            {selectedTasks.map((task, i) => (
-              <Animated.View
-                key={task.id}
-                entering={FadeIn.delay(STAGGER_MS * (4 + i)).duration(200)}
+            {heaviest && heavyName && (
+              <Pressable
+                onPress={() => {
+                  haptic.liquidTap();
+                  router.push({
+                    pathname: '/ai/chat',
+                    params: { prompt: `Spread out my ${heavyName} homework across the week so no day is too heavy.` },
+                  } as Href);
+                }}
+                style={({ pressed }) => [styles.spread, pressed && styles.pressed]}
+                accessibilityRole="button"
               >
-                <TaskBlock
-                  title={task.title}
-                  subject={task.subject}
-                  estimatedMinutes={task.estimatedMinutes}
-                  difficulty={task.difficulty}
-                  variant="scheduled"
-                  onPress={() => {
-                    haptic.liquidTap();
-                    router.push(`/tasks/${task.id}` as Href);
-                  }}
-                />
-              </Animated.View>
-            ))}
-          </View>
+                <AuraSymbol name="sparkles" size={16} color={colors.text.onAccent} />
+                <Text style={styles.spreadText}>Spread out {heavyName}</Text>
+              </Pressable>
+            )}
+
+            <Text style={styles.section}>
+              {selectedIso ? `Due ${load.find((d) => d.iso === selectedIso)?.date.toLocaleDateString(undefined, { weekday: 'long' })}` : 'Due this week'}
+            </Text>
+            {due.length > 0 ? <DueList items={due} /> : <Text style={styles.none}>Nothing due that day.</Text>}
+          </>
         )}
       </ScrollView>
     </Screen>
@@ -329,134 +136,45 @@ export default function WeekScreen() {
 
 function makeStyles(c: ThemeColors) {
   return StyleSheet.create({
-    header: {
-      paddingBottom: spacing.md,
-    },
-    eyebrow: {
-      ...typography.caption,
-      color: c.text.tertiary,
-    },
-    titleRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: spacing.sm,
-      marginTop: spacing.xs,
-    },
-    navArrow: {
-      width: 32,
-      height: 32,
-      borderRadius: 16,
-      backgroundColor: c.glass.light,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    title: {
-      ...typography.displayMedium,
+    header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingBottom: spacing.md },
+    eyebrow: { fontSize: 13, fontWeight: '700', letterSpacing: 1, textTransform: 'uppercase', color: c.text.secondary },
+    nav: { flexDirection: 'row' },
+    navBtn: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
+    gap: { gap: spacing.md, marginTop: spacing.lg },
+    center: { marginTop: spacing.xxl, alignItems: 'center', gap: spacing.md },
+    total: {
+      fontFamily: fontFamily.display,
+      fontSize: 64,
+      lineHeight: 68,
+      letterSpacing: -2.4,
       color: c.text.primary,
-      flex: 1,
-      textAlign: 'center',
-    },
-    subtitle: {
-      ...typography.body,
-      color: c.text.secondary,
-      marginTop: spacing.xs,
-    },
-    weekGrid: {
-      flexDirection: 'row',
-      alignItems: 'flex-start',
-      gap: spacing.xs,
-      marginTop: spacing.lg,
-      marginBottom: spacing.md,
-    },
-    dayCol: {
-      flex: 1,
-      alignItems: 'center',
-      paddingVertical: spacing.sm,
-      paddingHorizontal: 3,
-      borderRadius: radius.md,
-      gap: spacing.xs,
-    },
-    dayColSelected: {
-      backgroundColor: c.glass.accent,
-    },
-    dayLabel: {
-      ...typography.micro,
-      color: c.text.tertiary,
-    },
-    dayNum: {
-      width: 26,
-      height: 26,
-      borderRadius: 13,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    dayNumToday: {
-      backgroundColor: c.accent.blue,
-    },
-    dayNumText: {
-      fontSize: 13,
-      fontWeight: '600',
-      letterSpacing: -0.2,
       fontVariant: ['tabular-nums'],
-    },
-    barsStack: {
-      width: '100%',
-      alignItems: 'stretch',
-      gap: 3,
-      marginTop: 2,
-    },
-    barSkeleton: {
-      borderRadius: radius.sm,
-    },
-    restDash: {
-      width: 12,
-      height: 3,
-      borderRadius: 2,
-      backgroundColor: c.border.subtle,
-      alignSelf: 'center',
-      marginTop: spacing.xs,
-    },
-    overflowText: {
-      ...typography.micro,
-      color: c.text.tertiary,
-      textAlign: 'center',
-      marginTop: 1,
-    },
-    detailHeader: {
       marginTop: spacing.sm,
-      marginBottom: spacing.md,
     },
-    detailTitle: {
-      ...typography.headline,
-      color: c.text.primary,
-    },
-    detailSummary: {
-      ...typography.callout,
-      color: c.text.tertiary,
-      marginTop: 2,
-    },
-    scroll: {
-      flex: 1,
-    },
-    detailLoading: {
-      gap: spacing.md,
-    },
-    detailSkeleton: {
-      borderRadius: radius.md,
-    },
-    center: {
-      marginTop: spacing.xl,
+    totalUnit: { fontSize: 24, letterSpacing: 0, color: c.text.secondary },
+    sentence: { fontSize: 16, color: c.text.secondary, marginBottom: spacing.xl },
+    spread: {
+      alignSelf: 'flex-start',
+      flexDirection: 'row',
       alignItems: 'center',
-    },
-    errorText: {
-      marginBottom: spacing.md,
-    },
-    detailEmpty: {
+      gap: 8,
+      minHeight: 44,
+      paddingHorizontal: 18,
+      borderRadius: radius.full,
+      backgroundColor: c.accent.steel,
       marginTop: spacing.lg,
-      alignItems: 'center',
     },
-    taskList: {
-      gap: spacing.itemGap,
+    spreadText: { fontSize: 15, fontWeight: '600', color: c.text.onAccent },
+    pressed: { opacity: 0.85, transform: [{ scale: 0.98 }] },
+    section: {
+      fontSize: 13,
+      fontWeight: '700',
+      letterSpacing: 1,
+      textTransform: 'uppercase',
+      color: c.text.secondary,
+      marginTop: spacing.sectionGap,
+      marginBottom: spacing.md,
     },
+    none: { fontSize: 15, color: c.text.secondary },
   });
 }

@@ -46,7 +46,7 @@ function makeStyles(c: ThemeColors) {
     },
     label: {
       ...typography.micro,
-      color: c.accent.sky,
+      color: c.accent.steelDeep,
     },
     rail: {
       width: TIMELINE_RAIL_WIDTH,
